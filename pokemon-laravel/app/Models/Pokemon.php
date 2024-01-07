@@ -9,12 +9,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class Pokemon extends Model
 {
     use HasFactory;
+
+    protected $table = 'pokemons';
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(Pokemon::class, 'users_pokemons')->withTimestamps();
+        return $this->belongsToMany(User::class, 'users_pokemons')->withTimestamps();
     }
     public function moves(): BelongsToMany
     {
-        return $this->belongsToMany(Pokemon::class, 'pokemons_move')->withTimestamps();
+        return $this->belongsToMany(Move::class, 'pokemons_moves')->withTimestamps();
     }
 }

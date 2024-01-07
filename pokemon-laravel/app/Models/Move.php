@@ -10,7 +10,9 @@ class Move extends Model
 {
     use HasFactory;
 
-    public function moves(): BelongsToMany
+    //protected $table = 'moves';
+
+    public function pokemons(): BelongsToMany
     {
         return $this->belongsToMany(Pokemon::class, 'pokemons_moves')->withTimestamps();
     }
