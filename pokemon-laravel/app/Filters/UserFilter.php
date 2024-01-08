@@ -4,7 +4,7 @@ namespace App\Filters;
 
 use Illuminate\Http\Request;
 
-class PokemonFilter extends ApiFilter
+class UserFilter extends ApiFilter
 {
     protected $safeParams = [
         'name' => ['eq'],

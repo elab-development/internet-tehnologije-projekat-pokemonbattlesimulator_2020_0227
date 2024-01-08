@@ -15,6 +15,10 @@ class Pokemon extends Model
         'name'
     ];
 
+    public static function getRandomPokemon()
+    {
+        return self::inRandomOrder()->first();
+    }
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'users_pokemons')->withTimestamps();

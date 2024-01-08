@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Filters\MoveFilter;
+use App\Http\Requests\DeleteMoveRequest;
+use App\Http\Requests\StoreMoveRequest;
+use App\Http\Requests\UpdateMoveRequest;
 use App\Http\Resources\MoveCollection;
 use App\Http\Resources\MoveResource;
 use App\Models\Move;
@@ -12,25 +16,24 @@ class MoveController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        return new MoveCollection(Move::paginate());
-    }
+        $filter = new MoveFilter();
+        $filterItems = $filter->transform($request); //?column[operator]=value
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+        $moves = Move::where($filterItems);
+
+        return new MoveCollection(
+            $moves->paginate(PokemonController::PAGINATION_AMOUNT)->appends($request->query())
+        );
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreMoveRequest $request)
     {
-        //
+        return new MoveResource(Move::create($request->all()));
     }
 
     /**
@@ -39,35 +42,27 @@ class MoveController extends Controller
     public function show(string $id)
     {
         $move = Move::find($id);
-        if(is_null($move)){
+        if (is_null($move)) {
             return response()->json([
-                'message'=>'Data not found'
-            ],404);
+                'message' => 'Data not found'
+            ], 404);
         }
         return new MoveResource($move);
     }
 
     /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(UpdateMoveRequest $request, Move $move)
     {
-        //
+        $move->update($request->all());
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(DeleteMoveRequest $request, string $id)
     {
-        //
+        Move::destroy($id);
     }
 }

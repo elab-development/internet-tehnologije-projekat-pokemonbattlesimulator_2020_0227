@@ -6,7 +6,9 @@ use App\Http\Resources\PokemonCollection;
 use App\Http\Resources\PokemonResource;
 use App\Models\Pokemon;
 use App\Filters\PokemonFilter;
+use App\Http\Requests\AddMovesToPokemonRequest;
 use App\Http\Requests\BulkStorePokemonRequest;
+use App\Http\Requests\DeletePokemonRequest;
 use App\Http\Requests\StorePokemonRequest;
 use App\Http\Requests\UpdatePokemonRequest;
 use Illuminate\Http\Request;
@@ -24,10 +26,10 @@ class PokemonController extends Controller
         $filter = new PokemonFilter();
         $filterItems = $filter->transform($request); //?column[operator]=value
         $includeMoves = $request->query('includeMoves');
-        
+
         $pokemons = Pokemon::where($filterItems);
 
-        if($includeMoves){
+        if ($includeMoves) {
             $pokemons = $pokemons->with('moves');
         }
 
@@ -49,7 +51,8 @@ class PokemonController extends Controller
     /**
      * Insert a bulk of pokemons in storage
      */
-    public function bulkStore(BulkStorePokemonRequest $request){
+    public function bulkStore(BulkStorePokemonRequest $request)
+    {
         Pokemon::insert($request->all());
     }
 
@@ -79,8 +82,15 @@ class PokemonController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(DeletePokemonRequest $request, string $id)
     {
-        //
+        Pokemon::destroy($id);
+    }
+
+    public function add_moves_to_pokemon(AddMovesToPokemonRequest $request, Pokemon $pokemon)
+    {
+        $moveIds = $request->input('move_ids');
+
+        $pokemon->moves()->attach($moveIds);
     }
 }

@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class UpdatePokemonRequest extends FormRequest
+class UpdateMoveRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -12,6 +12,7 @@ class UpdatePokemonRequest extends FormRequest
     public function authorize(): bool
     {
         return $this->user()->can('admin-authorize');
+        return false;
     }
 
     /**
@@ -25,11 +26,13 @@ class UpdatePokemonRequest extends FormRequest
 
         if ($method == 'PUT') {
             return [
-                'name' => ['required', 'string', 'max:255']
+                'name' => ['required', 'string', 'max:255'],
+                'power' =>['required', 'integer','between:1,100']
             ];
         } else {
             return [
-                'name' => ['required', 'string', 'max:255']
+                'name' => ['sometimes','required', 'string', 'max:255'],
+                'power' =>['sometimes','required', 'integer','between:1,100']
             ];
         }
     }

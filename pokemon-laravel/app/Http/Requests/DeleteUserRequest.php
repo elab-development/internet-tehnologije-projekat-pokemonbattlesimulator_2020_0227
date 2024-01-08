@@ -3,16 +3,23 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Gate;
 
-class StorePokemonRequest extends FormRequest
+class DeleteUserRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return $this->user()->can('admin-authorize');
+        if ($this->user()->can('admin-authorize')) {
+            return true;
+        };
+
+        if (auth()->user()->id === $this->route('user')->id) {
+            return true;
+        }
+        abort(403,'Unauthorized');
+        return true;
     }
 
     /**
@@ -23,7 +30,7 @@ class StorePokemonRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
+            //
         ];
     }
 }

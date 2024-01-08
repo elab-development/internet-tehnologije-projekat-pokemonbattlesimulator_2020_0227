@@ -34,7 +34,7 @@ Route::group([
     Route::group([
         'middleware' => 'auth:sanctum'
     ], function () {
-        Route::apiResource('users', UserController::class)->except('index', 'show');
+        Route::apiResource('users', UserController::class);
         Route::apiResource('pokemons', PokemonController::class)->except('index', 'show');
         Route::apiResource('move', MoveController::class)->except('index', 'show');
 
