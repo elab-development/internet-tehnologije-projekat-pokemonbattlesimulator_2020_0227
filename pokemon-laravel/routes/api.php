@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MoveController;
 use App\Http\Controllers\PokemonController;
 use App\Http\Controllers\UserController;
@@ -17,17 +18,27 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+/*Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
-});
+});*/
 
 Route::group([
     'prefix' => 'v1',
     'namespace' => 'App\Http\Controllers',
 ], function () {
-    Route::apiResource('users', UserController::class);
-    Route::apiResource('pokemons', PokemonController::class);
-    Route::apiResource('move', MoveController::class);
+    Route::get('/pokemons', [PokemonController::class, 'index']);
+    Route::get('/pokemons/{id}', [PokemonController::class, 'show']);
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login', [AuthController::class, 'login']);
 
-    Route::post('pokemons/bulk', [PokemonController::class, 'bulkStore'])->name('pokemon.bulkStore');
+    Route::group([
+        'middleware' => 'auth:sanctum'
+    ], function () {
+        Route::apiResource('users', UserController::class)->except('index', 'show');
+        Route::apiResource('pokemons', PokemonController::class)->except('index', 'show');
+        Route::apiResource('move', MoveController::class)->except('index', 'show');
+
+        Route::post('/pokemons/bulk', [PokemonController::class, 'bulkStore'])->name('pokemon.bulkStore');
+        Route::post('/logout', [AuthController::class, 'logout']);
+    });
 });
