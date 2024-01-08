@@ -11,6 +11,10 @@ class Pokemon extends Model
     use HasFactory;
 
     protected $table = 'pokemons';
+    protected $fillable = [
+        'name'
+    ];
+
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'users_pokemons')->withTimestamps();
