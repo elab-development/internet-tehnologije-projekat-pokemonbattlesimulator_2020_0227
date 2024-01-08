@@ -12,8 +12,23 @@ class UserResource extends JsonResource
      *
      * @return array<string, mixed>
      */
+    /**
+     * Schema::create('users', function (Blueprint $table) {
+      *      $table->id();
+       *     $table->string('name');
+      *      $table->string('email')->unique();
+      *      $table->timestamp('email_verified_at')->nullable();
+      *      $table->string('password');
+      *      $table->rememberToken();
+      *      $table->timestamps();
+      *  });
+     */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            'id' => $this->resource->id,
+            'name' => $this->resource->name,
+            'email' => $this->resource->email,
+        ];
     }
 }
