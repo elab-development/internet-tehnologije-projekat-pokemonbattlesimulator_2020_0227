@@ -59,7 +59,7 @@ class PokemonController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Request $request, string $id)
     {
         $pokemon = Pokemon::find($id);
         if (is_null($pokemon)) {
@@ -68,6 +68,9 @@ class PokemonController extends Controller
             ], 404);
         }
 
+        if ($request->query('includeMoves')) {
+            $pokemon->load('moves');
+        }
         return new PokemonResource($pokemon);
     }
 

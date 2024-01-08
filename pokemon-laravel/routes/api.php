@@ -28,6 +28,8 @@ Route::group([
 ], function () {
     Route::get('/pokemons', [PokemonController::class, 'index']);
     Route::get('/pokemons/{id}', [PokemonController::class, 'show']);
+    Route::get('/moves',[MoveController::class, 'index']);
+    Route::get('/moves/{move}',[MoveController::class, 'show']);
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
 
@@ -36,7 +38,7 @@ Route::group([
     ], function () {
         Route::apiResource('users', UserController::class);
         Route::apiResource('pokemons', PokemonController::class)->except('index', 'show');
-        Route::apiResource('move', MoveController::class)->except('index', 'show');
+        Route::apiResource('moves', MoveController::class)->except('index', 'show');
 
         Route::post('/pokemons/bulk', [PokemonController::class, 'bulkStore'])->name('pokemon.bulkStore');
         Route::post('/logout', [AuthController::class, 'logout'])->name('logout');

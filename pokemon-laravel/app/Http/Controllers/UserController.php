@@ -41,7 +41,7 @@ class UserController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Request $request, string $id)
     {
         $this->authorize('user-authorize');
 
@@ -50,6 +50,10 @@ class UserController extends Controller
             return response()->json([
                 'message' => 'Data not found'
             ], 404);
+        }
+
+        if ($request->query('includePokemons')) {
+            $user->load('pokemons');
         }
 
         return new UserResource($user);
