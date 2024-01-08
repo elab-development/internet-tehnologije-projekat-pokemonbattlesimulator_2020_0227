@@ -22,7 +22,14 @@ class AddMovesToPokemonRequest extends FormRequest
     public function rules(): array
     {
         return [
-            '*' => ['exists:moves,id'],
+            'moveIds.*' => ['exists:moves,id'],
         ];
+    }
+
+    protected function prepareForValidation()
+    {
+        $this->merge([
+            'move_ids' =>$this->moveIds
+        ]);
     }
 }

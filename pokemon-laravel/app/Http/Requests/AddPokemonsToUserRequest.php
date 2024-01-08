@@ -22,7 +22,14 @@ class AddPokemonsToUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            '*' => ['exists:pokemons,id'],
+            'pokremonIds.*' => ['exists:pokemons,id'],
         ];
+    }
+
+    protected function prepareForValidation()
+    {
+        $this->merge([
+            'pokemon_ids' =>$this->pokremonIds
+        ]);
     }
 }

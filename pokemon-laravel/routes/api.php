@@ -39,6 +39,9 @@ Route::group([
         Route::apiResource('move', MoveController::class)->except('index', 'show');
 
         Route::post('/pokemons/bulk', [PokemonController::class, 'bulkStore'])->name('pokemon.bulkStore');
-        Route::post('/logout', [AuthController::class, 'logout']);
+        Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+        Route::post('/users/{user}/add-pokemons', [AuthController::class, 'add_pokemons_to_user'])->name('users.add-pokmeons');
+        Route::post('/users/{user}/get-random-pokemon', [AuthController::class, 'add_random_pokemon_to_user'])->name('users.get-random-pokmeon');
+        Route::post('/pokemons/{pokemon}/add-moves', [AuthController::class, 'add_moves_to_pokemon'])->name('pokemons.add-moves');        
     });
 });
