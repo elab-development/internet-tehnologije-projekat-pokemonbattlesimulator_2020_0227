@@ -1,38 +1,111 @@
+:root {
+  --clr-normal: #A8A77A;
+  --clr-fire: #EE8130;
+  --clr-water: #6390F0;
+  --clr-electric: #F7D02C;
+  --clr-grass: #7AC74C;
+  --clr-ice: #96D9D6;
+  --clr-fighting: #C22E28;
+  --clr-poison: #A33EA1;
+  --clr-ground: #E2BF65;
+  --clr-flying: #A98FF3;
+  --clr-psychic: #F95587;
+  --clr-bug: #A6B91A;
+  --clr-rock: #B6A136;
+  --clr-ghost: #735797;
+  --clr-dragon: #6F35FC;
+  --clr-dark: #705746;
+  --clr-steel: #B7B7CE;
+  --clr-fairy: #D685AD;
+
+  --clr-header-footer: #D70A28;
+  --clr-header-footer-text: white;
+  --clr-content: white;
+  --clr-content-text: black;
+}
+
 .App {
-  text-align: center;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+header {
+  flex-shrink: 0;
+  top: 0;
+  width: 100%;
+  background-color: var(--clr-header-footer);
+  z-index: 100;
+  color: var(--clr-header-footer-text);
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.content {
+  flex: 1 0 auto;
+  margin: 0 15px;
+  padding: 20px;
+  border-radius: 20px;
+  background-color: var(--clr-content);
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+footer {
+  bottom: 0;
+  height: 50px;
+  background-color: var(--clr-header-footer);
+  margin-top: 50px;
+  flex-shrink: 0;
+
   display: flex;
-  flex-direction: column;
-  align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  align-items: center;
+  font-size: 1.1vw;
+  text-align: center;
+  text-transform: uppercase;
+  color: var(--clr-header-footer-text);
 }
 
-.App-link {
-  color: #61dafb;
+
+/*Nav bar*/
+
+
+
+.nav-link,
+.nav-logo {
+  color: var(--clr-header-footer-text);
+  text-decoration: none;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.nav-logo{
+  font-size: 30px;
+}
+
+.nav-item {
+  transition: transform 0.3s ease-in-out;
+} 
+.nav-item:hover {
+  transform: scale(1.2); 
+}
+
+.navbar {
+  min-height: 70px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px;
+}
+
+.navbar ul li {
+  list-style-type: none;
+}
+
+.nav-meni {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  column-gap: 40px;
+}
+
+.hamburger {
+  display: none;
+  cursor: pointer;
 }
