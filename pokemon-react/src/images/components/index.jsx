@@ -1,6 +1,6 @@
 import backToHome from '../assets/back-to-home.svg'
 import chevronLeft from '../assets/chevron_left.svg'
-import chervonRight from '../assets/chevron_right.svg'
+import chevronRight from '../assets/chevron_right.svg'
 import cross from '../assets/cross.svg'
 import height from '../assets/height.svg'
 import pokeball from '../assets/pokeball.svg'
@@ -12,7 +12,7 @@ import weight from '../assets/weight.svg'
 export {
     backToHome,
     chevronLeft,
-    chervonRight,
+    chevronRight,
     cross,
     height,
     pokeball,
