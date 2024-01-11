@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { backToHome, chevronLeft, chevronRight, height, pokedex, weight } from '../images/components';
+import { backToHome, height, pokedex, weight } from '../images/components';
 import { MAX_POKEMON } from './util/constants';
 import axios from 'axios';
 import ProgressBar from './ProgressBar';
@@ -32,7 +32,7 @@ const PokemonDisplay = () => {
 
   const getEnglishText = () => {
     for (const entry of pokemonSpecies.flavor_text_entries) {
-      if (entry.language.name = "en") {
+      if (entry.language.name === "en") {
         const flavor = entry.flavor_text.replace(/\f/g, " ");
         return flavor;
       }
@@ -53,11 +53,11 @@ const PokemonDisplay = () => {
       navigate('/pokemons');
     }
     loadPokemon();
-  }, []);
+  }, [id, loadPokemon, navigate]);
 
 
   return (
-    <div className='poke-display' style={{backgroundColor: pokemon !== undefined ? `var(--clr-${getMainTypeColor()})` : 'white'}}>
+    <div className='poke-display' style={{ backgroundColor: pokemon !== undefined ? `var(--clr-${getMainTypeColor()})` : 'white' }}>
       {pokemon === undefined && pokemonSpecies === undefined ? <div className='loading-text'>Loading...</div> :
         <>
           <LeftArrow currentId={id} />
@@ -70,25 +70,25 @@ const PokemonDisplay = () => {
             </div>
           </div>
           <div className="pokemon-id-wrap">
-            <p>{pokemon.id}</p>
+            <p>#{String(pokemon.id).padStart(3, "0")}</p>
           </div>
 
           <div className="featured-img">
-            <img src="" alt="" />
+            <img src={`https://raw.githubusercontent.com/pokeapi/sprites/master/sprites/pokemon/other/dream-world/${pokemon.id}.svg`} alt="" />
           </div>
-          <div className="detail-card-detail-wrapper" style={{backgroundColor: "white"}}>
+          <div className="detail-card-detail-wrapper" style={{ backgroundColor: "white" }}>
             <p className="about-pokemon">About</p>
             <div className="pokemon-detail-wrapper">
               <div className="pokemon-detail-wrap">
                 <div className="pokemon-detail">
                   <img src={weight} alt="" />
-                  <p>{/*weight */}</p>
+                  <p>{pokemon.weight}</p>
                 </div>
                 <p>Weight</p>
                 <div className="pokemon-detail">
                   {
                     pokemon.types.map((value, index) => {
-                      return <p className="detail-type" key={index} style={{backgroundColor: `var(--clr-${value.type.name})`}}>
+                      return <p className="detail-type" key={index} style={{ backgroundColor: `var(--clr-${value.type.name})` }}>
                         {value.type.name}
                       </p>
                     })
@@ -97,7 +97,7 @@ const PokemonDisplay = () => {
                 <p>Type</p>
                 <div className="pokemon-detail">
                   <img src={height} alt="" />
-                  <p>{/*height */}</p>
+                  <p>{pokemon.height}</p>
                 </div>
                 <p>Height</p>
               </div>
@@ -108,32 +108,32 @@ const PokemonDisplay = () => {
               <div className="stats-wrapper">
                 <div className="stats-wrap">
                   <p className="stat-name">HP</p>
-                  <p className="stat-value"></p>
+                  <p className="stat-value">{pokemon.stats[0].base_stat}</p>
                   <ProgressBar percent={30} fillColor={`var(--clr-${getMainTypeColor()})`} />
                 </div>
                 <div className="stats-wrap">
                   <p className="stat-name">ATK</p>
-                  <p className="stat-value"></p>
+                  <p className="stat-value">{pokemon.stats[1].base_stat}</p>
                   <ProgressBar percent={30} fillColor={`var(--clr-${getMainTypeColor()})`} />
                 </div>
                 <div className="stats-wrap">
                   <p className="stat-name">DEF</p>
-                  <p className="stat-value"></p>
+                  <p className="stat-value">{pokemon.stats[2].base_stat}</p>
                   <ProgressBar percent={30} fillColor={`var(--clr-${getMainTypeColor()})`} />
                 </div>
                 <div className="stats-wrap">
                   <p className="stat-name">SATK</p>
-                  <p className="stat-value"></p>
+                  <p className="stat-value">{pokemon.stats[3].base_stat}</p>
                   <ProgressBar percent={30} fillColor={`var(--clr-${getMainTypeColor()})`} />
                 </div>
                 <div className="stats-wrap">
                   <p className="stat-name">SDEF</p>
-                  <p className="stat-value"></p>
+                  <p className="stat-value">{pokemon.stats[4].base_stat}</p>
                   <ProgressBar percent={30} fillColor={`var(--clr-${getMainTypeColor()})`} />
                 </div>
                 <div className="stats-wrap">
                   <p className="stat-name">SPD</p>
-                  <p className="stat-value"></p>
+                  <p className="stat-value">{pokemon.stats[5].base_stat}</p>
                   <ProgressBar percent={30} fillColor={`var(--clr-${getMainTypeColor()})`} />
                 </div>
               </div>
