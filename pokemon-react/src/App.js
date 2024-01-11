@@ -5,7 +5,7 @@ import Home from './components/Home';
 import Pokedex from './components/Pokedex';
 import Battle from './components/Battle';
 import Footer from './components/Footer';
-import Pokemon from './components/Pokemon';
+import PokemonDisplay from './components/PokemonDisplay';
 
 function App() {
   return (
@@ -16,7 +16,8 @@ function App() {
           <Route path='/' exact element={<Home />} />
           <Route path='/pokemons' element={<Pokedex />} />
           <Route path='/battle' element={<Battle />} />
-          <Route path='/pokemons/{id}' element={<Pokemon />} />          </Routes>
+          <Route path='/pokemons/{id}' element={<PokemonDisplay />} />          
+        </Routes>
       </div>
       <Footer />
     </BrowserRouter>
