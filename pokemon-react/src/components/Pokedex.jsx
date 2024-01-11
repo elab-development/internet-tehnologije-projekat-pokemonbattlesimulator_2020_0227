@@ -8,21 +8,38 @@ const Pokedex = () => {
 
   const [searchInput, setSearchInput] = useState("");
   const [allPokemons, setAllPokemons] = useState([]);
+  const [filteredPokemons, setFilteredPokemons] = useState([]);
+  const [searchParams, setSearchParams] = useState("name");
 
+  const fetchData = async () => {
+    const response = await axios.get(`${BASE_API_URL}/pokemon?limit=${MAX_POKEMON}`)
+    setAllPokemons(response.data.results);
+    setFilteredPokemons(response.data.results);
+  };
 
   useEffect(() => {
-    (async () => {
-      console.log(`${BASE_API_URL}/pokemon?limit=${MAX_POKEMON}`);
-      const response = await axios.get(`${BASE_API_URL}/pokemon?limit=${MAX_POKEMON}`)
-      console.log(response);
-      setAllPokemons(response.data.results);
-    })();
-
+    fetchData();
     return () => { }
   }, [])
 
+  useEffect(() => {
+    switch (searchParams) {
+      case "name":
+        setFilteredPokemons(allPokemons.filter((pokemon) => {
+          return pokemon.name.toLowerCase().startsWith(searchInput);
+        }));
+        break;
+      case "number":
+        setFilteredPokemons(allPokemons.filter((pokemon) => {
+          return pokemon.url.split('/')[6].startsWith(searchInput);
+        }));
+        break;
+    }
+  }, [searchInput]);
+
   const handleChange = (e) => {
     e.preventDefault();
+    setSearchInput(e.target.value.toLowerCase());
   }
 
   return (
@@ -30,7 +47,7 @@ const Pokedex = () => {
       <div className='search-wrapper'>
         <img src={pokeball} alt="pokeball" />
         <img src={search} alt="search" />
-        <input type="text" name="" id="search-input" className='search-input' />
+        <input type="text" onChange={handleChange} name="" id="search-input" className='search-input' />
         <img src={cross} alt="cross" id="search-close-icon" className='search-close-icon' />
 
         <div className='sort-wrapper'>
@@ -41,11 +58,11 @@ const Pokedex = () => {
             <p className='sort-text'>Sortiraj po:</p>
             <div className='filter-wrap'>
               <div>
-                <input type="radio" name="filters" id="number" value="number" />
+                <input type="radio" name="filters" id="number" value="number" checked={true} onChange={(e) => setSearchParams(e.target.value)} />
                 <label htmlFor="number">Number</label>
               </div>
               <div>
-                <input type="radio" name="filters" id="name" value="name" />
+                <input type="radio" name="filters" id="name" value="name" onChange={(e) => setSearchParams(e.target.value)} />
                 <label htmlFor="name">Name</label>
               </div>
             </div>
@@ -56,11 +73,11 @@ const Pokedex = () => {
         <div className="container">
           <div className="list-wrapper">
             {
-              allPokemons?.map((value, index) => {
+              filteredPokemons?.map((value, index) => {
                 const splitedUrl = value.url.split('/');
                 console.log(splitedUrl, value);
                 const pokemon = {
-                  id: splitedUrl[splitedUrl.length - 2],
+                  id: value.url.split('/')[6],
                   name: value.name,
                 }
                 return <PokemonCard pokemon={pokemon} key={index} />
