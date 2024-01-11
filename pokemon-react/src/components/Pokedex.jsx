@@ -9,8 +9,7 @@ const Pokedex = () => {
   const [searchInput, setSearchInput] = useState("");
   const [allPokemons, setAllPokemons] = useState([]);
   const [filteredPokemons, setFilteredPokemons] = useState([]);
-  const [searchParams, setSearchParams] = useState("name");
-
+  const [searchParams, setSearchParams] = useState("number");
   const fetchData = async () => {
     const response = await axios.get(`${BASE_API_URL}/pokemon?limit=${MAX_POKEMON}`)
     setAllPokemons(response.data.results);
@@ -31,7 +30,7 @@ const Pokedex = () => {
         break;
       case "number":
         setFilteredPokemons(allPokemons.filter((pokemon) => {
-          return pokemon.url.split('/')[6].startsWith(searchInput);
+          return pokemon.url.split('/')[6] === searchInput.trim();
         }));
         break;
     }
@@ -41,14 +40,15 @@ const Pokedex = () => {
     e.preventDefault();
     setSearchInput(e.target.value.toLowerCase());
   }
+  
 
   return (
     <>
       <div className='search-wrapper'>
         <img src={pokeball} alt="pokeball" />
         <img src={search} alt="search" />
-        <input type="text" onChange={handleChange} name="" id="search-input" className='search-input' />
-        <img src={cross} alt="cross" id="search-close-icon" className='search-close-icon' />
+        <input type="text" onChange={handleChange} value={searchInput} name="" id="search-input" className='search-input' />
+        <img src={cross} onClick={() => setSearchInput("")}alt="cross" id="search-close-icon" className='search-close-icon' />
 
         <div className='sort-wrapper'>
           <div className='sort-wrap'>
@@ -70,22 +70,23 @@ const Pokedex = () => {
         </div>
       </div>
       <div className="pokemon-list">
-        <div className="container">
-          <div className="list-wrapper">
-            {
-              filteredPokemons?.map((value, index) => {
-                const splitedUrl = value.url.split('/');
-                console.log(splitedUrl, value);
-                const pokemon = {
-                  id: value.url.split('/')[6],
-                  name: value.name,
+        {
+          filteredPokemons.length === 0 ?
+            <div id="not-found-nessage">Pokemon Not found</div> :
+            <div className="container">
+              <div className="list-wrapper">
+                {
+                  filteredPokemons?.map((value, index) => {
+                    const pokemon = {
+                      id: value.url.split('/')[6],
+                      name: value.name,
+                    }
+                    return <PokemonCard pokemon={pokemon} key={index} />
+                  })
                 }
-                return <PokemonCard pokemon={pokemon} key={index} />
-              })
-            }
-          </div>
-        </div>
-        <div id="not-found-nessage">Pokemon Not found</div>
+              </div>
+            </div>
+        }
       </div>
     </>
   )
