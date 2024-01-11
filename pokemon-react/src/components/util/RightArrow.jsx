@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { chevronRight } from '../../images/components';
 import { MAX_POKEMON } from './constants';
 
-const RightArrow = ({ currentId }) => {
+const RightArrow = ({ currentId, func }) => {
     const navigate = useNavigate();
 
     const handleHidden = () => {
@@ -21,7 +21,7 @@ const RightArrow = ({ currentId }) => {
                         src={chevronRight}
                         alt="right-arrow"
                         className='right-arrow'
-                        onClick={() => navigate(`/pokemons/${parseInt(currentId) + 1}`)}
+                        onClick={() => func()}
                         style={{
                             display: handleHidden() ? "none" : "default",
                             WebkitFilter: "brightness(0) grayscale(1) invert(1)",

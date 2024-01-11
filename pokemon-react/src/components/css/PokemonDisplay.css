@@ -55,15 +55,17 @@
 
 .wrap-wrap {
     width: 550px;
-    height: 530px;
+    height: 600px;
     margin: auto;
     margin-top: 0;
+    margin-bottom: 0;
     padding: 10px 20px 20px 20px;
     box-sizing: border-box;
 }
 
 .detail-card-detail-wrapper {
     background-color: white;
+    height: 100%;
     margin: auto;
     box-sizing: border-box;
     border-radius: 15px;

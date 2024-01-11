@@ -111,7 +111,7 @@ const Pokedex = () => {
         </div>
 
         {
-          filteredPokemons.length === 0 ? <div class="not-found-message">Pokemon Not found</div> :
+          filteredPokemons.length === 0 ? allPokemons.length === 0 ? undefined : <div class="not-found-message">Pokemon Not found</div> :
             <div className="pages">
               <span className="prev-page">
                 <button

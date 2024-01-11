@@ -25,15 +25,4 @@ class PokemonFactory extends Factory
             'name' => $name,
         ];
     }
-
-    /**
-     * I guess ill never know
-     */
-    /*public function configure(): static
-    {
-        return $this->afterCreating(function (Pokemon $pokemon){
-            $move = Move::factory()->create();
-            $pokemon->moves()->attach($move->id);
-        });
-    }*/
 }

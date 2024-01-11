@@ -1,9 +1,7 @@
-import React, { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React from 'react';
 import { chevronLeft } from '../../images/components';
 
-const LeftArrow = ({ currentId }) => {
-    const navigate = useNavigate();
+const LeftArrow = ({ currentId , func}) => {
 
     const handleHidden = () => {
         if (parseInt(currentId) === 1) {
@@ -29,7 +27,7 @@ const LeftArrow = ({ currentId }) => {
                             filter: "brightness(0) grayscale(1) invert(1)",
                             width: "28px"
                         }}
-                        onClick={() => navigate(`/pokemons/${parseInt(currentId) - 1}`)}
+                        onClick={() => func()}
                     />
             }
         </>

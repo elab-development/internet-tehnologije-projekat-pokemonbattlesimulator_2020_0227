@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import './css/PokemonDisplay.css'
 import { useNavigate, useParams } from 'react-router-dom'
-import {  height, pokedex, weight } from '../images/components';
+import { height, pokedex, weight } from '../images/components';
 import { MAX_POKEMON } from './util/constants';
 import axios from 'axios';
 import ProgressBar from './ProgressBar';
@@ -13,7 +13,6 @@ const PokemonDisplay = () => {
   const navigate = useNavigate();
   const [pokemon, setPokemon] = useState(undefined);
   const [pokemonSpecies, setPokemonSpecies] = useState(undefined);
- 
 
   const getEnglishText = () => {
     for (const entry of pokemonSpecies.flavor_text_entries) {
@@ -34,34 +33,51 @@ const PokemonDisplay = () => {
   }
 
   useEffect(() => {
+    const cancelToken = axios.CancelToken.source()
     const loadPokemon = async () => {
-      const baseInfo = await axios.get(`https://pokeapi.co/api/v2/pokemon/${id}`);
-      const speciesInfo = await axios.get(`https://pokeapi.co/api/v2/pokemon-species/${id}`);
-      setPokemon({
-        id: baseInfo.data.id,
-        name: baseInfo.data.name,
-        types: baseInfo.data.types,
-        weight: baseInfo.data.weight,
-        height: baseInfo.data.height,
-        abilities: baseInfo.data.abilities,
-        stats: baseInfo.data.stats
-      });
-      setPokemonSpecies(speciesInfo.data);
+      try {
+        const baseInfo = await axios.get(`https://pokeapi.co/api/v2/pokemon/${id}`, { cancelToken: cancelToken.token });
+        const speciesInfo = await axios.get(`https://pokeapi.co/api/v2/pokemon-species/${id}`, { cancelToken: cancelToken.token });
+        setPokemon({
+          id: baseInfo.data.id,
+          name: baseInfo.data.name,
+          types: baseInfo.data.types,
+          weight: baseInfo.data.weight,
+          height: baseInfo.data.height,
+          abilities: baseInfo.data.abilities,
+          stats: baseInfo.data.stats
+        });
+        setPokemonSpecies(speciesInfo.data);
+      }catch(err){
+        if(axios.isCancel(err))
+        console.log("cancel");
+        console.log(err)
+      }
     }
 
     if (id < 1 || id > MAX_POKEMON) {
       navigate('/pokemons');
     }
     loadPokemon();
+
+    return () => {
+      cancelToken.cancel("Operation canceled by the user");
+    }
   }, [id, navigate]);
 
+  const next = () => {
+    navigate(`/pokemons/${parseInt(id) + 1}`);
+  }
 
+  const prev = () => {
+    navigate(`/pokemons/${parseInt(id) - 1}`);
+  }
   return (
     <div className='poke-display' style={{ backgroundColor: pokemon !== undefined ? `var(--clr-${getMainTypeColor()})` : 'white' }}>
       {pokemon === undefined && pokemonSpecies === undefined ? <div className='loading-text'>Loading...</div> :
         <>
-          <LeftArrow currentId={pokemon.id} />
-          <RightArrow currentId={pokemon.id} />
+          <LeftArrow currentId={pokemon.id} func={prev}/>
+          <RightArrow currentId={pokemon.id} func={next}/>
 
           <div className="image-wrapper">
             <img src={pokedex} alt="pokedex" className='background-detail' />
