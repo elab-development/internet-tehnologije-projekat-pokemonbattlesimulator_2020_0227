@@ -1,4 +1,5 @@
 import React from 'react'
+import './css/PokemonCard.css'
 import { useNavigate } from 'react-router-dom'
 
 const PokemonCard = ({ pokemon }) => {
@@ -9,7 +10,7 @@ const PokemonCard = ({ pokemon }) => {
     return (
         <div className='poke-card' onClick={handleClick}>
             <div className='number-wrap'>
-                <p>{`#${pokemon.id}`}</p>
+                {`#${String(parseInt(pokemon.id)).padStart(3, "0")}`}
             </div>
             <div className='image-wrap'>
                 <img src={`https://raw.githubusercontent.com/pokeapi/sprites/master/sprites/pokemon/other/dream-world/${pokemon.id}.svg`} alt="" />

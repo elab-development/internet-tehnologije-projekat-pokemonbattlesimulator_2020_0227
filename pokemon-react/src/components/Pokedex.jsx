@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
-import axios from 'axios'
-import { cross, pokeball, search, sorting } from '../images/components'
+import './css/Pokedex.css'
+import axios from 'axios';
+import { cross, pokeball } from '../images/components'
 import { BASE_API_URL, MAX_POKEMON, PER_PAGE } from './util/constants';
 import PokemonCard from './PokemonCard';
 
@@ -72,60 +73,81 @@ const Pokedex = () => {
 
     return pageNumbers;
   };
-  
+
+  console.log(pageNumber === Math.ceil(displayedPokemons.length / PER_PAGE));
+  console.log(pageNumber);
+  console.log(Math.ceil(displayedPokemons.length / PER_PAGE));
+  console.log(Math.ceil(displayedPokemons.length / PER_PAGE));
+
   return (
     <>
-      <div className='search-wrapper'>
-        <img src={pokeball} alt="pokeball" />
-        <img src={search} alt="search" />
-        <input type="text" onChange={handleChange} value={searchInput} name="" id="search-input" className='search-input' />
-        <img src={cross} onClick={() => setSearchInput("")} alt="cross" id="search-close-icon" className='search-close-icon' />
+      <div className="pokedex">
 
-        <div className='sort-wrapper'>
-          <div className='sort-wrap'>
-            <img src={sorting} alt="" id="sort-icon" className='sort-icon' />
-          </div>
-
-        </div>
-      </div>
-      <div className="pokemon-list">
-        {
-          filteredPokemons.length === 0 ?
-            <div id="not-found-nessage">Pokemon Not found</div> :
-            <div className="container">
-              <div className="list-wrapper">
-                {
-                  displayedPokemons?.map((value, index) => {
-                    const pokemon = {
-                      id: value.url.split('/')[6],
-                      name: value.name,
-                    }
-                    return <PokemonCard pokemon={pokemon} key={index} />
-                  })
-                }
+        <div className='first-two-wrap'>
+          <div className='search-wrapper'>
+            <div className="pokeball-icon-wrapper">
+              <img src={pokeball} alt="pokeball" className='pokeball-icon' />
+            </div>
+            <input type="text" onChange={handleChange} value={searchInput} name="" className='search-input' placeholder='Pretraži' />
+            {searchInput === "" ? undefined :
+              <div className='search-close-icon-wrapper'>
+                <img src={cross} onClick={() => setSearchInput("")} alt="cross" id="search-close-icon" className='search-close-icon' />
               </div>
+            }
+          </div>
+          <div className="pokemon-list" style={{margin: filteredPokemons.length !== 0 ? "" : 0}}>
+            {
+              filteredPokemons.length === 0 ?
+                undefined :
+                <div className="list-wrapper">
+                  {
+                    displayedPokemons?.map((value, index) => {
+                      const pokemon = {
+                        id: value.url.split('/')[6],
+                        name: value.name,
+                      }
+                      return <PokemonCard pokemon={pokemon} key={index} />
+                    })
+                  }
+                </div>
+            }
+          </div>
+        </div>
+
+        {
+          filteredPokemons.length === 0 ? <div class="not-found-message">Pokemon Not found</div> :
+            <div className="pages">
+              <span className="prev-page">
+                <button
+                  onClick={() => handlePageChange(pageNumber - 1)} disabled={pageNumber === 1}
+                  className={`page-number`}
+                >&#60;</button>
+              </span>
+              <div className="page-numbers-wrap">
+                {generatePageNumbers(pageNumber, Math.ceil(filteredPokemons.length / PER_PAGE)).map((page, index) => (
+                  <span key={index}>
+                    {page === '...' ? (
+                      '...'
+                    ) : (
+                      <button
+                        onClick={() => handlePageChange(page)}
+                        className={`page-number ${page === pageNumber ? 'active' : ''}`}
+                      >
+                        {page}
+                      </button>
+                    )}
+                  </span>
+                ))}
+              </div>
+              <span className='next-page'>
+                <button
+                  onClick={() => handlePageChange(pageNumber + 1)} disabled={pageNumber === Math.ceil(filteredPokemons.length / PER_PAGE)}
+                  className={`page-number`} value={">"}
+                >&#62;</button>
+              </span>
             </div>
         }
       </div>
-
-      <div className="previous"></div>
-      <div className="pages">
-        {generatePageNumbers(pageNumber, Math.ceil(filteredPokemons.length / PER_PAGE)).map((page, index) => (
-          <span key={index}>
-            {page === '...' ? (
-              '...'
-            ) : (
-              <button
-                onClick={() => handlePageChange(page)}
-                className={`page-number ${page === pageNumber ? 'active' : ''}`}
-              >
-                {page}
-              </button>
-            )}
-          </span>
-        ))}
-      </div>
-      <div className="next"></div>
     </>
   )
 }

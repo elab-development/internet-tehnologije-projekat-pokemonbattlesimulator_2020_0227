@@ -13,16 +13,7 @@ const Header = () => {
                     <li className="nav-item">
                         <Link to="/pokemons" className='nav-link'>Pokédex</Link>
                     </li>
-                    <li className="nav-item">
-                        <Link to="/battle" className='nav-link'>Battle</Link>
-                    </li>
                 </ul>
-
-                <div className="hamburger">
-                    <span className="bar" ></span>
-                    <span className="bar" ></span>
-                    <span className="bar" ></span>
-                </div>
             </nav>
         </header>
     )

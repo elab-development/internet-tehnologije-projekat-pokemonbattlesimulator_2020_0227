@@ -40,6 +40,7 @@
   --clr-fairy-transparent: #D685AD80;
 
   --clr-header-footer: #D70A28;
+  --clr-header-footer-transparent: #D70A2850;
   --clr-header-footer-text: white;
   --clr-content: white;
   --clr-content-text: black;
@@ -96,15 +97,16 @@ footer {
   text-decoration: none;
 }
 
-.nav-logo{
+.nav-logo {
   font-size: 30px;
 }
 
 .nav-item {
   transition: transform 0.3s ease-in-out;
-} 
+}
+
 .nav-item:hover {
-  transform: scale(1.2); 
+  transform: scale(1.2);
 }
 
 .navbar {
@@ -129,4 +131,14 @@ footer {
 .hamburger {
   display: none;
   cursor: pointer;
+}
+
+@media(max-width: 780px) {
+  .nav-logo {
+    font-size: 20px;
+  }
+
+  .nav-link {
+    font-size: 14px;
+  }
 }
