@@ -72,15 +72,13 @@ header {
 
 footer {
   bottom: 0;
-  height: 50px;
   background-color: var(--clr-header-footer);
-  margin-top: 50px;
   flex-shrink: 0;
 
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 1.1vw;
+  font-size: 10px;
   text-align: center;
   text-transform: uppercase;
   color: var(--clr-header-footer-text);

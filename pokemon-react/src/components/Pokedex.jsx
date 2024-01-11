@@ -4,6 +4,7 @@ import axios from 'axios';
 import { cross, pokeball } from '../images/components'
 import { BASE_API_URL, MAX_POKEMON, PER_PAGE } from './util/constants';
 import PokemonCard from './PokemonCard';
+import useDebounce from './util/useDebounce';
 
 const Pokedex = () => {
 
@@ -11,8 +12,9 @@ const Pokedex = () => {
   const [allPokemons, setAllPokemons] = useState([]);
   const [filteredPokemons, setFilteredPokemons] = useState([]);
   const [displayedPokemons, setDisplayedPokemons] = useState([]);
-
   const [pageNumber, setPageNumber] = useState(1);
+  const debouncedValue = useDebounce(searchInput, 500);
+
 
   const fetchData = async () => {
     const response = await axios.get(`${BASE_API_URL}/pokemon?limit=${MAX_POKEMON}`)
@@ -27,17 +29,17 @@ const Pokedex = () => {
 
   /* Filtrira pokemone */
   useEffect(() => {
-    if (/^\d+$/.test(searchInput)) {
+    if (/^\d+$/.test(debouncedValue)) {
       setFilteredPokemons(allPokemons.filter((pokemon) => {
-        return pokemon.url.split('/')[6] === searchInput.trim();
+        return pokemon.url.split('/')[6] === debouncedValue.trim();
       }));
     } else {
       setFilteredPokemons(allPokemons.filter((pokemon) => {
-        return pokemon.name.toLowerCase().startsWith(searchInput);
+        return pokemon.name.toLowerCase().startsWith(debouncedValue);
       }));
     }
     setPageNumber(1);
-  }, [searchInput]);
+  }, [debouncedValue]);
 
   useEffect(() => {
     updateDisplayedPokemons();
@@ -74,15 +76,9 @@ const Pokedex = () => {
     return pageNumbers;
   };
 
-  console.log(pageNumber === Math.ceil(displayedPokemons.length / PER_PAGE));
-  console.log(pageNumber);
-  console.log(Math.ceil(displayedPokemons.length / PER_PAGE));
-  console.log(Math.ceil(displayedPokemons.length / PER_PAGE));
-
   return (
     <>
       <div className="pokedex">
-
         <div className='first-two-wrap'>
           <div className='search-wrapper'>
             <div className="pokeball-icon-wrapper">

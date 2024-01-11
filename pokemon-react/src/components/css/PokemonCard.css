@@ -10,10 +10,10 @@ p {
     align-items: center;
     border-radius: 8px;
     background: linear-gradient(white 30%, lightgray 60%);
-    min-width: 12vw;
-    min-height: 12vw;
+    min-width: 150px;
+    min-height: 150px;
     cursor: pointer;
-    font-size: 1.33vw;
+    font-size: 15px;
     box-sizing: border-box;
     box-shadow: 1px 1px 10px rgba(0, 0, 0, 0.2);
 }
@@ -31,49 +31,11 @@ p {
 }
 
 .poke-card .image-wrap {
-    width: 8vw;
-    height: 8vw;
+    width: 100px;
+    height: 100px;
 }
 
 .poke-card .image-wrap img {
     width: 100%;
     height: 100%;
-}
-
-@media(max-width: 780px) {
-    .poke-card {
-        min-width: 25vw;
-        min-height: 25vw;
-        font-size: 2.66vw;
-    }
-
-    .poke-card .image-wrap {
-        width: 17vw;
-        height: 17vw;
-    }
-}
-
-@media(max-width: 390px) {
-    .poke-card {
-        min-width: 36vw;
-        min-height: 36vw;
-        font-size: 4vw;
-    }
-
-    .poke-card .image-wrap {
-        width: 25vw;
-        height: 25vw;
-    }
-}
-@media(max-width: 325px) {
-    .poke-card {
-        min-width: 69vw;
-        min-height: 69vw;
-        font-size: 4vw;
-    }
-
-    .poke-card .image-wrap {
-        width: 50vw;
-        height: 50vw;
-    }
 }

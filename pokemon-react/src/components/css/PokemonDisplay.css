@@ -1,0 +1,151 @@
+.poke-display {
+    border-radius: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.left-arrow,
+.right-arrow {
+    position: absolute;
+    top: 160px;
+}
+
+.right-arrow {
+    right: 5%;
+}
+
+.left-arrow {
+    left: 5%;
+}
+
+.image-wrapper {
+    width: 200px;
+    height: 200px;
+}
+
+.background-detail {
+    position: absolute;
+    opacity: 0.1;
+    top: 40px;
+    right: 200px;
+}
+
+.background-detail path {
+    fill: rgba(255, 255, 255, 0.5);
+}
+
+.featured-img {
+    position: absolute;
+    width: 180px;
+    height: 180px;
+    top: 100px;
+    left: 50%;
+    transform: translate(-50%, 0);
+}
+
+.featured-img img {
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+}
+
+.wrap-wrap {
+    width: 550px;
+    min-width: 340px;
+
+    height: 100%;
+    margin: auto;
+    padding: 10px 20px 20px 20px;
+    box-sizing: border-box;
+}
+
+.detail-card-detail-wrapper {
+    background-color: white;
+    margin: auto;
+    box-sizing: border-box;
+    border-radius: 15px;
+    padding-top: 20px;
+}
+
+.pokemon-detail-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 85px;
+    margin-bottom: 10px;
+}
+
+.pokemon-detail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    height: 100%;
+    gap: 5px;
+    padding: 5px 20px 5px 20px;
+}
+
+.pokemon-detail-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    height: 66%;
+}
+
+.detail-type {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    padding: 2px;
+    border-radius: 25px;
+}
+
+.pokemon-description {
+    text-align: center;
+}
+
+h3 {
+    padding: 0;
+    margin: 10px 0 10px 0;
+    text-align: center;
+}
+
+.stats-wrapper {
+    width: 100%;
+    max-width: 530px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: auto;
+}
+
+.stats-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.stat-name {
+    width: 10%;
+    text-align: center;
+    padding-right: 10px;
+}
+
+.stat-value {
+    width: 15%;
+    text-align: center;
+}
+
+.progress-bar {
+    width: 75%;
+}

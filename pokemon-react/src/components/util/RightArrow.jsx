@@ -14,13 +14,23 @@ const RightArrow = ({ currentId }) => {
     }
 
     return (
-        <img
-            src={chevronRight}
-            alt="right-arrow"
-            className='right-arrow'
-            hidden={handleHidden()}
-            onClick={() => navigate(`/pokemons/${parseInt(currentId) + 1}`)}
-        />
+        <>
+            {
+                handleHidden() ? undefined :
+                    <img
+                        src={chevronRight}
+                        alt="right-arrow"
+                        className='right-arrow'
+                        onClick={() => navigate(`/pokemons/${parseInt(currentId) + 1}`)}
+                        style={{
+                            display: handleHidden() ? "none" : "default",
+                            WebkitFilter: "brightness(0) grayscale(1) invert(1)",
+                            filter: "brightness(0) grayscale(1) invert(1)",
+                            width: "28px"
+                        }}
+                    />
+            }
+        </>
     )
 }
 
