@@ -7,14 +7,14 @@ import axios from 'axios';
 import ProgressBar from './ProgressBar';
 import LeftArrow from './util/LeftArrow';
 import RightArrow from './util/RightArrow';
-import capitalizeFirstLetter from './util/capitalizeFirstLetter';
 
 const PokemonDisplay = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [pokemon, setPokemon] = useState(undefined);
   const [pokemonSpecies, setPokemonSpecies] = useState(undefined);
-  
+ 
+
   const getEnglishText = () => {
     for (const entry of pokemonSpecies.flavor_text_entries) {
       if (entry.language.name === "en") {
@@ -27,6 +27,10 @@ const PokemonDisplay = () => {
 
   const getMainTypeColor = () => {
     return pokemon.types[0].type.name;
+  }
+
+  const capitalizeFirstLetter = (string) => {
+    return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
   }
 
   useEffect(() => {
@@ -146,6 +150,7 @@ const PokemonDisplay = () => {
               </div>
             </div>
           </div>
+
         </>}
     </div>
   )

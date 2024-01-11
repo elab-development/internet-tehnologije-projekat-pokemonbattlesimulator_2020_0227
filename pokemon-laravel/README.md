@@ -17,8 +17,10 @@ Projekat je organizovan u skladu s Laravel konvencijama i sadrži odgovarajuću 
 + `database/seeders`
 
 ## Instalacija
+Potrebno je da se instalira `composer`, `node.js` i `xampp` ili bilo koja aplikacija za postavljanje lokalnog database servera pre kloniranja repozitorijuma. Ukoliko je potrebno, zbog **composera** restartovati kompjuter.
+
 ```bash
-# Kloniranje projekta
+# Kloniranje repozitorijuma
 git clone https://github.com/elab-development/internet-tehnologije-projekat-pokemonbattlesimulator_2020_0227
 cd internet-tehnologije-projekat-pokemonbattlesimulator_2020_0227\pokemon-laravel
 
@@ -26,7 +28,8 @@ cd internet-tehnologije-projekat-pokemonbattlesimulator_2020_0227\pokemon-larave
 composer install
 php artisan migrate --seed
 
-# Pokretanje servera
+# Čišćenje keširanih ruta i pokretanje servera
+php artisan route:clear 
 php artisan serve
 ```
 

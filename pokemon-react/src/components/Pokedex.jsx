@@ -16,15 +16,15 @@ const Pokedex = () => {
   const debouncedValue = useDebounce(searchInput, 500);
 
 
-  const fetchData = async () => {
-    const response = await axios.get(`${BASE_API_URL}/pokemon?limit=${MAX_POKEMON}`)
-    setAllPokemons(response.data.results);
-    setFilteredPokemons(response.data.results);
-  };
 
   useEffect(() => {
+    const fetchData = async () => {
+      const response = await axios.get(`${BASE_API_URL}/pokemon?limit=${MAX_POKEMON}`)
+      setAllPokemons(response.data.results);
+      setFilteredPokemons(response.data.results);
+    };
+
     fetchData();
-    return () => { }
   }, [])
 
   /* Filtrira pokemone */
@@ -91,7 +91,7 @@ const Pokedex = () => {
               </div>
             }
           </div>
-          <div className="pokemon-list" style={{margin: filteredPokemons.length !== 0 ? "" : 0}}>
+          <div className="pokemon-list" style={{ margin: filteredPokemons.length !== 0 ? "" : 0 }}>
             {
               filteredPokemons.length === 0 ?
                 undefined :
