@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import './css/PokemonDisplay.css'
 import { useNavigate, useParams } from 'react-router-dom'
 import { height, pokedex, weight } from '../images/components';
@@ -12,15 +12,17 @@ const PokemonDisplay = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [pokemon, setPokemon] = useState(undefined);
-  const [pokemonSpecies, setPokemonSpecies] = useState(undefined);
 
-  const getEnglishText = () => {
-    for (const entry of pokemonSpecies.flavor_text_entries) {
-      if (entry.language.name === "en") {
-        const flavor = entry.flavor_text.replace(/\f/g, " ");
-        return flavor;
+  const getEnglishText = (pokemonSpecies) => {
+    if (pokemonSpecies === undefined)
+      return "";
+    else
+      for (const entry of pokemonSpecies.flavor_text_entries) {
+        if (entry.language.name === "en") {
+          const flavor = entry.flavor_text.replace(/\f/g, " ");
+          return flavor;
+        }
       }
-    }
     return "";
   }
 
@@ -45,12 +47,12 @@ const PokemonDisplay = () => {
           weight: baseInfo.data.weight,
           height: baseInfo.data.height,
           abilities: baseInfo.data.abilities,
-          stats: baseInfo.data.stats
+          stats: baseInfo.data.stats,
+          description: getEnglishText(speciesInfo.data)
         });
-        setPokemonSpecies(speciesInfo.data);
-      }catch(err){
-        if(axios.isCancel(err))
-        console.log("cancel");
+      } catch (err) {
+        if (axios.isCancel(err))
+          console.log("cancel");
         console.log(err)
       }
     }
@@ -65,6 +67,12 @@ const PokemonDisplay = () => {
     }
   }, [id, navigate]);
 
+  useEffect(() => {
+    if(pokemon !== undefined){
+      console.log(pokemon)
+    }
+  }, pokemon);
+
   const next = () => {
     navigate(`/pokemons/${parseInt(id) + 1}`);
   }
@@ -74,10 +82,10 @@ const PokemonDisplay = () => {
   }
   return (
     <div className='poke-display' style={{ backgroundColor: pokemon !== undefined ? `var(--clr-${getMainTypeColor()})` : 'white' }}>
-      {pokemon === undefined && pokemonSpecies === undefined ? <div className='loading-text'>Loading...</div> :
+      {pokemon === undefined ? <div className='loading-text'>Loading...</div> :
         <>
-          <LeftArrow currentId={pokemon.id} func={prev}/>
-          <RightArrow currentId={pokemon.id} func={next}/>
+          <LeftArrow currentId={pokemon.id} func={prev} />
+          <RightArrow currentId={pokemon.id} func={next} />
 
           <div className="image-wrapper">
             <img src={pokedex} alt="pokedex" className='background-detail' />
@@ -128,7 +136,7 @@ const PokemonDisplay = () => {
 
                 </div>
                 <p className="pokemon-description">
-                  {`${getEnglishText()}`}
+                  {`${pokemon.description}`}
                 </p>
                 <h3 className="stats-heading">Base stats</h3>
                 <div className="stats-wrapper">
