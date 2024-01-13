@@ -10,6 +10,7 @@ import LeftArrow from './util/LeftArrow';
 import RightArrow from './util/RightArrow';
 import { AnimatePresence, motion } from "framer-motion"
 import Loader from './util/Loader';
+import { VARIANTS } from './util/constants';
 
 const PokemonDisplay = () => {
   const navigate = useNavigate();
@@ -18,22 +19,7 @@ const PokemonDisplay = () => {
     id: parseInt(useParams().id),
     loading: true,
   });
-  const variants = {
-    hidden: {
-      opacity: 0
-    },
-    visiblePokemon: {
-      opacity: 1,
-      transition: { duration: 1 }
-    },
-    visibleLoading: {
-      opacity: 1,
-      transition: { duration: 1 }
-    },
-    exit: {
-      opacity: 0,
-    }
-  }
+  
 
   const next = () => {
     window.history.pushState({}, null, `/pokemons/${state.id + 1}`);
@@ -83,7 +69,7 @@ const PokemonDisplay = () => {
               <AnimatePresence mode='wait'>
                 {!state.loading &&
                   <motion.img src={`https://raw.githubusercontent.com/pokeapi/sprites/master/sprites/pokemon/other/dream-world/${pokemon.id}.svg`} alt=""
-                    variants={variants} initial="hidden" animate="visiblePokemon" exit="exit" key="pokemon-image"
+                    variants={VARIANTS} initial="hidden" animate="visiblePokemon" exit="exit" key="pokemon-image"
                   />}
               </AnimatePresence>
             </div>
@@ -91,8 +77,8 @@ const PokemonDisplay = () => {
 
           <div className="detail-card-detail-wrapper">
             <AnimatePresence mode='wait'>
-              {state.loading ? <motion.div variants={variants} initial="hidden" animate="visibleLoading" exit="exit" key="pokemon-loader"><Loader /></motion.div> :
-                <motion.div className='detail-card-detail-inner-wrapper' variants={variants} initial="hidden" animate="visiblePokemon" exit="exit" key="pokemon-details">
+              {state.loading ? <motion.div variants={VARIANTS} initial="hidden" animate="visibleLoading" exit="exit" key="pokemon-loader"><Loader /></motion.div> :
+                <motion.div className='detail-card-detail-inner-wrapper' variants={VARIANTS} initial="hidden" animate="visiblePokemon" exit="exit" key="pokemon-details">
                   <div className="header-details">
                     <div className="name-wrap">
                       <h1 className="name">{capitalizeFirstLetter(pokemon?.name)} #{String(pokemon?.id).padStart(3, "0")}</h1>
