@@ -73,12 +73,8 @@ const PokemonDisplay = () => {
     <div className='poke-display' style={{ backgroundColor: pokemon !== undefined ? `var(--clr-${pokemon?.getMainTypeColor()})` : 'white' }} key="parent">
       {
         <div className='poke-display-inner-wrap'>
-          {state.loading ? undefined : 
-            <>
-              <LeftArrow currentId={pokemon?.id} func={prev} />
-              <RightArrow currentId={pokemon?.id} func={next} />
-            </>
-          }
+          <LeftArrow currentId={pokemon?.id} func={prev} />
+          <RightArrow currentId={pokemon?.id} func={next} />
 
 
           <div className="image-wrapper">
