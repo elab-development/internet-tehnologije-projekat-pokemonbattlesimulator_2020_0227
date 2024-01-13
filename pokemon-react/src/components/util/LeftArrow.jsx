@@ -1,7 +1,7 @@
 import React from 'react';
 import { chevronLeft } from '../../images/components';
 
-const LeftArrow = ({ currentId , func}) => {
+const LeftArrow = ({ currentId, func }) => {
 
     const handleHidden = () => {
         if (parseInt(currentId) === 1) {
@@ -23,6 +23,7 @@ const LeftArrow = ({ currentId , func}) => {
                         alt="left-arrow"
                         className='left-arrow'
                         style={{
+                            zIndex: 100,
                             WebkitFilter: "brightness(0) grayscale(1) invert(1)",
                             filter: "brightness(0) grayscale(1) invert(1)",
                             width: "28px"

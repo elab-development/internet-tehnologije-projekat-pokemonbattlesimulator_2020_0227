@@ -1,6 +1,7 @@
 import React from 'react'
 import './css/PokemonCard.css'
 import { useNavigate } from 'react-router-dom'
+import capitalizeFirstLetter from './util/capitalizeFirstLetter'
 
 const PokemonCard = ({ pokemon }) => {
     const navigate = useNavigate();
@@ -16,7 +17,7 @@ const PokemonCard = ({ pokemon }) => {
                 <img src={`https://raw.githubusercontent.com/pokeapi/sprites/master/sprites/pokemon/other/dream-world/${pokemon.id}.svg`} alt="" />
             </div>
             <div className='name-wrap'>
-                <p>{`${pokemon.name}`}</p>
+                <p>{`${capitalizeFirstLetter(pokemon.name)}`}</p>
             </div>
         </div>
     )

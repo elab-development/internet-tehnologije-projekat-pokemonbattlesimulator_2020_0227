@@ -23,7 +23,7 @@ const RightArrow = ({ currentId, func }) => {
                         className='right-arrow'
                         onClick={() => func()}
                         style={{
-                            display: handleHidden() ? "none" : "default",
+                            zIndex:100,
                             WebkitFilter: "brightness(0) grayscale(1) invert(1)",
                             filter: "brightness(0) grayscale(1) invert(1)",
                             width: "28px"

@@ -1,0 +1,17 @@
+.loader{
+    
+  --clr-header-footer: #D70A28;
+    width: 75px;
+    height: 75px;
+    border: 15px solid var(--clr-header-footer-transparent);
+    border-top-color: var(--clr-header-footer);
+    border-radius: 50%;
+    animation: spin 0.2s linear infinite
+}
+
+@keyframes spin {
+    from{
+        transform: rotate(0turn);
+    }
+    to{ transform: rotate(1turn);}
+}
