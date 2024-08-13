@@ -7,6 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon index.js",
     "db:generate": "drizzle-kit generate --schema=./db/schema.js --out=./db/migrations --dialect=postgresql",
+    "db:generate:custom": "drizzle-kit generate --custom --schema=./db/schema.js --out=./db/migrations --dialect=postgresql",
     "db:migrate": "npm run ./db/migrate.js",
     "db:seed": "npm run ./db/seed.js"
   },
@@ -14,12 +15,14 @@
   "license": "ISC",
   "dependencies": {
     "@neondatabase/serverless": "^0.9.4",
-    "bcryptjs": "^2.4.3",
+    "bcrypt": "^5.1.1",
     "drizzle-orm": "^0.32.1",
+    "drizzle-zod": "^0.5.1",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
     "socket.io": "^4.7.5",
-    "yup": "^1.4.0"
+    "yup": "^1.4.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "drizzle-kit": "^0.23.1",

@@ -26,6 +26,10 @@ const handleSocketConnections = (io) => {
     });
 
     io.on('connection', (socket) => {
+        console.log('New user successfuly connected!');
+        socket.emit('hello', "Welcome to server");
+
+        // Event registration
         registerChatHandlers(io, socket, socketInformation);
         registerGameHandlers(io, socket, socketInformation);
         socket.on('disconnect', handleDisconnect(socketInformation));

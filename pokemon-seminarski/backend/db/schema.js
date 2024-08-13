@@ -1,11 +1,13 @@
 const { relations } = require('drizzle-orm');
-const { serial, text, timestamp, integer, pgTable, primaryKey, numeric, varchar } = require('drizzle-orm/pg-core');
+const { serial, text, timestamp, integer, pgTable, primaryKey, numeric, varchar, boolean,  } = require('drizzle-orm/pg-core');
+const { ADMIN, MODERATOR, USER } = require('../enums/roles');
 
 const users = pgTable('users', {
     id: serial('id').primaryKey(),
     username: text('username').notNull().unique(),
     email: text('email').notNull(),
-    role: text('role', { enum: ["admin", "moderator", "player"] }),
+    password: varchar('password').notNull(),
+    role: text('role', { enum: [ADMIN, MODERATOR, USER] }).notNull().default(USER),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
@@ -24,6 +26,7 @@ const usersStats = pgTable('users_stats', {
     wins: integer('wins').notNull().default(0),
     totalBattles: integer('total_battles').notNull().default(0),
     numOfDefeatedPokemon: integer('num_of_defeated_pokemons').notNull().default(0),
+    private: boolean('private').notNull().default(false)
 }, (t) => ({
     pk: primaryKey({ columns: [t.userId] })
 }));
@@ -111,7 +114,6 @@ module.exports = {
     gameRelations,
     userRelations,
     pokemonRelations,
-    usersMessages,
     usersToMessagesRelations,
     usersToPokemonsRelations
 }
