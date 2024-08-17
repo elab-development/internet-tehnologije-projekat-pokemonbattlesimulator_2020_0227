@@ -20,6 +20,7 @@
     "drizzle-zod": "^0.5.1",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^6.9.14",
     "socket.io": "^4.7.5",
     "yup": "^1.4.0",
     "zod": "^3.23.8"

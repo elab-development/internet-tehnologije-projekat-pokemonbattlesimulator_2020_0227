@@ -1,15 +1,15 @@
 const { relations } = require('drizzle-orm');
-const { serial, text, timestamp, integer, pgTable, primaryKey, numeric, varchar, boolean,  } = require('drizzle-orm/pg-core');
+const { serial, text, timestamp, integer, pgTable, primaryKey, numeric, varchar, boolean, } = require('drizzle-orm/pg-core');
 const { ADMIN, MODERATOR, USER } = require('../enums/roles');
 
 const users = pgTable('users', {
     id: serial('id').primaryKey(),
-    username: text('username').notNull().unique(),
-    email: text('email').notNull(),
-    password: varchar('password').notNull(),
-    role: text('role', { enum: [ADMIN, MODERATOR, USER] }).notNull().default(USER),
+    username: varchar('username', { length: 128 }).notNull().unique(),
+    email: varchar('email', { length: 256 }).notNull().unique(),
+    password: varchar('password', { length: 72 }).notNull(),
+    role: varchar('role', { enum: [ADMIN, MODERATOR, USER], length: 64 }).notNull().default(USER),
     createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow().$onUpdate(() => new Date()),
 });
 
 const pokemons = pgTable('pokemons', {
@@ -60,6 +60,13 @@ const games = pgTable('games', {
 }, (t) => ({
     pk: primaryKey({ columns: [t.user1Id, t.user2Id] })
 }));
+
+const passwordResetTokens = pgTable('password_reset_tokens', {
+    email: varchar('email', { length: 256 }).primaryKey(),
+    token: varchar('token', { length: 64}).notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    expiresAt: timestamp('expires')
+})
 
 
 
@@ -115,5 +122,6 @@ module.exports = {
     userRelations,
     pokemonRelations,
     usersToMessagesRelations,
-    usersToPokemonsRelations
+    usersToPokemonsRelations,
+    passwordResetTokens
 }
