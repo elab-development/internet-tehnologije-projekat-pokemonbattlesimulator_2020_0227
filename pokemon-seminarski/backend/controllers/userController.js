@@ -174,7 +174,7 @@ const getUsersPokemons = async (req, res) => {
         }
 
         if (!user) {
-            return res.status(404).json(new ResponseError('User not found', undefined, 'params'));
+            return res.status(404).json(new ResponseError('User not found'));
         }
 
         const result = await getUsersPokemonsDB(user.id);
@@ -202,7 +202,7 @@ const getUsersPokemons = async (req, res) => {
  */
 const deleteUser = async (req, res) => {
     if (req.user.id !== parseIntegerStrict(param) && req.user.username !== param && req.user.role !== ADMIN) {
-        return res.status(401).json(new ResponseError("Unauthorized - Can't delete other user", undefined, 'params'));
+        return res.status(401).json(new ResponseError("Unauthorized - Can't delete other user"));
     }
 
     try {
@@ -210,7 +210,7 @@ const deleteUser = async (req, res) => {
             const id = parseIntegerStrict(req.params.param);
 
             if (isNullOrUndefined(id)) {
-                return res.status(400).json(new ResponseError('Bad request', 'Param is not an integer', 'params'));
+                return res.status(400).json(new ResponseError('Bad request', {param: 'Expected integer'}, 'params'));
             }
             await deleteUserDB(parseIntegerStrict(req.body.userId));
         } else {
@@ -266,7 +266,7 @@ const updateUser = async (req, res) => {
         return res.status(204).send();
     } catch (error) {
         if (error instanceof ZodError) {
-            return res.status(400).json(new ResponseError('Bad request', 'Param is not an integer', 'params'));
+            return res.status(400).json(new ResponseError('Bad request', {param: 'Expected integer'}, 'params'));
         }
         return res.status(500).json(new ResponseError(error.message));
     }
@@ -379,7 +379,7 @@ const requestUserPasswordResetViaToken = async (req, res) => {
         return res.status(201).send();
     } catch (err) {
         if (err instanceof ZodError) {
-            return res.status(400).json(new ResponseError('Bad Request', err));
+            return res.status(400).json(new ResponseError('Bad Request', err, 'body'));
         } else {
             return res.status(500).json(new ResponseError(err.message));
         }
@@ -445,7 +445,7 @@ const requestUserPasswordReset = async (req, res) => {
         return res.status(201).send();
     } catch (err) {
         if (err instanceof ZodError) {
-            return res.status(400).json(new ResponseError('Bad Request', err));
+            return res.status(400).json(new ResponseError('Bad Request', err, 'body'));
         } else {
             return res.status(500).json(new ResponseError(err.message));
         }
