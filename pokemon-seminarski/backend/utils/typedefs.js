@@ -2,8 +2,9 @@ const { Socket } = require('socket.io');
 const Room = require('../game-logic/room');
 const { z, ZodError } = require('zod');
 const { selectUserSchema, insertUserSchema } = require('../validations/userValidation.js');
-const { users } = require('../db/schema.js');
+const { users, pokemons } = require('../db/schema.js');
 const usersType = users.$inferSelect;
+const pokemonsType = pokemons.$inferSelect;
 
 /**
  * @typedef {object} SocketInformation
@@ -12,33 +13,16 @@ const usersType = users.$inferSelect;
  * @property {Array} allChatRooms
  */
 
-/**
- * @typedef {usersType UserTable}
-*/
-/**
- * @typedef {z.infer<typeof selectUserSchema> UserSelect}
- */
-/**
- * @typedef {z.infer<typeof insertUserSchema> UserInsert}
- */
-/**
- * @typedef {import('express').RequestHandler<{}, any, any, qs.ParsedQs, Record<string, any>} DefaultHandler express RequestHandler with default params
- */
-/**
- * @typedef {Object} MessageResponse
- * @property {number} id 
- * @property {number} sender
- * @property {number} reciver
- * @property {string} message
- * @property {Date} createdAt
- */
-/**
- * @typedef {Object} PaginationResponse
- * @property {number} totalMessages
- * @property {string|null} nextPage
- * @property {string|null} prevPage
- * @property {MessageResponse[]} messages
- */
+
+////////// USERS //////////
+/** @typedef {usersType UserTable} */
+/** @typedef {z.infer<typeof selectUserSchema> UserSelect} */
+/** @typedef {z.infer<typeof insertUserSchema> UserInsert} */
+/** @typedef {import('express').RequestHandler<{}, any, any, qs.ParsedQs, Record<string, any>} DefaultHandler express RequestHandler with default params */
+////////// POKEMONS //////////
+/** @typedef {pokemonsType} PokemonTable */
+////////// MESSAGES //////////
+/** @typedef {'both' | 'sent' | 'received'} direction*/
 
 
 /**

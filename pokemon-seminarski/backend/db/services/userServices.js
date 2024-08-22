@@ -1,7 +1,6 @@
 const { eq, getTableColumns, asc, desc, count } = require("drizzle-orm");
 const db = require("../../config/db");
 const { users, usersStats, usersPokemons, messages, passwordResetTokens } = require("../schema");
-const { isNullOrUndefined, parseIntegerStrict } = require("../../utils/parsesForPrimitives");
 
 /**
  * @typedef {Object} CreateUserParams
@@ -113,7 +112,7 @@ const getUserDB = async ({ userId = undefined, username = undefined, email = und
 // Error check to not cause massive update
 /** @param {import("../../utils/typedefs").UserTable} data */
 const updateUserDB = async ({ id, ...data }) => {
-    if (!data && isNullOrUndefined(id)) throw new Error('Data to be updated, userId or email are not provided.');
+    if (!data && id == null) throw new Error('Data to be updated, userId or email are not provided.');
     await db.update(users).set({ ...data }).where(eq(users.id, id)).returning({ id: users.id });
 }
 
@@ -123,7 +122,7 @@ const getUsersPokemonsDB = async (userId) => {
 
 // Error check to not cause massive update
 const deleteUserDB = async (userId) => {
-    if (isNullOrUndefined(userId)) throw new Error('Parameter userId is not defined');
+    if (userId == null) throw new Error('Parameter userId is not defined');
     const [{ id }] = await db.delete(users).where(eq(users.id, userId)).returning({ id: users.id });
     return id;
 }
@@ -143,9 +142,9 @@ const deleteUserDB = async (userId) => {
  */
 const getUsersMessagesDB = async ({ userId, offset = 0, limit = 10, chatsWith = 0, receivedMessages = true, sentMessages = true, orderByAsc = false }) => {
     const conditions = and(
-        receivedMessages ? eq(messages.reciverUserId, userId) : undefined,
+        receivedMessages ? eq(messages.receiverUserId, userId) : undefined,
         sentMessages ? eq(messages.senderUserId, userId) : undefined,
-        chatsWith ? or(eq(messages.senderUserId, chatsWith), eq(messages.reciverUserId, chatsWith)) : undefined
+        chatsWith ? or(eq(messages.senderUserId, chatsWith), eq(messages.receiverUserId, chatsWith)) : undefined
     );
 
     const [{ value: totalCount }] = await db

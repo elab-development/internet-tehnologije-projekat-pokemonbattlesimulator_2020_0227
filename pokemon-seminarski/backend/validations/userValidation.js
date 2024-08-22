@@ -5,7 +5,7 @@ const { users, usersStats, usersPokemons } = require('../db/schema');
 const { ADMIN, USER, MODERATOR } = require('../enums/roles');
 
 const usernameWeakValidation = z.string().min(3).max(15).regex(/^[a-zA-Z0-9_]*$/, {message: 'Only alphanumerical values and _'})
-
+const arrayOfUserIdValidation = z.array(z.number().int());
 
 // Accepts only username, email and password
 const insertUserSchema = createInsertSchema(users, {
@@ -51,5 +51,6 @@ module.exports = {
     selectUserSchemaFull,
     selectUserPokemonsSchema,
     updateUserSchema,
-    usernameWeakValidation
+    usernameWeakValidation,
+    arrayOfUserIdValidation
 }

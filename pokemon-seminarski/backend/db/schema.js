@@ -47,7 +47,7 @@ const usersPokemons = pgTable('users_pokemons', {
 
 const messages = pgTable('messages', {
     senderUserId: integer('sender_user_id').notNull().references(() => users.id),
-    reciverUserId: integer('reciver_user_id').notNull().references(() => users.id),
+    receiverUserId: integer('reciver_user_id').notNull().references(() => users.id),
     message: varchar('message', { length: 512 }).notNull(),
     createdAt: timestamp('created_at').notNull().defaultNow(),
 });
@@ -105,7 +105,7 @@ const usersToMessagesRelations = relations(messages, ({ one }) => ({
         references: [users.id]
     }),
     reciver: one(users, {
-        fields: [messages.reciverUserId],
+        fields: [messages.receiverUserId],
         references: [users.id]
     })
 }))

@@ -1,7 +1,7 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const generateToken = require('../utils/generateToken');
-const { stringToBoolean, isStringInteger, parseIntegerStrict, isNullOrUndefined } = require('../utils/parsesForPrimitives');
+const { stringToBoolean, isStringInteger, parseIntegerStrict } = require('../utils/parsesForPrimitives');
 const { getUserByUsername, createUser, getUserById, getUserByEmail, updateUserDB, getUsersPokemonsDB, deleteUserDB, getUsersMessagesDB, insertResetPasswordToken, getResetPasswordToken, getUserDB, getUsersDB } = require('../db/services/userServices');
 const { insertUserSchema, selectUserSchema, selectUserPokemonsSchema, updateUserSchema, usernameWeakValidation } = require('../validations/userValidation');
 const { ZodError, z } = require('zod');
@@ -126,18 +126,20 @@ const getUser = async (req, res) => {
  */
 const getUsers = async (req, res) => {
     let errors = []
-    if (!isNullOrUndefined(req.query.limit) && !isStringInteger(req.query.offset))
-        throw new Error('offset$Expected number');
-    if (!isNullOrUndefined(req.query.limit) && !isStringInteger(req.query.limit))
-        throw new Error('limit$Expected number');
+    if (req.query.offset != null && !isStringInteger(req.query.offset))
+        errors.push('offset$Expected number');
+    if (req.query.limit != null && !isStringInteger(req.query.limit, { negative: false }))
+        errors.push('limit$Expected positive number');
+
     if (errors.length !== 0) {
         return res.status(400).json(new ResponseError('Bad Request', errors, 'query'));
     }
 
+    let x;
     let offset = req.query.offset ? parseInt(req.query.offset, 10) : undefined;
-    let limit = req.query.limit ? parseInt(req.query.limit, 10) : undefined;
+    let limit = req.query.limit && (x = parseInt(req.query.limit, 10)) === 0 ? x : undefined;
 
-    
+
     try {
         const result = await getUsersDB(Object.keys({
             offset,
@@ -146,8 +148,8 @@ const getUsers = async (req, res) => {
 
         return res.status(200).json({
             totalCount: result.totalCount,
-            next: result.offset + result.limit >= totalCount ? null : `${process.env.HOST ?? `http://localhost:${process.env.PORT ?? 5000}`}/api/users?offset=${result.offset}&limit=${result.limit}`,
-            previous: offset === 0 ? null : `${process.env.HOST ?? `http://localhost:${process.env.PORT ?? 5000}`}/api/users/${userId}/messages?offset=${(result.offset - result.limit < 0) ? 0 : result.offset - result.limit}&limit=${result.offset - result.limit < 0 ? offset : limit}`,
+            next: result.offset + result.limit >= result.totalCount ? null : `${process.env.HOST ?? `http://localhost:${process.env.PORT ?? 5000}`}/api/users?offset=${result.offset + result.limit < 0 ? 0 : result.offset}&limit=${result.offset + 2 * result.limit > result.totalresult ? result.totalCount - result.limit : result.limit}`,
+            previous: offset === 0 ? null : `${process.env.HOST ?? `http://localhost:${process.env.PORT ?? 5000}`}/api/users/${userId}/messages?offset=${(result.offset - result.limit < 0) ? 0 : (result.offset - result.limit > result.totalCount ? result.totalCount - result.limit : result.offset - result.limit)}&limit=${result.offset - result.limit < 0 ? result.offset : result.limit}`,
             data: result.usersData
         });
     } catch (error) {
@@ -209,8 +211,8 @@ const deleteUser = async (req, res) => {
         if (req.user.role === ADMIN) {
             const id = parseIntegerStrict(req.params.param);
 
-            if (isNullOrUndefined(id)) {
-                return res.status(400).json(new ResponseError('Bad request', {param: 'Expected integer'}, 'params'));
+            if (id == null) {
+                return res.status(400).json(new ResponseError('Bad request', { param: 'Expected integer' }, 'params'));
             }
             await deleteUserDB(parseIntegerStrict(req.body.userId));
         } else {
@@ -266,7 +268,7 @@ const updateUser = async (req, res) => {
         return res.status(204).send();
     } catch (error) {
         if (error instanceof ZodError) {
-            return res.status(400).json(new ResponseError('Bad request', {param: 'Expected integer'}, 'params'));
+            return res.status(400).json(new ResponseError('Bad request', { param: 'Expected integer' }, 'params'));
         }
         return res.status(500).json(new ResponseError(error.message));
     }
@@ -309,25 +311,25 @@ const getUsersMessages = async (req, res) => {
 
     // Query validation and assigning values to boolean properties to save computation
     let errors = [];
-    if (!isNullOrUndefined(req.query.offset) && !isStringInteger(req.query.offset))
+    if (req.query.offset != null && !isStringInteger(req.query.offset))
         errors.push('offset$Expected number');
-    if (!isNullOrUndefined(req.query.limit) && !isStringInteger(req.query.limit))
-        errors.push('limit$Expected number');
-    if (!isNullOrUndefined(req.query.chatsWith) && !isStringInteger(req.query.chatsWith))
+    if (req.query.limit != null && !isStringInteger(req.query.limit, { negative: false }))
+        errors.push('limit$Expected positive number');
+    if (req.query.chatsWith != null && !isStringInteger(req.query.chatsWith))
         errors.push('chatsWith$Expected number');
-    if (!isNullOrUndefined(req.query.receivedMessages) && ((receivedMessages = stringToBoolean(req.query.receivedMessages)) === undefined))
+    if (req.query.receivedMessages != null && ((receivedMessages = stringToBoolean(req.query.receivedMessages)) === undefined))
         errors.push('recivedMessages$Expected boolean. Allowed values are: ["true", "1", "yes", "y", "false", "0", "no", "n"]');
-    if (!isNullOrUndefined(req.query.sentMessages) && ((sentMessages = stringToBoolean(req.query.sentMessages)) === undefined))
+    if (req.query.sentMessages != null && ((sentMessages = stringToBoolean(req.query.sentMessages)) === undefined))
         errors.push('sentMessages$Expected boolean. Allowed values are: ["true", "1", "yes", "y", "false", "0", "no", "n"]');
-    if (!isNullOrUndefined(req.query.orderByAsc) && ((orderByAsc = stringToBoolean(req.query.receivedMessages)) === undefined))
-        errors.push('chatsWith$Expected boolean. Allowed values are: ["true", "1", "yes", "y", "false", "0", "no", "n"]');
+    if (req.query.orderByAsc != null && ((orderByAsc = stringToBoolean(req.query.receivedMessages)) === undefined))
+        errors.push('orderByAsc$Expected boolean. Allowed values are: ["true", "1", "yes", "y", "false", "0", "no", "n"]');
     if (errors.length !== 0) {
         return res.status(400).json(new ResponseError('Bad Request', errors, 'query'));
     }
 
-
-    offset = req.query.offset ? parseInt(req.query.offset, 10) : undefined;
-    limit = req.query.limit ? parseInt(req.query.limit, 10) : undefined;
+    let x;
+    offset = req.query.offset == null ? parseInt(req.query.offset, 10) : undefined;
+    limit = req.query.limit == null && (x = parseInt(req.query.limit, 10)) !== 0 ? x : undefined; //if 0 then default value
     chatsWith = req.query.chatsWith ? parseInt(req.query.chatsWith, 10) : undefined;
 
 
@@ -344,8 +346,8 @@ const getUsersMessages = async (req, res) => {
 
         return res.status(200).json({
             totalCount: result.totalCount,
-            next: result.offset + result.limit >= totalCount ? null : `${process.env.HOST ?? `http://localhost:${process.env.PORT ?? 5000}`}/api/users/${userId}/messages?offset=${result.offset}&limit=${result.limit}${isNullOrUndefined(chatsWith) && '&chatsWith=' + chatsWith}${isNullOrUndefined(receivedMessages) && '&recivedMessages=' + receivedMessages}${isNullOrUndefined(sentMessages) && '&sentMessages=' + sentMessages}&orderByAsc=${orderByAsc ?? false}`,
-            previous: offset === 0 ? null : `${process.env.HOST ?? `http://localhost:${process.env.PORT ?? 5000}`}/api/users/${userId}/messages?offset=${(result.offset - result.limit < 0) ? 0 : result.offset - result.limit}&limit=${result.offset - result.limit < 0 ? offset : limit}${isNullOrUndefined(chatsWith) && '&chatsWith=' + chatsWith}${isNullOrUndefined(receivedMessages) && '&recivedMessages=' + receivedMessages}${isNullOrUndefined(sentMessages) && '&sentMessages=' + sentMessages}&orderByAsc=${orderByAsc ?? false}`,
+            next: result.offset + result.limit >= totalCount ? null : `${process.env.HOST ?? `http://localhost:${process.env.PORT ?? 5000}`}/api/users/${userId}/messages?offset=${result.offset + result.limit < 0 ? 0 : result.offset}&limit=${result.offset + 2 * result.limit > result.totalresult ? result.totalCount - result.limit : result.limit}${chatsWith != null && '&chatsWith=' + chatsWith}${receivedMessages != null && '&recivedMessages=' + receivedMessages}${sentMessages != null && '&sentMessages=' + sentMessages}&orderByAsc=${orderByAsc ?? false}`,
+            previous: offset === 0 ? null : `${process.env.HOST ?? `http://localhost:${process.env.PORT ?? 5000}`}/api/users/${userId}/messages?offset=${(result.offset - result.limit < 0) ? 0 : (result.offset - result.limit > result.totalCount ? result.totalCount - result.limit : result.offset - result.limit)}&limit=${result.offset - result.limit < 0 ? result.offset : result.limit}${chatsWith != null && '&chatsWith=' + chatsWith}${receivedMessages != null && '&recivedMessages=' + receivedMessages}${sentMessages != null && '&sentMessages=' + sentMessages}&orderByAsc=${orderByAsc ?? false}`,
             data: result.messagesData
         });
 
@@ -467,7 +469,7 @@ const resetUserPassword = async (req, res) => {
     let user;
     try {
         const result = await getResetPasswordToken(token);
-        if (!validateResetPasswordToken(token, result.token)) {
+        if (!validateResetPasswordToken(token, result.token, { createdAt: result.createdAt, expiresAt: result.expiresAt })) {
             return res.status(403).json(new ResponseError('Forbidden'));
         }
 

@@ -22,28 +22,54 @@ const stringToBoolean = (str) => {
             return undefined;
     }
 }
+
 /**
  * Parses a string to an integer and returns undefined if the input is not a valid integer.
  * @param {string} str - The string to parse.
- * @returns {number|undefined} - The parsed integer or undefined if not valid.
+ * @param {boolean} returnOriginal - if true returns originaly passed object, otherwiser undefined (default: false)
+ * @returns {number | undefined} The parsed integer or undefined if not valid.
  */
-const parseIntegerStrict = (str) => {
+const parseIntegerStrict = (str, returnOriginal = false) => {
     return /^-?\d+$/.test(String(str)) && Number.isSafeInteger(+str) ? +str : undefined;
 }
 
-const isNullOrUndefined = (param) => {
-    return param === undefined || param === null;
-}
+
 /** Checks if the string is a valid integer 
  * @param {string} str 
+ * @param {{negative: boolean, positive: boolean}} options
  */
-const isStringInteger = (str) => {
-    return /^-?\d+$/.test(String(str)) && Number.isSafeInteger(+str);
+const isStringInteger = (str, { negative = true, positive = true, zero = true }) => {
+    if (!negative && !positive && !zero) throw new Error('Select at least one option');
+    let test;
+    test = /^-?\d+$/.test(String(str)) && Number.isSafeInteger(+str);
+    return test && ((negative && +str < 0) || (positive && +str > 0) || (zero && +str === 0));
+
+}
+
+/**
+ * Parses value to its true value
+ * @param {string} str if not a string, returns a value it self
+ * @returns {any}
+ */
+const dynamicParseStringToPrimitives = (str) => {
+    if (typeof str !== 'string') return str;
+    if (str.trim() === '') return str;
+    if (str === 'undefined') return undefined;
+    if (str === 'null') return null;
+    if (str === 'true') return true;
+    if (str === 'false') return false;
+    if (str === 'NaN') return NaN;
+    if (!isNaN(Number(str))) return Number(str); // todo: Vratiće cropovan number i ako je prosledjen bigint number
+    try {
+        return BigInt(str.endsWith('n') ? str.slice(0, -1) : str);
+    } catch (error) { }
+    
+    return str; // Not parsing functions, regex and object
 }
 
 module.exports = {
+    dynamicParseStringToPrimitives,
     isStringInteger,
-    isNullOrUndefined,
     parseIntegerStrict,
     stringToBoolean
 }
