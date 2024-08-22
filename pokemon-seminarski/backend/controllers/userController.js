@@ -361,8 +361,8 @@ const getUsersMessages = async (req, res) => {
 
 
 /**
- * @description     Sends reset-email-token to req.body.email email, with this 
- * @route           POST /api/users/request-password-reset
+ * @description     Sends reset-email-token to req.body.email email, changes or creates new token in database
+ * @route           PUT /api/users/request-password-reset
  * @access          Public
  * 
  * @type {import('../utils/typedefs').DefaultHandler}
@@ -395,8 +395,8 @@ const requestUserPasswordReset = async (req, res) => {
 
 
 /**
- * @description     Sends reset-email-token to req.body.email email, with this 
- * @route           POST /api/users/reset-password/:token
+ * @description     resets the password via provided token
+ * @route           PATCH /api/users/reset-password/:token
  * @access          Private
  * 
  * @type {import('../utils/typedefs').DefaultHandler}

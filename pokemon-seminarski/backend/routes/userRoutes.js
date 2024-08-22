@@ -8,8 +8,8 @@ const router = express.Router();
 
 router.route('/').get(getUsers).post(registerUser)
 router.route('/login').post(loginUser);
-router.route('/reset-password').post(requestUserPasswordReset);
-router.route('/reset-password/:token').post(resetUserPassword);
+router.route('/reset-password').put(requestUserPasswordReset);
+router.route('/reset-password/:token').patch(resetUserPassword);
 router.route('/:param').get(getUser).patch(protect, updateUser).delete(protect, deleteUser);;
 router.route('/:param/messages').get(protect, getUsersMessages);
 router.route('/:param/pokemons').get(protect, getUsersPokemons);

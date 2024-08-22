@@ -54,5 +54,4 @@ const getGamesDB = async ({ limit = 10, offset = 0, gameId = undefined, user = u
 
 module.exports = {
     getGamesDB,
-    getGameById,
 }

@@ -1,25 +1,31 @@
 const { ZodError, ZodIssueCode } = require('zod');
 const { ResponseError } = require('../utils/typedefs');
-const { isStringInteger, dynamicParseStringToPrimitives } = require('../utils/parsesForPrimitives');
+const { isStringInteger, dynamicParseStringToPrimitives, parseIntegerStrict } = require('../utils/parsesForPrimitives');
 const { getGamesDB } = require('../db/services/gameServices');
 
 /**
- * @description     Gets a specific game by gameId
+ * @description     Gets a specific game by id
  * @route           GET /api/games/:id
  * @access          Public
  * 
  * @type {import('express').RequestHandler<{id: string}, any, any, qs.ParsedQs, Record<string, any>}
  */
-const getGameById = (req, res) => {
+const getGameById = async (req, res) => {
     let zerrors = new ZodError([]);
 
     // Filtration
     if (req.params.id != null && !isStringInteger(req.params.id)) {
         zerrors.addIssue({ code: ZodIssueCode.invalid_type, path: ["gameId"], message: 'Expected integer' });
     }
+    if (!zerrors.isEmpty) {
+        return res.status(400).json(new ResponseError('Bad Request', zerrors, 'params'));
+    }
 
-    if(!zerrors.isEmpty){
-        return res.status(400).json(new ResponseError('Bad Request', zerrors, 'query'));
+    try {
+        const result = (await getGamesDB({ gameId: parseIntegerStrict(req.params.id) })).gamesData[0];
+        return res.status(200).json(result);
+    } catch (error) {
+        return res.status(500).json(new ResponseError(error.message));
     }
 }
 
