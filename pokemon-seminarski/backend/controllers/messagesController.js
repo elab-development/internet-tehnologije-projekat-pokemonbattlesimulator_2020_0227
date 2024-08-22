@@ -35,7 +35,7 @@ const getMessages = async (req, res) => {
         if (!Array.isArray(req.query.user1)) {
             zerrors.addIssue({ code: ZodIssueCode.invalid_type, path: ["user1"], message: 'Expected integer or array of integers' }); 
             zerrors.addIssues(arrayOfUserIdValidation.safeParse(
-                req.query.user1.forEach((val) => dynamicParseStringToPrimitives(val)) // Obrađuje pre field req.query.user1
+                req.query.user1.forEach((val) => dynamicParseStringToPrimitives(val)) // Obrađuje odmah field req.query.user1 -> prevodi string => integer
             ).error?.issues.map((val) => {
                 val.path.unshift('user1');
                 return val;
@@ -44,14 +44,14 @@ const getMessages = async (req, res) => {
     }
     if (req.query.user2 != null && !isStringInteger(req.query.user2)) {
         if (!Array.isArray(req.query.user2)) {
-            zerrors.addIssue({ code: ZodIssueCode.invalid_type, path: ["user2"], message: 'Expected integer or array of integers' }); //errors.push('user2$Expected integer or array of integers')
+            zerrors.addIssue({ code: ZodIssueCode.invalid_type, path: ["user2"], message: 'Expected integer or array of integers' }); 
         } else {
             zerrors.addIssues(arrayOfUserIdValidation.safeParse(
                 req.query.user2.forEach((val) => dynamicParseStringToPrimitives(val))
             ).error?.issues.map((val) => {
                 val.path.unshift('user2');
                 return val;
-            })) //.forEach((val) => {errors.push(`${val.path.join(",")}$${val.message}`);});
+            })) 
         }
     }
     zerrors.addIssue(directionMessageValidation.optional().safeParse(req.query.direction).error?.issues);
@@ -74,8 +74,8 @@ const getMessages = async (req, res) => {
 
         return res.status(200).json({
             totalCount: result.totalCount,
-            next: result.offset + result.limit >= result.totalCount ? null : `${process.env.HOST ?? `http://localhost:${process.env.PORT ?? 5000}`}/api/messages?offset=${result.offset + result.limit < 0 ? 0 : result.offset}&limit=${result.offset + 2 * result.limit > result.totalresult ? result.totalCount - result.limit : result.limit}${user1 != null && (Array.isArray(user1) ? user1 : [user1]).map((val) => `&user1=${val}`)}${user2 != null && (Array.isArray(user2) ? user2 : [user2]).map((val) => `&user2=${val}`)}${user2 != null && (Array.isArray(user2) ? user2 : [user2]).map((val) => `&user2=${val}`)}${direction && ("&direction=" + direction)}${q && ("&direction=" + q)}`,
-            previous: offset === 0 ? null : `${process.env.HOST ?? `http://localhost:${process.env.PORT ?? 5000}`}/api/messages?offset=${(result.offset - result.limit < 0) ? 0 : (result.offset - result.limit > result.totalCount ? result.totalCount - result.limit : result.offset - result.limit)}&limit=${result.offset - result.limit < 0 ? result.offset : result.limit}${user1 != null && (Array.isArray(user1) ? user1 : [user1]).map((val) => `&user1=${val}`)}${user2 != null && (Array.isArray(user2) ? user2 : [user2]).map((val) => `&user2=${val}`)}${user2 != null && (Array.isArray(user2) ? user2 : [user2]).map((val) => `&user2=${val}`)}${direction && ("&direction=" + direction)}${q && ("&direction=" + q)}`,
+            next: result.offset + result.limit >= result.totalCount ? null : `${process.env.HOST ?? `http://localhost:${process.env.PORT ?? 5000}`}/api/messages?offset=${result.offset + result.limit < 0 ? 0 : result.offset}&limit=${result.offset + 2 * result.limit > result.totalresult ? result.totalCount - result.limit : result.limit}${user1 != null && (Array.isArray(user1) ? user1 : [user1]).map((val) => `&user1=${val}`)}${user2 != null && (Array.isArray(user2) ? user2 : [user2]).map((val) => `&user2=${val}`)}${direction && ("&direction=" + direction)}${q && ("&direction=" + q)}`,
+            previous: offset === 0 ? null : `${process.env.HOST ?? `http://localhost:${process.env.PORT ?? 5000}`}/api/messages?offset=${(result.offset - result.limit < 0) ? 0 : (result.offset - result.limit > result.totalCount ? result.totalCount - result.limit : result.offset - result.limit)}&limit=${result.offset - result.limit < 0 ? result.offset : result.limit}${user1 != null && (Array.isArray(user1) ? user1 : [user1]).map((val) => `&user1=${val}`)}${user2 != null && (Array.isArray(user2) ? user2 : [user2]).map((val) => `&user2=${val}`)}${direction && ("&direction=" + direction)}${q && ("&direction=" + q)}`,
             data: result.messagesData
         });
     } catch (error) {

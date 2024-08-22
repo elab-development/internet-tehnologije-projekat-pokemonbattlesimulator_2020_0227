@@ -29,9 +29,9 @@ const insertPokemons = async (req, res) => {
 
     let validatedArray;
     try {
-        validatedArray = z.object({pokemons: z.array(insertPokemonSchema).nonempty()}).parse({pokemons: pokemons}); // samo kako bi stavilo prefix na error
+        validatedArray = z.array(insertPokemonSchema).nonempty().parse(pokemons);
     } catch (error) {
-        return res.status(400).json(new ResponseError('Bad Request', error, 'body'));
+        return res.status(400).json(new ResponseError('Bad Request', error, 'body', 'pokemons'));
     }
 
     try {

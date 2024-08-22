@@ -44,45 +44,71 @@ class ConnectedUser {
 class ResponseError {
     /**
      * @param {string} message
-     * @param {ZodError | string | Object | string[] } validationErrors list of validation erros, will get converted to `z.typeToFlattenedError<any>`
-     *  1. `validationErrors instanceof ZodError` - calls `ZodError.flatten()`
-     *  2. `typeof validationErrors === 'string` - sets `fieldErrors` to provided string
-     *  3. `validationErrors instanceof Object` - sets `formErrors` to provided object
+     * @param {ZodError | string | Object | string[] } validationErrors list of validation erros, will get converted to `z.ZodFormattedError<any>`
+     *  1. `validationErrors instanceof ZodError` - calls `ZodError.format()`
+     *  2. `typeof validationErrors === 'string` - sets `formErrors` to provided string
+     *  3. `validationErrors instanceof Object` - sets `fieldErrors` to provided object
      *  4. `validationErrors instanceof Arrray` - converts array of strings with format `property$errorMessage` to object and assigns it to `formErrors`
-     * @param {'body' | 'query' | 'params'} requestPath
+     * @param {'body' | 'query' | 'params'} requestPath where in request body error occurred
+     * @param {string | undefined} pathPrefixForZodError since zod returns a message with no path when you check a primitive value directly, 
+     *      you can use this field prefix all the path issues (ex. of primitives: `z.array()`, `z.number()`, `z.string()` ...). 
+     *      Works only if `validationsErrors instanceof ZodError === true`, otherwise nothing happens.
     */
-    constructor(message, validationErrors = undefined, requestPath = undefined) {
+    constructor(message, validationErrors = undefined, requestPath = undefined, pathPrefixForZodError = undefined) {
         this.message = message;
-        /**@type {z.typeToFlattenedError<any>} */
+        /**@type {z.ZodFormattedError<any>} */
         this.validationErrors;
 
 
         if (validationErrors instanceof ZodError) {
-            this.validationErrors = validationErrors.flatten();
+            if (pathPrefixForZodError != null) {
+                validationErrors.issues.forEach((val) => val.path.unshift(pathPrefixForZodError))
+            }
+            this.validationErrors = validationErrors.format();
         } else if (typeof validationErrors === 'string') {
             this.validationErrors = {
-                fieldErrors: [validationErrors.message],
-                formErrors: {}
+                _errors: [validationErrors] // Form errors - suggested to call
             };
         } else if (validationErrors instanceof Object && Object.getPrototypeOf(validationErrors) == Object.prototype) {
-            this.validationErrors = {
-                fieldErrors: [],
-                formErrors: validationErrors
-            };
-        } else if (validationErrors instanceof Array) {
-            this.validationErrors = {
-                fieldErrors: [],
-                formErrors: Object.assign(...errors.map((val) => {
-                    val = val.split('$');
-                    return { [split[0]]: split[1] };
-                }))
-            }
+            this.validationErrors = createZodErrorFormat(validationErrors); // Prosleđivanje ručno
+        
         } else {
             this.validationErrors = validationErrors;
         }
         this.requestPath = requestPath
     }
 
+    /**
+     * @param {Object} obj - Format noted in example
+     * @returns {z.ZodFormattedError}
+     * @example
+     *  let obj1 = {
+     *      param: 'str', // Takes single string
+     *      foo: ['bar','fizz'] // Takes array of strings
+     *  }
+     *  
+     *  let obj2 = {
+     *      fuz: obj1, // Takes objects of similar type
+     *      aux: 'bmw'
+     *  }
+     *  ResponseError.createZodErrorFormat(obj1);
+     *  ResponseError.createZodErrorFormat(obj1);
+     */
+    static createZodErrorFormat(obj) {
+        const formattedError = { _errors: [] };
+
+        for (const key in obj) {
+            if (typeof obj[key] === 'object' && !Array.isArray(obj[key]) && obj[key] !== null) {
+                // Recursively handle nested objects
+                formattedError[key] = createZodErrorFormat(obj[key]);
+            } else {
+                // Add an error message for the current key
+                formattedError[key] = { _errors: [`Invalid value for ${key}`] };
+            }
+        }
+
+        return formattedError;
+    }
 }
 
 

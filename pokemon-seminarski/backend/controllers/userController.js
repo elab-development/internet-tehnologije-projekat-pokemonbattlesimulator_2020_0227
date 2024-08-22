@@ -4,7 +4,7 @@ const generateToken = require('../utils/generateToken');
 const { stringToBoolean, isStringInteger, parseIntegerStrict } = require('../utils/parsesForPrimitives');
 const { getUserByUsername, createUser, getUserById, getUserByEmail, updateUserDB, getUsersPokemonsDB, deleteUserDB, getUsersMessagesDB, insertResetPasswordToken, getResetPasswordToken, getUserDB, getUsersDB } = require('../db/services/userServices');
 const { insertUserSchema, selectUserSchema, selectUserPokemonsSchema, updateUserSchema, usernameWeakValidation } = require('../validations/userValidation');
-const { ZodError, z } = require('zod');
+const { ZodError, z, ZodIssueCode } = require('zod');
 const { ADMIN } = require('../enums/roles');
 const { ResponseError } = require('../utils/typedefs');
 const { generateResetPasswordToken, validateResetPasswordToken } = require('../utils/generateResetPasswordToken');
@@ -22,7 +22,7 @@ const loginUser = async (req, res) => {
     try {
         username = usernameWeakValidation.parse(username);
     } catch (error) {
-        return res.status(400).json(new ResponseError('Invalid username', { username: err.issues[0].message }, 'body'));
+        return res.status(400).json(new ResponseError('Invalid username', error, 'body', 'username'));
     }
 
     let user;
@@ -125,14 +125,15 @@ const getUser = async (req, res) => {
  * @type {import('express').RequestHandler<{param: string}, any, any, qs.ParsedQs, Record<string, any>}
  */
 const getUsers = async (req, res) => {
-    let errors = []
+    let zerrors = new ZodError([]);
     if (req.query.offset != null && !isStringInteger(req.query.offset))
-        errors.push('offset$Expected number');
-    if (req.query.limit != null && !isStringInteger(req.query.limit, { negative: false }))
-        errors.push('limit$Expected positive number');
+        zerrors.addIssue({ code: ZodIssueCode.invalid_type, message: 'Expected integer', path: ['offset'] });
 
-    if (errors.length !== 0) {
-        return res.status(400).json(new ResponseError('Bad Request', errors, 'query'));
+    if (req.query.limit != null && !isStringInteger(req.query.limit, { negative: false }))
+        zerrors.addIssue({ code: ZodIssueCode.invalid_type, message: 'Expected positive integer', path: ['limit'] });
+
+    if (zerrors.isEmpty) {
+        return res.status(400).json(new ResponseError('Bad Request', zerrors, 'query'));
     }
 
     let x;
@@ -310,21 +311,22 @@ const getUsersMessages = async (req, res) => {
     let offset, limit, chatsWith, receivedMessages, sentMessages, orderByAsc;
 
     // Query validation and assigning values to boolean properties to save computation
-    let errors = [];
+    let zerrors = new ZodError([]);
     if (req.query.offset != null && !isStringInteger(req.query.offset))
-        errors.push('offset$Expected number');
+        zerrors.addIssue({ code: ZodIssueCode.invalid_type, path: ['offset'], message: 'Expected integer' })
     if (req.query.limit != null && !isStringInteger(req.query.limit, { negative: false }))
-        errors.push('limit$Expected positive number');
+        zerrors.addIssue({ code: ZodIssueCode.invalid_type, path: ['limit'], message: 'Expected positive integer' })
     if (req.query.chatsWith != null && !isStringInteger(req.query.chatsWith))
-        errors.push('chatsWith$Expected number');
+        zerrors.addIssue({ code: ZodIssueCode.invalid_type, path: ['chatsWith'], message: 'Expected integer' })
     if (req.query.receivedMessages != null && ((receivedMessages = stringToBoolean(req.query.receivedMessages)) === undefined))
-        errors.push('recivedMessages$Expected boolean. Allowed values are: ["true", "1", "yes", "y", "false", "0", "no", "n"]');
+        zerrors.addIssue({ code: ZodIssueCode.invalid_type, path: ['receivedMessages'], message: 'Expected boolean. Allowed values are: ["true", "1", "yes", "y", "false", "0", "no", "n"]' })
     if (req.query.sentMessages != null && ((sentMessages = stringToBoolean(req.query.sentMessages)) === undefined))
-        errors.push('sentMessages$Expected boolean. Allowed values are: ["true", "1", "yes", "y", "false", "0", "no", "n"]');
+        zerrors.addIssue({ code: ZodIssueCode.invalid_type, path: ['sentMessages'], message: 'Expected boolean. Allowed values are: ["true", "1", "yes", "y", "false", "0", "no", "n"]' })
     if (req.query.orderByAsc != null && ((orderByAsc = stringToBoolean(req.query.receivedMessages)) === undefined))
-        errors.push('orderByAsc$Expected boolean. Allowed values are: ["true", "1", "yes", "y", "false", "0", "no", "n"]');
-    if (errors.length !== 0) {
-        return res.status(400).json(new ResponseError('Bad Request', errors, 'query'));
+        zerrors.addIssue({ code: ZodIssueCode.invalid_type, path: ['orderByAsc'], message: 'Expected boolean. Allowed values are: ["true", "1", "yes", "y", "false", "0", "no", "n"]' })
+
+    if (zerrors.isEmpty !== 0) {
+        return res.status(400).json(new ResponseError('Bad Request', zerrors, 'query'));
     }
 
     let x;
@@ -357,69 +359,6 @@ const getUsersMessages = async (req, res) => {
 }
 
 
-/**
- * @description     Sends reset-email-token to req.body.email email, with this 
- * @route           POST /api/users/request-password-reset
- * @access          Private
- * 
- * @type {import('../utils/typedefs').DefaultHandler}
- */
-const requestUserPasswordResetViaToken = async (req, res) => {
-    const { email } = req.body;
-
-    try {
-        z.string().email().parse(email);
-        const user = await getUserByEmail(String(email));
-
-        if (!user) {
-            return res.status(400).json(new ResponseError('User with this email does not exist'));
-        }
-
-        const token = generateToken({ id: user.id, email: user.email }, '10min');
-        const resetUrl = `${process.env.SERVER_URL}/api/users/reset-password/${token}`;
-        sendPasswordResetEmail(user.email, resetUrl);
-        return res.status(201).send();
-    } catch (err) {
-        if (err instanceof ZodError) {
-            return res.status(400).json(new ResponseError('Bad Request', err, 'body'));
-        } else {
-            return res.status(500).json(new ResponseError(err.message));
-        }
-    }
-}
-
-
-/**
- * @description     Sends reset-email-token to req.body.email email, with this 
- * @route           POST /api/users/reset-password/:token
- * @access          Private
- * 
- * @type {import('../utils/typedefs').DefaultHandler}
- */
-const resetPasswordViaToken = (req, res) => {
-    const { token } = req.params;
-    const { newPassword } = req.body;
-
-    try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        if (!decoded.email) {
-            throw new Error('token not valid');
-        }
-    } catch (err) {
-        return res.status(401).json(new ResponseError(`Unauthorized${'- ' + err.message}`));
-    }
-    /*
-    bcrypt.genSalt(10, (err, salt) => {
-        bcrypt.hash(newPassword, salt, async (err, hash) => {
-            updateUserDB({ password: hash }).then((_) => {
-                res.status(200).json({ message: 'Password changed succefully' });
-            }).catch((err) => {
-                res.status(500).json(new ResponseError(err.message));
-            });
-        })
-    })*/
-}
-
 
 /**
  * @description     Sends reset-email-token to req.body.email email, with this 
@@ -447,7 +386,7 @@ const requestUserPasswordReset = async (req, res) => {
         return res.status(201).send();
     } catch (err) {
         if (err instanceof ZodError) {
-            return res.status(400).json(new ResponseError('Bad Request', err, 'body'));
+            return res.status(400).json(new ResponseError('Bad Request', err, 'body', 'email'));
         } else {
             return res.status(500).json(new ResponseError(err.message));
         }
@@ -479,24 +418,18 @@ const resetUserPassword = async (req, res) => {
 
     } catch (err) {
         if (err instanceof ZodError) {
-            return res.status(401).json(new ResponseError('Bad Request', err));
+            return res.status(401).json(new ResponseError('Bad Request', err, 'body'));
         }
-        return res.status(401).json(new ResponseError(`Unauthorized${'- ' + err.message}`));
+        return res.status(401).json(new ResponseError('Unauthorized - ' + err.message));
     }
 
-    await updateUserDB({});
+    try {
+        await updateUserDB(user);
+        return res.status(201).send({});
+    } catch (error) {
+        return res.status(500).json(new ResponseError(error.message));
+    }
 }
-
-
-
-/**
- * @description     Sends reset-email-token to req.body.email email, with this 
- * @route           PATCH /api/users
- * @access          Private
- * 
- * @type {import('../utils/typedefs').DefaultHandler}
- */
-
 
 module.exports = {
     getUser,
