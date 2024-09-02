@@ -17,8 +17,32 @@ const pokemons = pgTable('pokemons', {
 });
 
 const moves = pgTable('moves', {
-    id: serial('id').primaryKey()
+    id: serial('id').primaryKey(),
+    name: varchar('name', {length: 128}),
+    manaCost: integer('mana_cost').notNull(),
+});
+
+const types = pgTable('types', {
+    id: serial('id').primaryKey(),
+    name: varchar('name', { length: 32 })
+});
+
+const typeEffectivness = pgTable('type_effectiveness', {
+    attackerTypeId: integer('id').notNull(),
+    defenderTypeId: integer('id').notNull(),
+    effectivness: numeric('effectivness', { precision: 2, scale: 1})
+}, (t) => ({
+    pk: primaryKey({columns: [t.attackerTypeId, t.defenderTypeId]})
+}));
+
+const evolution = pgTable('evolution', {
+    id: serial('id'.primaryKey),
+    pokemonId: integer('pokemon_id').notNull().references(() => pokemons.id),
+    evolvesToId: integer('evolves_to_id').notNull().references(() => pokemons.id),
+    levelRequired: integer('level_required').notNull(),
+    coinsRequired: integer('coins_required').notNull()
 })
+
 
 const usersStats = pgTable('users_stats', {
     userId: integer('user_id').notNull().references(() => users.id),
@@ -38,7 +62,8 @@ const usersStats = pgTable('users_stats', {
 const usersPokemons = pgTable('users_pokemons', {
     pokemonId: integer('pokemon_id').notNull().references(() => pokemons.id),
     userId: integer('user_id').notNull().references(() => users.id),
-    evolutionPercentage: numeric('evolution_percentage', { precision: 4, scale: 1 }).notNull().default("0"),
+    level: integer('level').notNull(),
+    xp: integer('xp').notNull(),
     createdAt: timestamp('created_at').notNull().defaultNow()
 }, (t) => ({
     pk: primaryKey({ columns: [t.pokemonId, t.userId] })
@@ -63,7 +88,7 @@ const games = pgTable('games', {
 
 const passwordResetTokens = pgTable('password_reset_tokens', {
     email: varchar('email', { length: 256 }).primaryKey(),
-    token: varchar('token', { length: 64}).notNull(),
+    token: varchar('token', { length: 64 }).notNull(),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     expiresAt: timestamp('expires')
 })

@@ -97,14 +97,18 @@ const getUsersDB = async ({ limit = 1, offset = 10 }) => {
 }
 
 /**
- * @param {{userId: number, username: string, email: string}} param0 
+ * @param {{userId: number, username: string, email: string}} queryData 
+ * @param {boolean} logicalConjunction
  */
-const getUserDB = async ({ userId = undefined, username = undefined, email = undefined }) => {
-    const conditions = or(
+const getUserDB = async ({ userId = undefined, username = undefined, email = undefined, password = undefined }, logicalConjunction = true) => {
+    const listOfConditions = [
         userId ? eq(users.id, userId) : undefined,
         username ? eq(users.username, username) : undefined,
-        userId ? eq(users.id, userId) : undefined,
-    );
+        email ? eq(users.email, email) : undefined,
+        password ? eq(users.password, password) : undefined,
+    ];
+
+    const conditions = logicalConjunction ? and(...listOfConditions) : or(...listOfConditions)
 
     return (await db.select().from(users).where(conditions));
 }

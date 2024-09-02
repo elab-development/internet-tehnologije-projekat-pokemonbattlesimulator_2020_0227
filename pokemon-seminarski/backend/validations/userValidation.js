@@ -10,7 +10,7 @@ const arrayOfUserIdValidation = z.array(z.number().int());
 // Accepts only username, email and password
 const insertUserSchema = createInsertSchema(users, {
     email: z.string().email().min(5),
-    username: z.string().regex(/^(?=.{3,15}$)(?![_])(?![_]{2})[a-zA-Z0-9_]+(?<![_])$/),
+    username: z.string().regex(/^(?=.{3,15}$)(?![_])(?!.*[_]{2})[a-zA-Z0-9_]+(?<![_])$/),
     password: z.string().regex(/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$ %^&*-]).{5,}$/)
         .transform((val) => bcrypt.hashSync(val, bcrypt.genSaltSync(10))),
 }).pick({

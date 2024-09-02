@@ -9,6 +9,7 @@ const { ADMIN } = require('../enums/roles');
 const { ResponseError } = require('../utils/typedefs');
 const { generateResetPasswordToken, validateResetPasswordToken } = require('../utils/generateResetPasswordToken');
 const { sendPasswordResetEmail } = require('../utils/sendPasswordResetEmail');
+const { validateToken } = require('../utils/validateToken');
 
 /**
  * @description     Login user & get token
@@ -18,16 +19,38 @@ const { sendPasswordResetEmail } = require('../utils/sendPasswordResetEmail');
  * @type {import('../utils/typedefs').DefaultHandler}
  */
 const loginUser = async (req, res) => {
-    let { username, password } = req.body;
-    try {
+    if (req.headers.authorization != null) {
+        try {
+            let user = validateToken(req.headers.authorization);
+            return res.status(200).json({
+                ...(selectUserSchema.parse(user)),
+                token: req.headers.authorization
+            })
+        } catch (error) {
+            return res.status(401).json(new ResponseError('Invalid token - ' + error.message))
+        }
+    }
+
+    let { username, email, password } = req.body;
+    /*try {
         username = usernameWeakValidation.parse(username);
     } catch (error) {
         return res.status(400).json(new ResponseError('Invalid username', error, 'body', 'username'));
+    }*/
+    let user;
+
+    try {
+        insertUserSchema
+            .extend({ password: z.string() })
+            .partial({ username: true, email: true })
+            .refine(({ username, email }) => (username != null && email == null) || (username == null && email != null), 'Specify either username or email')
+            .parse({ username, email, password });
+    } catch (error) {
+        return res.status(400).json(new ResponseError('Bad Request', error, 'body'));
     }
 
-    let user;
     try {
-        user = await getUserByUsername(String(username).trim());
+        user = (await getUserDB({username, email, password}))[0];
     } catch (error) {
         return res.status(500).json(new ResponseError(error.message));
     }
@@ -59,8 +82,8 @@ const registerUser = async (req, res) => {
         // Checks if user exists then error
         if ((await getUserDB({
             username: checkedUser.username,
-            email: checkedUser.email
-        })).length !== 0) {
+            email: checkedUser.email,
+        }, false)).length !== 0) {
             return res.status(400).json(new ResponseError('User already exists'));
         }
 
@@ -440,8 +463,6 @@ module.exports = {
     getUsersMessages,
     deleteUser,
     updateUser,
-    requestUserPasswordResetViaToken,
-    resetPasswordViaToken,
     requestUserPasswordReset,
     resetUserPassword
 }

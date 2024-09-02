@@ -1,7 +1,7 @@
 const { Socket } = require('socket.io');
 const Room = require('../game-logic/room');
 const { z, ZodError } = require('zod');
-const { selectUserSchema, insertUserSchema } = require('../validations/userValidation.js');
+const { selectUserSchema, insertUserSchema, selectUserSchemaFull } = require('../validations/userValidation.js');
 const { users, pokemons } = require('../db/schema.js');
 const usersType = users.$inferSelect;
 const pokemonsType = pokemons.$inferSelect;
@@ -17,6 +17,7 @@ const pokemonsType = pokemons.$inferSelect;
 ////////// USERS //////////
 /** @typedef {usersType UserTable} */
 /** @typedef {z.infer<typeof selectUserSchema> UserSelect} */
+/** @typedef {z.infer<typeof selectUserSchemaFull> UserSelectFull} */
 /** @typedef {z.infer<typeof insertUserSchema> UserInsert} */
 /** @typedef {import('express').RequestHandler<{}, any, any, qs.ParsedQs, Record<string, any>} DefaultHandler express RequestHandler with default params */
 ////////// POKEMONS //////////

@@ -1,31 +1,16 @@
-const jwt = require('jsonwebtoken');
-const { getUserById } = require('../db/services/userServices');
-const { selectUserSchemaFull } = require('../validations/userValidation');
+const { validateToken } = require('../utils/validateToken.js');
+const { ResponseError } = require('../utils/typedefs');
 
 /**
  * @type  {import('../utils/typedefs').DefaultHandler}
  */
 const protect = async (req, res, next) => {
-    let token;
-
-    if (
-        req.headers.authorization &&
-        req.headers.authorization.startsWith('Bearer')
-    ) {
-        try {
-            token = req.headers.authorization.split(' ')[1];
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            
-            req.user = selectUserSchemaFull.parse(await getUserById(decoded.id));
-            
-            next();
-        } catch (err) {
-            return res.status(401).json({ message: `Not authorized - ${err.message}` });
-        }
-    }
-
-    if (!token) {
-        return res.status(401).json({ message: 'Not authorized - no token provided' });
+    try {
+        let user = await validateToken(req.headers.authorization);
+        req.user = user;
+        next();
+    } catch (error) {
+        return res.status(401).json(new ResponseError('Not authorized - ' + error.message))
     }
 }
 
