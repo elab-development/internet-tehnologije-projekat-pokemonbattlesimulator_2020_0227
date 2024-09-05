@@ -50,7 +50,7 @@ const loginUser = async (req, res) => {
     }
 
     try {
-        user = (await getUserDB({username, email, password}))[0];
+        user = (await getUserDB({ username, email, password }))[0];
     } catch (error) {
         return res.status(500).json(new ResponseError(error.message));
     }
@@ -139,10 +139,10 @@ const getUser = async (req, res) => {
 }
 
 
-// No filtration, only pagination
+//Pagination, Filtration (body -> {users: number[], queryUsername: string  })
 /**
  * @description     Gets array of users
- * @route           DELETE /api/users
+ * @route           GET /api/users
  * @access          Private
  * 
  * @type {import('express').RequestHandler<{param: string}, any, any, qs.ParsedQs, Record<string, any>}
@@ -155,19 +155,29 @@ const getUsers = async (req, res) => {
     if (req.query.limit != null && !isStringInteger(req.query.limit, { negative: false }))
         zerrors.addIssue({ code: ZodIssueCode.invalid_type, message: 'Expected positive integer', path: ['limit'] });
 
-    if (zerrors.isEmpty) {
+    if (req.body.users !== undefined) {
+        z.array(z.number().int()).safeParse(req.body.users).error?.issues.forEach((val) => zerrors.addIssue({code: val.code, message: val.message, path: ['users', ...val.path]}));
+    }
+    if (req.body.queryUsername !== undefined) {
+        z.string().safeParse(req.body.queryUsername).error?.issues.forEach((val) => zerrors.addIssue({code: val.code, message: val.message, path: ['queryUsername', ...val.path]}));
+    }
+
+    if (!zerrors.isEmpty) {
         return res.status(400).json(new ResponseError('Bad Request', zerrors, 'query'));
     }
 
     let x;
     let offset = req.query.offset ? parseInt(req.query.offset, 10) : undefined;
     let limit = req.query.limit && (x = parseInt(req.query.limit, 10)) === 0 ? x : undefined;
-
+    let userIds = req.body.users;
+    let queryUsername = req.body.queryUsername;
 
     try {
         const result = await getUsersDB(Object.keys({
             offset,
             limit,
+            userIds,
+            queryUsername
         }).forEach(key => obj[key] === undefined && delete obj[key]));
 
         return res.status(200).json({
@@ -348,7 +358,7 @@ const getUsersMessages = async (req, res) => {
     if (req.query.orderByAsc != null && ((orderByAsc = stringToBoolean(req.query.receivedMessages)) === undefined))
         zerrors.addIssue({ code: ZodIssueCode.invalid_type, path: ['orderByAsc'], message: 'Expected boolean. Allowed values are: ["true", "1", "yes", "y", "false", "0", "no", "n"]' })
 
-    if (zerrors.isEmpty !== 0) {
+    if (!zerrors.isEmpty) {
         return res.status(400).json(new ResponseError('Bad Request', zerrors, 'query'));
     }
 

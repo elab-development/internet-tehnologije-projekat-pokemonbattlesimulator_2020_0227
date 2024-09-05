@@ -1,4 +1,4 @@
-const { eq, getTableColumns, asc, desc, count } = require("drizzle-orm");
+const { eq, getTableColumns, asc, desc, count, inArray, ilike } = require("drizzle-orm");
 const db = require("../../config/db");
 const { users, usersStats, usersPokemons, messages, passwordResetTokens } = require("../schema");
 
@@ -75,10 +75,10 @@ const getUserByEmail = async (email) => {
 }
 
 /**
- * @param {{limit: number, offset: number}} param0 
+ * @param {{limit: number, offset: number, userIds: number[], queryUsername: string}} param0 
  * @returns 
  */
-const getUsersDB = async ({ limit = 1, offset = 10 }) => {
+const getUsersDB = async ({ limit = 1, offset = 10, userIds = [], queryUsername = undefined }) => {
 
     let { password, email, ...baseQuery } = getTableColumns(users)
 
@@ -89,6 +89,7 @@ const getUsersDB = async ({ limit = 1, offset = 10 }) => {
     const usersData = await db
         .select(...baseQuery)
         .from(users)
+        .where(users.length > 0 ? inArray(users.id, userIds) : undefined, ilike(users.username, `%${queryUsername}%`))
         .orderBy(asc(users.id))
         .offset(offset)
         .limit(limit);

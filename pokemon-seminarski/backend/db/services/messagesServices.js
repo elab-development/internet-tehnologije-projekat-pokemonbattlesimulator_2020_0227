@@ -1,6 +1,7 @@
 const { and, SQL, inArray, ilike, desc } = require("drizzle-orm");
 const db = require("../../config/db");
-const { messages } = require("../schema");
+const { messages, users } = require("../schema");
+const { alias } = require("drizzle-orm/pg-core");
 
 /**
  * 
@@ -65,11 +66,37 @@ const getMessagesDB = async ({ offset = 0, limit = 10, user1 = undefined, user2 
     }
 
     const [{ value: totalCount }] = await db.select({ value: count() }).from(messages).where(...checks);
-    const messagesData = await db.select().from(messages).where(...checks).offset(offset).limit(limit).orderBy(desc(messages.createdAt));
+    const senderAlias = alias(users, 'sender');
+    const receiverAlias = alias(users, 'receiver');
+    const messagesData = await db
+        .select({
+            sender: {
+                id: senderAlias.id,
+                username: senderAlias.username
+            },
+            receiver: {
+                id: receiverAlias.id,
+                username: receiverAlias.username
+            },
+            message: messages.message,
+            createdAt: messages.createdAt
+        })
+        .from(messages)
+        .leftJoin(senderAlias, eq(senderAlias.id, messages.senderUserId))
+        .leftJoin(receiverAlias, eq(receiverAlias.id, messages.receiverUserId))
+        .where(...checks)
+        .offset(offset)
+        .limit(limit)
+        .orderBy(desc(messages.createdAt));
 
     return { totalCount, offset, limit, messagesData }
 }
 
+const insertMessageDB = async ({ message, receiverUserId, senderUserId }) => {
+    return (await db.insert(messages).values({ message: message, receiverUserId: receiverUserId, senderUserId: senderUserId }).returning())[0];
+}
+
 module.exports = {
-    getMessagesDB
+    getMessagesDB,
+    insertMessageDB
 }
