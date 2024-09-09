@@ -20,7 +20,7 @@ const usersStats = pgTable('users_stats', {
     wins: integer('wins').notNull().default(0),
     totalBattles: integer('total_battles').notNull().default(0),
     numOfDefeatedPokemon: integer('num_of_defeated_pokemons').notNull().default(0),
-    private: boolean('private').notNull().default(false)
+    //private: boolean('private').notNull().default(false)
 }, (t) => ({
     pk: primaryKey({ columns: [t.userId] })
 }));
@@ -58,6 +58,7 @@ const moves = pgTable('moves', {
     id: serial('id').primaryKey(),
     name: varchar('name', { length: 128 }).notNull(),
     manaCost: integer('mana_cost').notNull(),
+    attackBase: integer('attack_base').notNull(),
     typeId: integer('type_id').notNull().references(() => types.id, { onDelete: 'cascade' })
 });
 
@@ -84,7 +85,7 @@ const typeEffectivness = pgTable('type_effectiveness', {
 
 const pokemonsTypes = pgTable('pokemon_type', {
     pokemonId: integer('pokemon_id').notNull(),
-    typeId: integer('type_id') - notNull()
+    typeId: integer('type_id').notNull()
 });
 
 const usersPokemons = pgTable('users_pokemons', {

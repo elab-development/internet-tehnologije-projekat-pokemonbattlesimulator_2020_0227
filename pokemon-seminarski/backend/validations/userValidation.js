@@ -4,7 +4,7 @@ const { z } = require('zod');
 const { users, usersStats, usersPokemons } = require('../db/schema');
 const { ADMIN, USER, MODERATOR } = require('../enums/roles');
 
-const usernameWeakValidation = z.string().min(3).max(15).regex(/^[a-zA-Z0-9_]*$/, {message: 'Only alphanumerical values and _'})
+const usernameWeakValidation = z.string().min(3).max(15).regex(/^[a-zA-Z0-9_]*$/, { message: 'Only alphanumerical values and _' })
 const arrayOfUserIdValidation = z.array(z.number().int());
 
 // Accepts only username, email and password
@@ -20,7 +20,7 @@ const insertUserSchema = createInsertSchema(users, {
 });
 
 
-const selectUserStatsSchema = createSelectSchema(usersStats);
+const selectUserStatsSchema = createSelectSchema(usersStats).omit({ userId: true });
 
 // For backend validation
 const selectUserSchemaFull = createSelectSchema(users).omit({
@@ -42,7 +42,7 @@ const updateUserSchema = insertUserSchema.partial().refine(
     { message: 'At least one field should be provided' }
 );
 
-const selectUserPokemonsSchema = createSelectSchema(usersPokemons);
+//const selectUserPokemonsSchema = createSelectSchema(usersPokemons);
 
 
 module.exports = {

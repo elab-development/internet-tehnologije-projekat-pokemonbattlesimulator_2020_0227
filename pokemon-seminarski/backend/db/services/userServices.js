@@ -1,6 +1,7 @@
 const { eq, getTableColumns, asc, desc, count, inArray, ilike } = require("drizzle-orm");
 const db = require("../../config/db");
-const { users, usersStats, usersPokemons, messages, passwordResetTokens } = require("../schema");
+const { users, usersStats, usersPokemons, messages, passwordResetTokens, pokemons, moves, pokemonsMoves, types, pokemonsTypes } = require("../schema");
+const { alias } = require("drizzle-orm/pg-core");
 
 /**
  * @typedef {Object} CreateUserParams
@@ -44,7 +45,8 @@ const getUserByUsername = async (username, populate = false) => {
     }
 
     if (populate) {
-        baseQuery.stats = usersStats;
+        const { userId, ...stats } = getTableColumns(usersStats);
+        baseQuery.stats = stats
     }
 
     const result = await db
@@ -56,7 +58,7 @@ const getUserByUsername = async (username, populate = false) => {
     return result[0];
 }
 
-const getUserByEmail = async (email) => {
+const getUserByEmail = async (email, populate = false) => {
     const baseQuery = {
         ...getTableColumns(users)
     }
@@ -122,7 +124,64 @@ const updateUserDB = async ({ id, ...data }) => {
 }
 
 const getUsersPokemonsDB = async (userId) => {
-    return await db.select().from(usersPokemons).where(eq(usersPokemons.userId, userId));
+    const mTypes = alias(types);
+    const pTypes = alias(types);
+
+    const result = await db
+        .select({
+            id: usersPokemons.pokemonId,
+            xp: usersPokemons.xp,
+            baseStats: {
+                defenseBase: pokemons.defenseBase,
+                healthPointsBase: pokemons.healthPointsBase,
+            },
+            type: {
+                id: pTypes.id,
+                name: pTypes.name
+            },
+            move: {
+                id: moves.id,
+                name: moves.name,
+                attackBase: moves.attackBase,
+                mana: moves.manaCost,
+                type: {
+                    id: mTypes.id,
+                    name: mTypes.name
+                }
+            },
+            createdAt: usersPokemons.createdAt
+        })
+        .from(usersPokemons)
+        .leftJoin(pokemons, eq(usersPokemons.pokemonId, pokemons.id))
+        .leftJoin(pokemonsMoves, eq(usersPokemons.pokemonId, pokemonsMoves.pokemonId))
+        .leftJoin(moves, eq(pokemonsMoves.moveId, moves.id))
+        .leftJoin(mTypes, eq(moves.typeId, mTypes.id))
+        .leftJoin(pokemonsTypes, eq(usersPokemons.pokemonId, pokemonsTypes.pokemonId))
+        .leftJoin(pTypes, eq(pokemonsTypes.typeId, pTypes.id))
+        .where(eq(usersPokemons.userId, userId))
+
+    const groupedResult = result.reduce((acc, row) => {
+        if (!acc[row.id]) {
+            acc[row.id] = {
+                id: row.id,
+                xp: row.xp,
+                baseStats: row.baseStats,
+                type: [],
+                moves: [],
+                createdAt: row.createdAt,
+            }
+        }
+        if (row.move?.id != null && acc[row.id].moves.some((val) => val.id === row.move.id)) {
+            acc[row.id].moves.push(row.move);
+        }
+        if (row.type?.id != null && acc[row.id].type.some((val) => val.id === row.type.id)) {
+            acc[row.id].type.push(row.type);
+        }
+
+        return acc;
+    }, {});
+
+    const finalResult = Object.values(groupedResult);
 }
 
 // Error check to not cause massive update

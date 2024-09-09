@@ -116,9 +116,17 @@ const registerUser = async (req, res) => {
  */
 const getUser = async (req, res) => {
     const { param } = req.params;
+    const { populate } = req.query;
 
     try {
         let user;
+
+        if (populate != null && ((orderByAsc = stringToBoolean(req.query.receivedMessages)) === undefined)) {
+            return res.status(400).json(new ResponseError('Bad Request', new ZodError([{
+                code: ZodIssueCode.invalid_type, path: ['populate'],
+                message: 'Expected boolean. Allowed values are: ["true", "1", "yes", "y", "false", "0", "no", "n"]'
+            }]), 'query'));
+        }
 
         // Problematics handling the bigint and database, function isSafeInteger limits to 2**53 - 1
         if (isStringInteger(param)) {
@@ -156,10 +164,10 @@ const getUsers = async (req, res) => {
         zerrors.addIssue({ code: ZodIssueCode.invalid_type, message: 'Expected positive integer', path: ['limit'] });
 
     if (req.body.users !== undefined) {
-        z.array(z.number().int()).safeParse(req.body.users).error?.issues.forEach((val) => zerrors.addIssue({code: val.code, message: val.message, path: ['users', ...val.path]}));
+        z.array(z.number().int()).safeParse(req.body.users).error?.issues.forEach((val) => zerrors.addIssue({ code: val.code, message: val.message, path: ['users', ...val.path] }));
     }
     if (req.body.queryUsername !== undefined) {
-        z.string().safeParse(req.body.queryUsername).error?.issues.forEach((val) => zerrors.addIssue({code: val.code, message: val.message, path: ['queryUsername', ...val.path]}));
+        z.string().safeParse(req.body.queryUsername).error?.issues.forEach((val) => zerrors.addIssue({ code: val.code, message: val.message, path: ['queryUsername', ...val.path] }));
     }
 
     if (!zerrors.isEmpty) {
@@ -214,14 +222,8 @@ const getUsersPokemons = async (req, res) => {
         }
 
         const result = await getUsersPokemonsDB(user.id);
-        const pokes = z.array(
-            selectUserPokemonsSchema.omit({ userId: true })
-        ).parse(result);
 
-        return res.status(200).json({
-            userId: user.id,
-            data: pokes
-        })
+        return res.status(200).json(result);
     } catch (error) {
         return res.status(500).json(new ResponseError(error.message));
     }
