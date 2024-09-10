@@ -2,14 +2,14 @@ import React from 'react'
 import ProgressBar from './ProgressBar'
 import { getTypeName } from './pokemonTypes'
 
-const PokemonCard = ({ pokemon, onClick, classNames }) => {
+const PokemonCard = ({ pokemon, onClick, options: { evolvable = false, selectable = false } }) => {
 
     const handleClick = () => {
         onClick(pokemon);
     }
 
     return (
-        <div className={`pokemon-card${classNames?.length > 0 ? " " + classNames.join(' ') : ""}`} onClick={handleClick}>
+        <div className={`pokemon-card${evolvable && pokemon.xp >= 100 ? " pokemon-card-evolvable":""}`} onClick={handleClick}>
             <h3 className='pokemon-card-title'>#{String(pokemon.id).padStart(3, "0")} - {pokemon.name}</h3>
             <div className='pokemon-card-picture'>
                 <img src={pokemon.picuture} alt='pokemon-image' />
@@ -28,7 +28,7 @@ const PokemonCard = ({ pokemon, onClick, classNames }) => {
             </div>
             <div className='pokemon-card-moves'>
                 {pokemon.moves.map(move => (
-                    <div className='pokemon-card-move' style={{ outline: ``, boxShadow }}> {/**TODO*/}
+                    <div className='pokemon-card-move' style={{ outline: ``, boxShadow }}> {/**TODO POZADINA ZA POKRET*/}
                         <p className='move-type' style={{ borderBottom: "1px solid black" }}>{move.type.name}</p>
                         <div className='move-info-wrap'>
                             <p className='move-dmg' style={{ borderRight: "1px solid black" }}>DMG:</p><p className='move-dmg-val'>{move.attackBase}</p>

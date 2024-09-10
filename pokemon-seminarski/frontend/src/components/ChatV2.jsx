@@ -18,7 +18,7 @@ import axios from 'axios';
 
 const GLOBAL_NAMESPACE = 0;
 
-const ChatV2 = ({ isFriendSearchOpen }) => {
+const ChatV2 = () => {
     const { info } = useContext(UserContext);
 
     const [loaded, setLoaded] = useState({ friends: false, namespace: true, tenor: false }); // true -> because global has no load
@@ -30,6 +30,8 @@ const ChatV2 = ({ isFriendSearchOpen }) => {
     /**@type {[GlobalMessage[], React.Dispatch<React.SetStateAction<GlobalMessage[]>>]} */    // GLOBALMESSAGES -> ID === 0
     const [globalMessages, setGlobalMessages] = useState([]);
     const [isNewGlobal, setIsNewGlobal] = useState(false);
+    
+    const [isFriendSearchOpen, setIsFriendSearchOpen] = useState(false);
     /**@type {[UsersResult[], React.Dispatch<React.SetStateAction<UsersResult[]>>]} */
     const [usersQueryResult, setUsersQueryResult] = useState([]);
     const [usersQuery, setUsersQuery] = useState("");
@@ -41,6 +43,7 @@ const ChatV2 = ({ isFriendSearchOpen }) => {
     const [isTenorOpen, setIsTenorOpen] = useState(false);
     const [tenorQueryResult, setTenorQueryResult] = useState([]);
     const tenorQueryDebounced = useDebounce(tenorQuery);
+
 
     const addFriends = useCallback((friends) => {
         setFriends(prev => Array.isArray(friends) ? [...prev, ...friends] : [...prev, friends]);
@@ -236,9 +239,9 @@ const ChatV2 = ({ isFriendSearchOpen }) => {
                                         <p className='chat-loading-text'>loading...</p>
                                     ) : (
                                         <>
-                                            <div className="gif-column">{tenorQueryResult.map((val, index) => index % 3 !== 0 ? null : <img src={val.mediaFormats.nanogif} alt={val.title} className='nanogif' key={index} onClick={() => {setMessageText(val.tinygif); setIsTenorOpen(false)}}/>)}</div>
-                                            <div className="gif-column">{tenorQueryResult.map((val, index) => index % 3 !== 1 ? null : <img src={val.mediaFormats.nanogif} alt={val.title} className='nanogif' key={index} onClick={() => {setMessageText(val.tinygif); setIsTenorOpen(false)}}/>)}</div>
-                                            <div className="gif-column">{tenorQueryResult.map((val, index) => index % 3 !== 2 ? null : <img src={val.mediaFormats.nanogif} alt={val.title} className='nanogif' key={index} onClick={() => {setMessageText(val.tinygif); setIsTenorOpen(false)}}/>)}</div>
+                                            <div className="gif-column">{tenorQueryResult.map((val, index) => index % 3 !== 0 ? null : <img src={val.mediaFormats.nanogif} alt={val.title} className='nanogif' key={index} onClick={() => { setMessageText(val.tinygif); setIsTenorOpen(false) }} />)}</div>
+                                            <div className="gif-column">{tenorQueryResult.map((val, index) => index % 3 !== 1 ? null : <img src={val.mediaFormats.nanogif} alt={val.title} className='nanogif' key={index} onClick={() => { setMessageText(val.tinygif); setIsTenorOpen(false) }} />)}</div>
+                                            <div className="gif-column">{tenorQueryResult.map((val, index) => index % 3 !== 2 ? null : <img src={val.mediaFormats.nanogif} alt={val.title} className='nanogif' key={index} onClick={() => { setMessageText(val.tinygif); setIsTenorOpen(false) }} />)}</div>
                                         </>
                                     )
                                 }
@@ -260,17 +263,22 @@ const ChatV2 = ({ isFriendSearchOpen }) => {
                     }
                 </div>
                 <div className='friend-box'>
-                    <UserFriendCard val={{ id: 0, username: 'global' }} onClickMessage={handleOnClickNamespace} highlight={selectedNamespace === 0} isNewMessage={isNewGlobal} />
-                    <br />
-                    {
-                        loaded.friends ?
-                            (<>
-                                {friends.map((val) => <UserFriendCard val={val} key={val.id} onClickMessage={handleOnClickNamespace} highlight={val.id === selectedNamespace} isNewMessage={val.newMessage} />)}
-                            </>)
-                            : (
-                                <p className='chat-loading-text'>loading...</p>
-                            )
-                    }
+                    <div className='friend-box-inner-wrapper'>
+                        <UserFriendCard val={{ id: 0, username: 'global' }} onClickMessage={handleOnClickNamespace} highlight={selectedNamespace === 0} isNewMessage={isNewGlobal} />
+                        <br />
+                        {
+                            loaded.friends ?
+                                (<>
+                                    {friends.map((val) => <UserFriendCard val={val} key={val.id} onClickMessage={handleOnClickNamespace} highlight={val.id === selectedNamespace} isNewMessage={val.newMessage} />)}
+                                </>)
+                                : (
+                                    <p className='chat-loading-text'>loading...</p>
+                                )
+                        }
+                    </div>
+                    <div className='find friends button'>
+                        <button type='button' onClick={handleOpenFriend}>find friends!</button>
+                    </div>
                 </div>
             </div>
             <div className='send-message-wrapper'>

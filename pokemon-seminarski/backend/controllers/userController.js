@@ -120,8 +120,8 @@ const getUser = async (req, res) => {
 
     try {
         let user;
-
-        if (populate != null && ((orderByAsc = stringToBoolean(req.query.receivedMessages)) === undefined)) {
+        let pop;
+        if (populate != null && ((pop = stringToBoolean(populate)) === undefined)) {
             return res.status(400).json(new ResponseError('Bad Request', new ZodError([{
                 code: ZodIssueCode.invalid_type, path: ['populate'],
                 message: 'Expected boolean. Allowed values are: ["true", "1", "yes", "y", "false", "0", "no", "n"]'
@@ -130,9 +130,9 @@ const getUser = async (req, res) => {
 
         // Problematics handling the bigint and database, function isSafeInteger limits to 2**53 - 1
         if (isStringInteger(param)) {
-            user = await getUserById(parseInt(param, 10));
+            user = await getUserById(parseInt(param, 10), populate);
         } else {
-            user = await getUserByUsername(param);
+            user = await getUserByUsername(param, populate);
         }
 
         if (!user) {

@@ -11,9 +11,11 @@ import Play from './components/Play';
 import Home from './components/Home';
 import AuthPageLayout from './components/AuthPageLayout';
 import UserContextProvider from './contexts/UserContextProvider';
-import Collection from './components/Collection';
 import GameScreen from './components/GameScreen';
 import RequestPasswordReset from './components/RequestPasswordReset';
+import MainLayout from './components/MainLayout';
+import Settings from './components/Settings';
+import CareerWrapper from './components/CareerWrapper';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -21,10 +23,9 @@ const router = createBrowserRouter(
       <Route id='req-auth' element={<AuthLayout />}>
         <Route element={<MainLayout />}>
           <Route path='/home' element={<Home />} />
-          <Route path='/pokedex' element={<Pokedex />} />
           <Route path='/play' element={<Play />} />
-          <Route path='/user/:id' element={<Register />} />
-          <Route path='/user/:id/collection' element={<Collection />} />
+          <Route path='/settings' element={<Settings />} />
+          <Route path='/user/:id' element={<CareerWrapper />} />
         </Route>
         <Route path='/game/:id' element={<GameScreen />} />
       </Route>

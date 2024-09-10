@@ -12,7 +12,7 @@ import PokemonCard from './utils/PokemonCard';
  */
 
 const pokeAPI = "https://pokeapi.co/api/v2";
-const pokeGITAPI = (id) => `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/dream-world/${id}.svg`;
+export const pokeGITAPI = (id) => `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/dream-world/${id}.svg`;
 
 const loadUserPokemons = async (userId) => {
    try {
@@ -56,14 +56,16 @@ const loadUserPokemons = async (userId) => {
 }
 
 /** Collection of users pokemon*/
-const Collection = ({ horizontal = false, cardClickEvent = undefined, id = undefined, additionalClassesToCards = [] }) => {
+const Collection = ({ horizontal = false, cardClickEvent = undefined, id = undefined, cardOptions }) => {
    const { info } = useContext(UserContext);
    const [loaded, setLoaded] = useState(false);
    const [pokemons, setPokemons] = useState([]);
 
-   const handleClick = async (pokemon) => {
-      pokemon = await cardClickEvent?.(pokemon);
-      setPokemons(prev => prev.map(p => p.id ? { ...pokemon } : { ...p }));
+   const handleClick = async (pokemon) => { //možda je zapravo i pametno da postoji callback jer svako ima druge radnje TODO
+      if (cardClickEvent != null) {
+         pokemon = await cardClickEvent?.(pokemon, setPokemons);
+         setPokemons(prev => prev.map(p => p.id ? { ...pokemon } : { ...p }));
+      }
    }
 
    useEffect(() => {
@@ -78,7 +80,7 @@ const Collection = ({ horizontal = false, cardClickEvent = undefined, id = undef
          {!loaded ? null :
             pokemons.map((pokemon) => {
                return (
-                  <PokemonCard pokemon={pokemon} onClick={handleClick} classNames={additionalClassesToCards}/>
+                  <PokemonCard pokemon={pokemon} onClick={handleClick} options={cardOptions} />
                );
             })
          }
