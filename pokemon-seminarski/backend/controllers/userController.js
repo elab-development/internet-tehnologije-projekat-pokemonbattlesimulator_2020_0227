@@ -1,8 +1,8 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const generateToken = require('../utils/generateToken');
-const { stringToBoolean, isStringInteger, parseIntegerStrict } = require('../utils/parsesForPrimitives');
-const { getUserByUsername, createUser, getUserById, getUserByEmail, updateUserDB, getUsersPokemonsDB, deleteUserDB, getUsersMessagesDB, insertResetPasswordToken, getResetPasswordToken, getUserDB, getUsersDB } = require('../db/services/userServices');
+const { stringToBoolean, isStringInteger, parseIntegerStrict, dynamicParseStringToPrimitives } = require('../utils/parsesForPrimitives');
+const { getUserByUsername, createUser, getUserById, getUserByEmail, updateUserDB, getUsersPokemonsDB, deleteUserDB, getUsersMessagesDB, insertResetPasswordToken, getResetPasswordToken, getUserDB, getUsersDB, deleteUsersPokemonDB, evolvePokemonDB } = require('../db/services/userServices');
 const { insertUserSchema, selectUserSchema, selectUserPokemonsSchema, updateUserSchema, usernameWeakValidation } = require('../validations/userValidation');
 const { ZodError, z, ZodIssueCode } = require('zod');
 const { ADMIN } = require('../enums/roles');
@@ -229,6 +229,50 @@ const getUsersPokemons = async (req, res) => {
     }
 }
 
+/**
+ * @description     Evolves a provided pokemon
+ * @route           GET /api/users/:param/pokemons/:id
+ * @access          Private
+ * 
+ * @type {import('express').RequestHandler<{param: string, id: string}, any, any, qs.ParsedQs, Record<string, any>}
+ */
+const evolvePokemon = async (req, res) => {
+    const { param, id } = req.params;
+
+    try {
+        let check;
+        if (isStringInteger(param)) {
+            check = req.user.id === parseInt(param, 10);
+        } else {
+            check = req.user.username === param;
+        }
+
+        if (!check) {
+            return res.status(401).json(new ResponseError("Not authorized - can't evolve other users pokemons"));
+        }
+
+        if (!isStringInteger(id)) {
+            return res.status(400).json(new ResponseError("Bad Request", { id: "Expected integer" }, 'params'));
+        }
+        let parsedPokemon = parseInt(id, 10);
+
+        const usersPokemons = await getUsersPokemonsDB(req.user.id);
+        const pokemonToEvolve = usersPokemons.find(val => val.id === parsedPokemon)
+        if (find == null) {
+            return res.status(404).json(new ResponseError("Pokemon not found"));
+        }
+
+        if (usersPokemons.some(val => val.id === pokemonToEvolve.evolvesToPokemonId)) {
+            return res.status(400).json(new ResponseError("Bad Request - you already own the evolved version of this pokemon"));
+        }
+
+        const pokemon = await evolvePokemonDB(userId, pokemonToEvolve.id);
+        console.log(`User "${req.user.username} deleted a pokemon (${pokemonToEvolve.id})for the sake of evolving"`);
+        return res.status(201).json({ ...pokemon });
+    } catch (error) {
+        return res.status(500).json(new ResponseError("Internal server error - " + error.message))
+    }
+}
 
 
 /**
@@ -472,6 +516,7 @@ module.exports = {
     loginUser,
     getUsers,
     getUsersPokemons,
+    evolvePokemon,
     getUsersMessages,
     deleteUser,
     updateUser,

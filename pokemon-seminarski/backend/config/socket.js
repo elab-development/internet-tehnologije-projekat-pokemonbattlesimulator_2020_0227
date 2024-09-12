@@ -5,6 +5,7 @@ const { ConnectedUser } = require('../utils/typedefs');
 const registerChatHandlers = require('../event-handlers-v2/chatHandler.js');
 const registerGameHandlers = require('../event-handlers-v2/gameHandler.js');
 const handleDisconnect = require('../event-handlers-v2/disconnectionHandler.js');
+const RoomManager = require("../game-logic/RoomManager.js");
 
 /**
  * @type {import('../utils/typedefs').SocketInformation}
@@ -12,13 +13,15 @@ const handleDisconnect = require('../event-handlers-v2/disconnectionHandler.js')
 const socketInformation = {
     allConnectedUsers: [],
     allGameRooms: [],
-    allChatRooms: [],
 }
+
 
 /**
  *  @param { Server } io
  */
 const handleSocketConnections = (io) => {
+    const manager = new RoomManager(socketInformation, io);
+
     io.use((socket, next) => {
         const token = socket.handshake.auth.token;
         (() => {/*check jwt signature*/ })();
@@ -31,7 +34,7 @@ const handleSocketConnections = (io) => {
 
         // Event registration
         registerChatHandlers(io, socket, socketInformation);
-        registerGameHandlers(io, socket, socketInformation);
+        registerGameHandlers(io, socket, socketInformation, manager);
         socket.on('disconnect', handleDisconnect(socketInformation));
     });
 }

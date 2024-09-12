@@ -1,8 +1,12 @@
 import React from 'react'
+import { getRandomImage } from './assets/loadingPageAssets/loadingImages'
 
 const LoadingPage = () => {
   return (
-    <div>LoadingPage</div>
+    <div className='loading-page'>
+      <img src={getRandomImage()}></img>
+      <p>Loading...</p>
+    </div>
   )
 }
 

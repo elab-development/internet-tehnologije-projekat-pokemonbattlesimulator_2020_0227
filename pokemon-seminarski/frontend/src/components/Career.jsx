@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { UserContext } from '../contexts/UserContextProvider'
 import API from './utils/API';
-import Collection from './Collection';
+import Collection, { loadApiData } from './Collection';
 import { useNavigate } from 'react-router-dom';
 import { splitCamelCase } from './CareerWrapper';
 
@@ -13,10 +13,14 @@ const Career = () => {
    const [{ stats, ...user }, setUser] = useState(structuredClone(ctx.info));
    const [loaded, setLoaded] = useState({ stats: false });
 
-   /** @param {import('./Collection').UsersPokemon} pokemon, @param {React.Dispatch<React.SetStateAction<import('../../../backend/utils/typedefs').PokemonTable>>} callback*/
+   /** @param {import('./Collection').UsersPokemonExpanded} pokemon @param {React.Dispatch<React.SetStateAction<import('./Collection').UsersPokemonExpanded[]>>} callback*/
    const handleEvolve = async (pokemon, callback) => {
-      const data = await API.patch(`/users/${ctx.info.id}/pokemons/${pokemon.id}`);
-      callback(prev => prev.map(p => p.id === data.data ? { ...data.data } : { ...p }));
+      if (!pokemon.canEvolve) {
+         return;
+      }
+      const data = await API.patch(`/users/${ctx.info.id}/pokemons/${pokemon.id}`); // CALLS OUR EVOLVE API TODO
+      const fullPokemon = await loadApiData(pokemon.id);
+      callback(prev => prev.map(p => p.id === data.data ? { ...data.data, ...fullPokemon } : { ...p })); // UPDATES THE POKEMONS TO REFLECT
    }
 
    useEffect(() => {

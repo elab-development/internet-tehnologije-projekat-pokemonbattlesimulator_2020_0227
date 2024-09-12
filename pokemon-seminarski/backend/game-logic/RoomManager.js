@@ -1,3 +1,4 @@
+const { Server } = require('socket.io');
 const Player = require('./Player');
 const Room = require('./room');
 const RoomCodeManager = require('./RoomCodeManager');
@@ -8,32 +9,31 @@ const RoomCodeManager = require('./RoomCodeManager');
 module.exports = class RoomManager {
     /**
      * @param {import("../utils/typedefs").SocketInformation} socketInformation 
+     * @param {Server} io server reference
      */
-    constructor(socketInformation){
+    constructor(socketInformation, io) {
         this.socketInformation = socketInformation;
         this.roomCodeManager = new RoomCodeManager();
         this.lock = false;
+        this.io = io;
     }
 
     /**
      * Creates a room by a player
      * @param {Player} playerWhoCreated 
      */
-    createRoom(creatorsSocket){
-        const roomCode = this.roomCodeManager.generateCode();
-        this.socketInformation.allGameRooms.push(new Room(
-            this,
-            roomCode,
-            playerWhoCreated,
-            null
-        ));
+    createRoom(playerWhoCreated) {
+        const room = new Room(this, this.roomCodeManager.generateCode(), null, null, 'waiting');
+        room.joinGame(playerWhoCreated);
+        this.socketInformation.allGameRooms.push(room);
     }
 
     /**
      * Removes a room from `SocketInfromation` provided in RoomManager
      * @param {Room} room 
      */
-    removeRoom(room){
-        this.socketInformation.allGameRooms.filter((value, _) => value !== room);
+    removeRoom(room) {
+        this.io.socketsLeave(room.roomId);
+        this.socketInformation.allGameRooms = this.socketInformation.allGameRooms.filter((value, _) => value.roomId !== room.roomId);
     }
 }

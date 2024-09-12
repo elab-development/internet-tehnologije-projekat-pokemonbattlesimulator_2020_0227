@@ -19,15 +19,18 @@ const Play = () => {
    }
 
    const handleFind = () => {
-      socket.emit('game:find', { pokemons: selectedPokemon });
-      setIsSearching(true);
+      if (selectedPokemon.length !== 3) return;
+      socket.emit('game:queue:join', { pokemons: selectedPokemon.map((val) => val.id) });
    }
 
    const handleCanel = () => {
-      socket.emit('game:cancel');
+      socket.emit('game:queue:leave');
    }
 
    useEffect(() => {
+      function onSuccessJoinQueue({ message }) {
+         setIsSearching(true);
+      }
       function onFoundGame(id) {
          navigate(`/game/${id}`, { replace: true });
       }
@@ -35,11 +38,17 @@ const Play = () => {
          setIsSearching(false);
       }
 
-      socket.on('game:found', onFoundGame);
-      socket.on('game:cancel', onCancelGame);
+      socket.on('game:queue:found', onFoundGame);                                      // Successfully joined the queue and found the game
+      socket.on('game:queue:join:success', onSuccessJoinQueue);                         // Successfully joined the game search
+      socket.on('game:queue:join:failed', ({ message }) => console.error(message));    // Coudln't join queue cause of given reason
+      socket.on('game:queue:leave:success', onCancelGame);                             // Successfully exited game search
+      socket.on('game:queue:leave:failed', ({ message }) => console.error(message));   // Couldn't exit game search
       return () => {
-         socket.off('game:found', onFoundGame);
-         socket.off('game:cancel', onCancelGame);
+         socket.off('game:queue:found', onFoundGame);
+         socket.off('game:queue:join:failed');
+         socket.off('game:queue:join:success', onSuccessJoinQueue);
+         socket.off('game:queue:leave:success', onCancelGame);
+         socket.off('game:queue:leave:failed');
       }
    }, []);
 
@@ -60,7 +69,7 @@ const Play = () => {
                   <div className='pokemon-card-placeholder'>{selectedPokemon[2] != null ? <PokemonCard pokemon={selectedPokemon[2]} onClick={handleDeselect} /> : null}</div>
                </div>
                <div className='find-game-button'>
-                  <button className='button' onClick={handleFind}>play</button>
+                  <button className='button' onClick={handleFind} disabled={selectedPokemon.length !== 3}>play</button>
                </div>
                <Collection horizontal={true} cardClickEvent={handleSelect} />
             </>

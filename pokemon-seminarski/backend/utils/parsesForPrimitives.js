@@ -36,7 +36,7 @@ const parseIntegerStrict = (str, returnOriginal = false) => {
 
 /** Checks if the string is a valid integer 
  * @param {string} str 
- * @param {{negative: boolean, positive: boolean}} options
+ * @param {{negative: boolean, positive: boolean, zero: boolean}} options
  */
 const isStringInteger = (str, { negative = true, positive = true, zero = true }) => {
     if (!negative && !positive && !zero) throw new Error('Select at least one option');

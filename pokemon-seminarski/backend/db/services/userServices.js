@@ -1,6 +1,6 @@
 const { eq, getTableColumns, asc, desc, count, inArray, ilike } = require("drizzle-orm");
 const db = require("../../config/db");
-const { users, usersStats, usersPokemons, messages, passwordResetTokens, pokemons, moves, pokemonsMoves, types, pokemonsTypes } = require("../schema");
+const { users, usersStats, usersPokemons, messages, passwordResetTokens, pokemons, moves, pokemonsMoves, types, pokemonsTypes, evolution } = require("../schema");
 const { alias } = require("drizzle-orm/pg-core");
 
 /**
@@ -11,7 +11,14 @@ const { alias } = require("drizzle-orm/pg-core");
  * @param {CreateUserParams} param0
  */
 const createUser = async ({ username, email, password }) => {
-    return (await db.insert(users).values({ username: username, email: email, password: password }).returning())[0];
+    return await db.transaction(async (tx) => {
+        let threePokemons = await tx.select().from(pokemons).orderBy(asc(pokemons.id)).limit(3);
+        if (threePokemons.length !== 3) return tx.rollback();
+
+        let user = (await db.insert(users).values({ username: username, email: email, password: password }).returning())[0];
+        (await db.insert(usersPokemons).values(threePokemons.map(p => ({ pokemonId: p.id, userId: user.id }))));
+        return user;
+    })
 }
 
 
@@ -24,7 +31,8 @@ const getUserById = async (id, populate = false) => {
     }
 
     if (populate) {
-        baseQuery.stats = usersStats;
+        const { userId, ...stats } = getTableColumns(usersStats);
+        baseQuery.stats = stats;
     }
 
     const result = await db
@@ -123,6 +131,34 @@ const updateUserDB = async ({ id, ...data }) => {
     await db.update(users).set({ ...data }).where(eq(users.id, id)).returning({ id: users.id });
 }
 
+/**
+ * @typedef {{
+ *      id: number, 
+ *      xp: number, 
+ *      createdAt: Date,
+ *      evolvesToPokemonId: number | null,
+ *      baseStats: {
+ *          defenseBase: number, 
+ *          healthPointsBase: number
+ *      }, 
+ *      type: {
+ *          id: number, 
+ *          name: string
+ *      }[], 
+ *      moves: {
+ *          id: number, 
+ *          name: string, 
+ *          attackBase: number, 
+ *          mana: number, 
+ *          type: {
+ *              id: number,
+ *              name: string
+ *          }
+ *       }[]
+ *  }} UsersPokemon Expanded pokemon that user owns
+ * @param {number} userId 
+ * @returns {Promise<UsersPokemon[]>}
+ */
 const getUsersPokemonsDB = async (userId) => {
     const mTypes = alias(types);
     const pTypes = alias(types);
@@ -149,6 +185,7 @@ const getUsersPokemonsDB = async (userId) => {
                     name: mTypes.name
                 }
             },
+            evolvesToPokemonId: evolution.evolvesToId,
             createdAt: usersPokemons.createdAt
         })
         .from(usersPokemons)
@@ -158,6 +195,7 @@ const getUsersPokemonsDB = async (userId) => {
         .leftJoin(mTypes, eq(moves.typeId, mTypes.id))
         .leftJoin(pokemonsTypes, eq(usersPokemons.pokemonId, pokemonsTypes.pokemonId))
         .leftJoin(pTypes, eq(pokemonsTypes.typeId, pTypes.id))
+        .leftJoin(evolution, eq(evolution.pokemonId, usersPokemons.pokemonId))
         .where(eq(usersPokemons.userId, userId))
 
     const groupedResult = result.reduce((acc, row) => {
@@ -182,6 +220,39 @@ const getUsersPokemonsDB = async (userId) => {
     }, {});
 
     const finalResult = Object.values(groupedResult);
+    return finalResult;
+}
+
+const deleteUsersPokemonDB = async (userId, pokemonId) => {
+    //SAFE CHECK
+    if (userId == null && pokemonId == null) {
+        throw new Error('Must provide both userId and pokemonId');
+    }
+    return (await db.delete(usersPokemons).where(and(eq(usersPokemons.userId, userId), eq(usersPokemons.userId, userId))));
+}
+
+const evolvePokemonDB = async (userId, pokemonId) => {
+    if (userId, pokemonId) throw new Error('Not provided anything user and/or pokemon');
+    return await db.transaction(async (tx) => {
+        let usersPokemon = (await tx
+            .select({
+                id: usersPokemons.id,
+                evolvesToId: evolution.evolvesToId
+            })
+            .from(usersPokemons)
+            .innerJoin(usersPokemons.pokemonId, pokemons.id)
+            .leftJoin(usersPokemons.pokemonId, evolution.pokemonId)
+            .where(eq(usersPokemons.pokemonId, pokemonId))
+            .limit(1)
+        )[0];
+        if (usersPokemon == null)
+            return tx.rollback(); // No pokemonid found in usersPokemons or pokemon doesnt exist
+        if (usersPokemon.evolvesToId == null)
+            return tx.rollback();
+
+        await tx.delete(usersPokemons).where(and(eq(usersPokemons.pokemonId, pokemonId), eq(usersPokemons.userId, userId)));
+        return (await tx.insert(usersPokemons).values({ pokemonId: pokemonId, userId: userId }).returning())[0];
+    });
 }
 
 // Error check to not cause massive update
@@ -189,6 +260,27 @@ const deleteUserDB = async (userId) => {
     if (userId == null) throw new Error('Parameter userId is not defined');
     const [{ id }] = await db.delete(users).where(eq(users.id, userId)).returning({ id: users.id });
     return id;
+}
+
+/**
+ * @param {number} userId
+ * @param {{won: boolean, numOfDefeatedPokemon: number}} data
+  */
+const updateUsersStatsDB = async (userId, data) => {
+    if (userId == null || data == null) {
+        throw new Error('Must provide data and user id to update');
+    }
+    let playerStats = (await db.select().from(usersStats).where(eq(usersStats.userId, userId)).limit(1))[0];
+    if (playerStats == null) {
+        throw new Error("Couldn't find the user");
+    }
+    let newStats = {
+        wins: playerStats.wins + data.won ? 1 : 0,
+        numOfDefeatedPokemon: playerStats.numOfDefeatedPokemon + data.numOfDefeatedPokemon,
+        totalBattles: playerStats.totalBattles + 1
+    }
+
+    await db.update(usersStats).set({ ...newStats }).where(eq(usersStats.userId, userId));
 }
 
 /**
@@ -264,8 +356,11 @@ module.exports = {
     getUserDB,
     getUsersDB,
     updateUserDB,
+    updateUsersStatsDB,
     getUsersMessagesDB,
     getUsersPokemonsDB,
+    deleteUsersPokemonDB,
+    evolvePokemonDB,
     deleteUserDB,
     insertResetPasswordToken,
     getResetPasswordToken

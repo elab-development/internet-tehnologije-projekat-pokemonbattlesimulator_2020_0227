@@ -1,5 +1,5 @@
 const express = require('express');
-const { getUser, registerUser, updateUser, loginUser, getUsersPokemons, getUsersMessages, deleteUser, requestUserPasswordReset, resetUserPassword, getUsers } = require('../controllers/userController');
+const { getUser, registerUser, updateUser, loginUser, getUsersPokemons, getUsersMessages, deleteUser, requestUserPasswordReset, resetUserPassword, getUsers, evolvePokemon } = require('../controllers/userController');
 const { protect } = require('../middleware/authMiddleware');
 
 const router = express.Router();
@@ -13,6 +13,8 @@ router.route('/reset-password/:token').patch(resetUserPassword);
 router.route('/:param').get(getUser).patch(protect, updateUser).delete(protect, deleteUser);;
 router.route('/:param/messages').get(protect, getUsersMessages);
 router.route('/:param/pokemons').get(protect, getUsersPokemons);
+router.route('/:param/pokemons/:id').get(protect, evolvePokemon);
+
 
 
 module.exports = router;

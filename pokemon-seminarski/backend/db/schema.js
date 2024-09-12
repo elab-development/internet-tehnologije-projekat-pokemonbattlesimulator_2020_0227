@@ -50,8 +50,8 @@ const pokemons = pgTable('pokemons', {
 const evolution = pgTable('evolution', {
     id: serial('id').primaryKey(),
     pokemonId: integer('pokemon_id').notNull().references(() => pokemons.id, { onDelete: 'cascade' }),
-    evolvesToId: integer('evolves_to_id').notNull().references(() => pokemons.id, { onDelete: 'cascade' }),
-    expirienceRequired: integer('expirience_required').notNull(),
+    evolvesToId: integer('evolves_to_id').references(() => pokemons.id, { onDelete: 'cascade' }),
+    //expirienceRequired: integer('expirience_required').notNull(),
 })
 
 const moves = pgTable('moves', {
@@ -91,7 +91,7 @@ const pokemonsTypes = pgTable('pokemon_type', {
 const usersPokemons = pgTable('users_pokemons', {
     pokemonId: integer('pokemon_id').notNull().references(() => pokemons.id),
     userId: integer('user_id').notNull().references(() => users.id),
-    xp: integer('xp').notNull(),
+    xp: integer('xp').notNull().default(0),
     createdAt: timestamp('created_at').notNull().defaultNow()
 }, (t) => ({
     pk: primaryKey({ columns: [t.pokemonId, t.userId] })
