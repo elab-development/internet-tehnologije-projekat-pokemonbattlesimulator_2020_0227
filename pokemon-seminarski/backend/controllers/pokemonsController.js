@@ -1,4 +1,4 @@
-const { insertPokemonDB, insertBulkPokemonDB, getPokemonByIdDB, getPokemonsDB, deletePokemonDB } = require("../db/services/pokemonService");
+const { insertPokemonDB, insertBulkPokemonDB, getPokemonByIdDB, getPokemonsDB, deletePokemonDB } = require("../db/services/pokemonServices");
 const { ADMIN } = require("../enums/roles");
 const { parseIntegerStrict } = require("../utils/parsesForPrimitives");
 const { ResponseError } = require("../utils/typedefs");
@@ -39,7 +39,7 @@ const insertPokemons = async (req, res) => {
             return res.status(201).json(await insertPokemonDB(validatedArray[0]));
         } else {
             let result = await insertBulkPokemonDB(validatedArray);
-            return res.status(201).json({ insertedRows: result });
+            return res.status(201).json({ rowsInserted: result });
         }
     } catch (error) {
         return res.status(500).json(new ResponseError(error.message));

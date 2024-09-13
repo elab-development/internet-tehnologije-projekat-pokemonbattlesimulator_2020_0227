@@ -160,8 +160,8 @@ const updateUserDB = async ({ id, ...data }) => {
  * @returns {Promise<UsersPokemon[]>}
  */
 const getUsersPokemonsDB = async (userId) => {
-    const mTypes = alias(types);
-    const pTypes = alias(types);
+    const mTypes = alias(types, 'move_types');
+    const pTypes = alias(types, 'pokemon_types');
 
     const result = await db
         .select({
@@ -206,6 +206,7 @@ const getUsersPokemonsDB = async (userId) => {
                 baseStats: row.baseStats,
                 type: [],
                 moves: [],
+                evolvesToPokemonId: row.evolvesToPokemonId,
                 createdAt: row.createdAt,
             }
         }

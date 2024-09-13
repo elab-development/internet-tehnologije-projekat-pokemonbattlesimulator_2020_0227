@@ -1,22 +1,13 @@
-const { drizzle } = require("drizzle-orm/neon-http");
-const { migrate } = require("drizzle-orm/neon-http/migrator");
-const { neon } = require("@neondatabase/serverless");
+const path = require('path');
+const { defineConfig } = require("drizzle-kit");
 
-const sql = neon(process.env.DATABASE_URI);
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
-const db = drizzle(sql);
-
-const main = async () => {
-    try {
-        await migrate(db, {
-            migrationsFolder: "./db/migrations",
-        });
-
-        console.log("Migration successful");
-    } catch (error) {
-        console.log(error);
-        process.exit(1);
-    }
-}
-
-main();
+module.exports = defineConfig({
+    schema: "./db/schema.js",
+    out: "./db/migrations",
+    dialect: "postgresql",
+    dbCredentials: {
+        url: process.env.DATABASE_URL
+    },
+});

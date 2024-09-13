@@ -10,8 +10,10 @@ module.exports = class RoomManager {
     /**
      * @param {import("../utils/typedefs").SocketInformation} socketInformation 
      * @param {Server} io server reference
+     * @param {{movesEffectivenesses: { attackerTypeId: number; defenderTypeId: number; effectivness: string;}[]}} gameEssentials
      */
-    constructor(socketInformation, io) {
+    constructor(socketInformation, io, gameEssentials) {
+        this.gameEssentials = gameEssentials;
         this.socketInformation = socketInformation;
         this.roomCodeManager = new RoomCodeManager();
         this.lock = false;
@@ -23,7 +25,7 @@ module.exports = class RoomManager {
      * @param {Player} playerWhoCreated 
      */
     createRoom(playerWhoCreated) {
-        const room = new Room(this, this.roomCodeManager.generateCode(), null, null, 'waiting');
+        const room = new Room(this, this.roomCodeManager.generateCode(), null, null, this.gameEssentials, 'waiting');
         room.joinGame(playerWhoCreated);
         this.socketInformation.allGameRooms.push(room);
     }

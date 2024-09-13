@@ -63,7 +63,7 @@ const dynamicParseStringToPrimitives = (str) => {
     try {
         return BigInt(str.endsWith('n') ? str.slice(0, -1) : str);
     } catch (error) { }
-    
+
     return str; // Not parsing functions, regex and object
 }
 

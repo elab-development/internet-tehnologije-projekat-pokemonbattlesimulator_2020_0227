@@ -1,8 +1,8 @@
 const { Socket } = require("socket.io");
 
 /**
- * @typedef {{id: number, name: string, mana: number, atk: number}} MovesExpanded
- * @typedef {{id: number, name: string, stats: {hp: number, def: number}, moves: MovesExpanded[]}} PokemonExpanded
+ * @typedef {{id: number, name: string, mana: number, atk: number, type: {id: number, name: string}}} MovesExpanded
+ * @typedef {{id: number, name: string, stats: {hp: number, def: number}, moves: MovesExpanded[], type: {id: number, name: string}[] }} PokemonExpanded
  * @typedef {{id: number, name: string, mana: number, selectedPokemonIndex: number, pokemons: PokemonExpanded[]}} SanitizedUser strips away socket object
  */
 /**
@@ -20,7 +20,7 @@ module.exports = class Player {
         this.id = id;
         this.username = username;
         this.pokemons = this.calcucaltePokemons(pokemons);
-        this.mana = 5;
+        this.mana = 7;
         this.selectedPokemonIndex = 0;
         this.leftTheGame = false;
     }

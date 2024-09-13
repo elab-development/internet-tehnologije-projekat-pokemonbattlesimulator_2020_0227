@@ -12,14 +12,16 @@ module.exports = class Room {
      * @param {Player} player2 player two (one who joined)
      * @param {'waiting' | 'playing'} status represents the current state of the room
      * @param {boolean} turn true if its player1 turn, else its false
+     * @param {{movesEffectivenesses: { attackerTypeId: number; defenderTypeId: number; effectivness: string;}[]}} essentialsRef 
      */
-    constructor(observer, roomId, player1, player2, status = 'waiting') {
+    constructor(observer, roomId, player1, player2, essentialsRef, status = 'waiting') {
         this.observer = observer;
         this.roomId = roomId;
         this.player1 = player1;
         this.player2 = player2;
         this.status = status;
         this.turn = true;
+        this.essentialsRef = essentialsRef;
     }
 
     get broadcastOperator() {
@@ -41,10 +43,10 @@ module.exports = class Room {
     }
 
     /**
-     * performs action
-     * @param {number} userId user that requests an action
-     * @param {'attack' | 'switch'} type 
-     * @param {number} id either moveId or pokemonIndex
+     * Performs action of type `'attack' | 'switch' | 'skip'`
+     * @param {number} userId User that requests an action
+     * @param {'attack' | 'switch' | 'skip'} type  type of attack
+     * @param {number} id Either moveId or pokemonIndex, if skip ommited then dont provide anything
      */
     action(userId, type, id) {
         const currentPlayer = this.turn ? this.player1 : this.player2;
@@ -58,10 +60,14 @@ module.exports = class Room {
         if (type === 'attack') {
             end = this.handleAttack(currentPlayer, opponentPlayer, id);
             this.turn = !this.turn;
-            currentPlayer.mana += 3;
-        } else {
+            currentPlayer.mana += 7;
+        } else if (type === 'switch') {
             this.handleSwitch(currentPlayer, id);
+        } else if (type === 'skip') {
+            this.turn = !this.turn;
+            currentPlayer.mana += 7;
         }
+
 
         this.player1.socket.emit('game:update', {
             ...this.generateStateForPlayer(),
@@ -97,8 +103,11 @@ module.exports = class Room {
 
         currentPlayer.mana -= selectedMove.mana;
 
-        // ATK * (DEF/MAX_DEF)/2 -> Maksimalno može da se smanji napad za 50%
-        const damage = selectedMove.atk * (1 - opponentPokemon.stats.def / (200 * 2));
+        // ATK * (DEF/(MAX_DEF * 2))/2 -> DEF maksimalno može da se smanji napad za 50%
+        const effectivness = this.essentialsRef.movesEffectivenesses.find(val =>
+            val.attackerTypeId === selectedMove.type.id && opponentPokemon.type.some(t => t.id === val.defenderTypeId)
+        )?.effectivness ?? 1;
+        const damage = (selectedMove.atk * (1 - opponentPokemon.stats.def / (100 * 2 * 2))) * effectivness;
         opponentPokemon.stats.hp -= damage > 0 ? damage : 0;
 
         if (opponentPlayer.stats.hp <= 0) {

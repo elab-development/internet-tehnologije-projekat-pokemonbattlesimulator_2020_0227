@@ -12,9 +12,7 @@ const server = require('http').createServer(app);
 // Middleware
 
 const PORT = process.env.PORT || 5001;
-
 app.use(express.json());
-
 app.get('/', (_, res) => {
     res.send('Api is running...');
 });
@@ -25,9 +23,19 @@ app.get('/', (_, res) => {
 
 
 // socket.io setup
+const handleSocketConnections = require('./config/socket');
 const { Server } = require('socket.io');
 const io = new Server(server);
 
-server.listen(PORT, () => {
-    console.log(`Serve is running on port ${PORT}`);
-});
+const startServer = async () => {
+    try {
+        await handleSocketConnections(io);
+
+        server.listen(PORT, () => {
+            console.log(`Server is running on port ${PORT}`);
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+startServer();

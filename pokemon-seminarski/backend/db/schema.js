@@ -52,7 +52,13 @@ const evolution = pgTable('evolution', {
     pokemonId: integer('pokemon_id').notNull().references(() => pokemons.id, { onDelete: 'cascade' }),
     evolvesToId: integer('evolves_to_id').references(() => pokemons.id, { onDelete: 'cascade' }),
     //expirienceRequired: integer('expirience_required').notNull(),
-})
+});
+
+
+const types = pgTable('types', {
+    id: serial('id').primaryKey(),
+    name: varchar('name', { length: 32 }).notNull()
+});
 
 const moves = pgTable('moves', {
     id: serial('id').primaryKey(),
@@ -70,14 +76,10 @@ const pokemonsMoves = pgTable('pokemons_moves', {
     pk: primaryKey({ columns: [t.moveId, t.pokemonId] })
 }));
 
-const types = pgTable('types', {
-    id: serial('id').primaryKey(),
-    name: varchar('name', { length: 32 }).notNull()
-});
 
 const typeEffectivness = pgTable('type_effectiveness', {
-    attackerTypeId: integer('id').notNull(),
-    defenderTypeId: integer('id').notNull(),
+    attackerTypeId: integer('attacker_type_id').notNull(),
+    defenderTypeId: integer('defender_type_id').notNull(),
     effectivness: numeric('effectivness', { precision: 2, scale: 1 }).notNull(),
 }, (t) => ({
     pk: primaryKey({ columns: [t.attackerTypeId, t.defenderTypeId] })
@@ -102,9 +104,7 @@ const games = pgTable('games', {
     id: serial('id').primaryKey(),
     user1Id: integer('user1_id').references(() => users.id, { onDelete: 'set null' }),
     user2Id: integer('user2_id').references(() => users.id, { onDelete: 'set null' }),
-}, (t) => ({
-    pk: primaryKey({ columns: [t.user1Id, t.user2Id] })
-}));
+});
 
 
 /*/*            Relations            */
@@ -240,7 +240,6 @@ module.exports = {
     types,
     typeEffectivness,
     passwordResetTokens,
-
 
     gameRelations,
     userRelations,

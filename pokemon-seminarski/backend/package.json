@@ -8,7 +8,7 @@
     "dev": "nodemon index.js",
     "db:generate": "drizzle-kit generate --schema=./db/schema.js --out=./db/migrations --dialect=postgresql",
     "db:generate:custom": "drizzle-kit generate --custom --schema=./db/schema.js --out=./db/migrations --dialect=postgresql",
-    "db:migrate": "npm run ./db/migrate.js",
+    "db:migrate": "npx drizzle-kit migrate --config=\"./db/migrate.js\"",
     "db:seed": "npm run ./db/seed.js"
   },
   "author": "",

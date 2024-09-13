@@ -130,6 +130,21 @@ module.exports = (io, socket, socketInformation, manager) => {
         }
     }
 
+    const skipTurn = () => {
+        const user = socketInformation.allConnectedUsers.find(cu => cu.socket.id === socket.id);
+        const game = socketInformation.allGameRooms.find(gr => gr.player1.id === user.id || gr.player2.id === user.id);
+
+        if (game == null || game.status !== 'playing') {
+            return socket.emit('game:action:failed', { message: "Can't leave the game when you are not in a game" });
+        }
+
+        try {
+            game.action(user.id, 'skip');
+        } catch (error) {
+
+        }
+    }
+
     const leaveGame = () => {
         const user = socketInformation.allConnectedUsers.find(cu => cu.socket.id === socket.id);
         const game = socketInformation.allGameRooms.find(gr => gr.player1.id === user.id || gr.player2.id === user.id);
@@ -150,5 +165,6 @@ module.exports = (io, socket, socketInformation, manager) => {
     socket.on("game:queue:leave", leaveQueue);
     socket.on("game:action:attack", attack);
     socket.on("game:action:switch", switchPokemon);
+    socket.on("game:action:skip", switchPokemon);
     socket.on("game:action:leave", leaveGame);
 }
