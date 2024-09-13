@@ -1,4 +1,4 @@
-const { updateUsersStatsDB } = require('../db/services/userServices');
+const { updateUsersStatsDB, updateUsersPokemonsDB } = require('../db/services/userServices');
 const Player = require('./Player');
 const RoomManager = require('./RoomManager');
 /**
@@ -159,10 +159,35 @@ module.exports = class Room {
         updateUsersStatsDB(this.player1.id, {
             won: checkP2,
             numOfDefeatedPokemon: this.player2.pokemons.reduce((acc, val) => val.stats.hp <= 0 ? acc + 1 : acc, 0),
+        }).then(async () => {
+            let coef = 1
+            if (this.player1.leftTheGame) return; // NO XP REWARD FOR FLEEING
+            if (this.player2.socket.disconnected) coef = 0.5 // ALL GOOD BUT COEF IS 0.5
+            if (checkP2) coef = coef * 1.4;
+            else coef = coef * 0.8;
+
+            const usersPokemonsPromises = this.player1.pokemons.map(async (val) => {
+                await updateUsersPokemonsDB(this.player1.id, val.id, { xp: val.xp + (coef * val.stats.hp <= 0 ? 0.8 : 1.1 * Math.floor(Math.random() * (30 - 15 + 1)) + 15) })
+            });
+            await Promise.all(usersPokemonsPromises);
+            console.log('updated userspokemons');
         }).catch((err) => console.error('some mf error' + err.message));
-        updateUsersStatsDB(this.player1.id, {
+
+        updateUsersStatsDB(this.player2.id, {
             won: checkP1,
-            numOfDefeatedPokemon: this.player1.pokemons.reduce((acc, val) => val.stats.hp <= 0 ? acc + 1 : acc, 0),
+            numOfDefeatedPokemon: this.player2.pokemons.reduce((acc, val) => val.stats.hp <= 0 ? acc + 1 : acc, 0),
+        }).then(async () => {
+            let coef = 1;
+            if (this.player2.leftTheGame) return; // NO XP REWARD FOR FLEEING
+            if (this.player1.socket.disconnected) coef = 0.5// ALL GOOD BUT COEF IS 0.5
+            if (checkP1) coef = coef * 1.4;
+            else coef = coef * 0.8;
+
+            const usersPokemonsPromises = this.player2.pokemons.map(async (val) => {
+                await updateUsersPokemonsDB(this.player2.id, val.id, { xp: val.xp + (coef * val.stats.hp <= 0 ? 0.8 : 1.1 * Math.floor(Math.random() * (30 - 15 + 1)) + 15) })
+            });
+            await Promise.all(usersPokemonsPromises);
+            console.log('updated userspokemons');
         }).catch((err) => console.error('some mf error' + err.message));
 
         this.delete();

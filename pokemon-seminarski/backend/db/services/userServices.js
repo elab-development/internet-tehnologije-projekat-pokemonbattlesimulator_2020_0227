@@ -224,10 +224,21 @@ const getUsersPokemonsDB = async (userId) => {
     const finalResult = Object.values(groupedResult);
     return finalResult;
 }
+const updateUsersPokemonsDB = async (userId, pokemonId, { xp } = {}) => {
+    // SAFE CHECK
+    if (userId == null || pokemonId == null || xp == null) {
+        throw new Error('Must provide both userId and pokemonId');
+    }
+    return (await db
+        .update(usersPokemons)
+        .set({ xp: xp })
+        .where(and(eq(usersPokemons.pokemonId, pokemonId), eq(usersPokemons.userId, userId)))
+    )
+}
 
 const deleteUsersPokemonDB = async (userId, pokemonId) => {
     //SAFE CHECK
-    if (userId == null && pokemonId == null) {
+    if (userId == null || pokemonId == null) {
         throw new Error('Must provide both userId and pokemonId');
     }
     return (await db.delete(usersPokemons).where(and(eq(usersPokemons.userId, userId), eq(usersPokemons.userId, userId))));
@@ -365,6 +376,7 @@ module.exports = {
     updateUsersStatsDB,
     getUsersMessagesDB,
     getUsersPokemonsDB,
+    updateUsersPokemonsDB,
     deleteUsersPokemonDB,
     evolvePokemonDB,
     deleteUserDB,

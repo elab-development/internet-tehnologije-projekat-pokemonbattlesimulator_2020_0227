@@ -2,7 +2,7 @@ const { Socket } = require("socket.io");
 
 /**
  * @typedef {{id: number, name: string, mana: number, atk: number, type: {id: number, name: string}}} MovesExpanded
- * @typedef {{id: number, name: string, stats: {hp: number, def: number}, moves: MovesExpanded[], type: {id: number, name: string}[] }} PokemonExpanded
+ * @typedef {{id: number, name: string, xp: number, stats: {hp: number, def: number}, moves: MovesExpanded[], type: {id: number, name: string}[] }} PokemonExpanded
  * @typedef {{id: number, name: string, mana: number, selectedPokemonIndex: number, pokemons: PokemonExpanded[]}} SanitizedUser strips away socket object
  */
 /**
