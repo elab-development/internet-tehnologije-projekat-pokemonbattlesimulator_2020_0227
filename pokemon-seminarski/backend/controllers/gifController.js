@@ -1,9 +1,16 @@
 const throttle = require('../utils/throttle');
-
-/** @type {import('express').RequestHandler<{}, any, any, qs.ParsedQs, Record<string, any>, import('express').NextFunction>}*/
+const axios = require('axios');
+/** 
+ * Get's gifs with provided query string
+ * @description     Gets gifs
+ * @route           GET /api/gifs
+ * @access          Private
+ * 
+ * @type {import('express').RequestHandler<{}, any, any, qs.ParsedQs, Record<string, any>, import('express').NextFunction>}
+ */
 const getGifs = async (req, res, next) => {
-    const { query = '' } = req.query;
-    const cacheKey = `/search?q=${query.trim()}`; // e.g., /search?q=...&limit=...
+    const { q: query = '' } = req.query;
+    const cacheKey = `/search?q=${query.trim()}`;
 
     // Store the cacheKey in res.locals for the setCache middleware
     res.locals.cacheKey = cacheKey;
@@ -11,12 +18,12 @@ const getGifs = async (req, res, next) => {
     try {
         // Throttle the API request
         const response = await throttle.enqueue(() => query.trim() === '' ?
-            axios.get(`${TENOR_BASE_URL}/featured`, {
+            axios.get(`${process.env.TENOR_BASE_URL}/featured`, {
                 params: {
                     key: process.env.TENOR_API_KEY
                 }
             })
-            : axios.get(`${TENOR_BASE_URL}/search`, {
+            : axios.get(`${process.env.TENOR_BASE_URL}/search`, {
                 params: {
                     q: query,
                     key: process.env.TENOR_API_KEY

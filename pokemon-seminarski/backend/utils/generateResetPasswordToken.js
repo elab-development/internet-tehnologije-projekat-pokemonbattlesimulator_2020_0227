@@ -58,19 +58,19 @@ const generateResetPasswordToken = (expiresIn = '10m') => {
 }
 
 /**
- * @param {string} token 
- * @param {string} hashedToken 
  * @param {{expiresAt: Date, createdAt: Date}} dateInfo 
  * @returns 
  */
-const validateResetPasswordToken = (token, hashedToken, dateInfo) => {
-    return (
-        crypto.createHash('sha256').update(token).digest('hex') === hashedToken
-        && (dateInfo != null && dateInfo.expiresAt != null ? dateInfo.expiresAt <= new Date() : true)
-    );
+const validateResetPasswordToken = (dateInfo) => {
+    return (dateInfo != null && dateInfo.expiresAt != null && dateInfo.expiresAt >= new Date());
+}
+
+const hashToken = (token) => {
+    return crypto.createHash('sha256').update(token).digest('hex');
 }
 
 module.exports = {
     generateResetPasswordToken,
-    validateResetPasswordToken
+    validateResetPasswordToken,
+    hashToken
 }

@@ -9,4 +9,6 @@ const model = 'gifs';
 
 // api/gifs
 
-router.route('/search', getFromCache(model), getGifs, setCache(model))
+router.route('/search').get(getFromCache(model), getGifs, setCache(model));
+
+module.exports = router

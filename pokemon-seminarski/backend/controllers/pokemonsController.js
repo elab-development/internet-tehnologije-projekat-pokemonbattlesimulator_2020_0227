@@ -1,4 +1,4 @@
-const { insertPokemonDB, insertBulkPokemonDB, getPokemonByIdDB, getPokemonsDB, deletePokemonDB } = require("../db/services/pokemonServices");
+const { insertPokemonDB, insertBulkPokemonDB, getPokemonByIdDB, getPokemonsDB, deletePokemonDB, updatePokemonDB } = require("../db/services/pokemonServices");
 const { ADMIN } = require("../enums/roles");
 const { parseIntegerStrict } = require("../utils/parsesForPrimitives");
 const { ResponseError } = require("../utils/typedefs");
@@ -19,13 +19,13 @@ const insertPokemons = async (req, res) => {
     }
 
     let { pokemons } = req.body;
-    let { id } = req.body;
+    let { id, defenseBase, healthPointsBase } = req.body;
 
     if (pokemons == null) {
-        pokemons = [{ id }];
+        pokemons = [{ id, defenseBase, healthPointsBase }];
     } else if (!Array.isArray(pokemons)) {
         pokemons = [pokemons];
-    } //else pokemons exist and is Array
+    } //else pokemons exist and is an Array
 
     let validatedArray;
     try {
@@ -36,12 +36,14 @@ const insertPokemons = async (req, res) => {
 
     try {
         if (validatedArray.length === 1) {
-            return res.status(201).json(await insertPokemonDB(validatedArray[0]));
+            let pokemon = await insertPokemonDB(validatedArray[0]);
+            return res.status(201).json({ message: "Success!!", pokemon: { ...pokemon } });
         } else {
             let result = await insertBulkPokemonDB(validatedArray);
             return res.status(201).json({ rowsInserted: result });
         }
     } catch (error) {
+        console.error(error);
         return res.status(500).json(new ResponseError(error.message));
     }
 }
@@ -65,7 +67,7 @@ const getPokemonById = async (req, res) => {
 
     try {
         const result = await getPokemonByIdDB(validatedPokemonId);
-        return res.status(200).json()
+        return res.status(200).json({ ...result })
     } catch (error) {
         return res.status(500).json(new ResponseError(error.message))
     }
@@ -98,15 +100,15 @@ const getPokemons = async (req, res) => {
 
 
     try {
-        const result = await getPokemonsDB(Object.keys({
-            offset,
-            limit,
-        }).forEach(key => obj[key] === undefined && delete obj[key]));
+        let obj = { offset, limit }
+        Object.keys(obj).forEach(key => obj[key] === undefined && delete obj[key])
+        const result = await getPokemonsDB({ ...obj });
+
 
         return res.status(200).json({
             totalCount: result.totalCount,
-            next: result.offset + result.limit >= result.totalCount ? null : `${process.env.HOST ?? `http://localhost:${process.env.PORT ?? 5000}`}/api/pokemons?offset=${result.offset + result.limit < 0 ? 0 : result.offset}&limit=${result.offset + 2 * result.limit > result.totalresult ? result.totalCount - result.limit : result.limit}`,
-            previous: offset === 0 ? null : `${process.env.HOST ?? `http://localhost:${process.env.PORT ?? 5000}`}/api/pokemons?offset=${(result.offset - result.limit < 0) ? 0 : (result.offset - result.limit > result.totalCount ? result.totalCount - result.limit : result.offset - result.limit)}&limit=${result.offset - result.limit < 0 ? result.offset : result.limit}`,
+            next: result.offset + result.limit >= result.totalCount ? null : `${process.env.HOST ?? `http://localhost:${process.env.PORT ?? 5000}`}/api/pokemons?offset=${result.offset + result.limit < 0 ? 0 : result.offset}&limit=${result.offset + 2 * result.limit > result.totalresult ? result.totalCount - result.limit : (result.limit <= 0 ? Math.min(20, result.totalCount) : result.limit)}`,
+            previous: result.offset === 0 ? null : `${process.env.HOST ?? `http://localhost:${process.env.PORT ?? 5000}`}/api/pokemons?offset=${(result.offset - result.limit < 0) ? 0 : (result.offset - result.limit > result.totalCount ? result.totalCount - result.limit : result.offset - result.limit)}&limit=${result.offset - result.limit < 0 ? result.offset : result.limit}`,
             data: result.pokemonsData
         });
     } catch (error) {
@@ -156,20 +158,27 @@ const updatePokemon = async (req, res) => {
         return res.status(401).json(new ResponseError('Unauthorized'));
     }
 
-    let { id } = req.params;
+    let reqId = req.params.id;
+    let { id, defenseBase, healthPointsBase } = req.body;
     let validatedPokemonId;
     try {
-        validatedPokemonId = z.number().int().parse(parseIntegerStrict(id));
+        validatedPokemonId = z.number().int().parse(parseIntegerStrict(reqId));
     } catch (error) {
         return res.status(400).json(new ResponseError('Bad Request', { id: 'Expected integer' }, 'params'))
     }
 
     try {
-        await deletePokemonDB(validatedPokemonId);
+        validatedUpdate = updatePokemonSchema.parse({ id, defenseBase, healthPointsBase });
+    } catch (error) {
+        return res.status(400).json(new ResponseError('Bad Request', error, 'body'))
+    }
+
+    try {
+        await updatePokemonDB(validatedPokemonId);
         return res.status(204).send();
     } catch (error) {
         return res.status(500).json(new ResponseError(error.message));
-    }   
+    }
 }
 
 

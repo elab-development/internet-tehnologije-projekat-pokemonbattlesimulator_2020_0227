@@ -38,7 +38,7 @@ const parseIntegerStrict = (str, returnOriginal = false) => {
  * @param {string} str 
  * @param {{negative: boolean, positive: boolean, zero: boolean}} options
  */
-const isStringInteger = (str, { negative = true, positive = true, zero = true }) => {
+const isStringInteger = (str, { negative = true, positive = true, zero = true } = {}) => {
     if (!negative && !positive && !zero) throw new Error('Select at least one option');
     let test;
     test = /^-?\d+$/.test(String(str)) && Number.isSafeInteger(+str);

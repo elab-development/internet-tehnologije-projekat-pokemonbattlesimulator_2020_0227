@@ -1,4 +1,4 @@
-const { SQL, desc, count, asc, inArray, and, eq } = require('drizzle-orm');
+const { SQL, desc, count, asc, inArray, and, eq, or } = require('drizzle-orm');
 const db = require('../../config/db');
 const { games } = require('../schema');
 
@@ -13,7 +13,7 @@ const { games } = require('../schema');
  * // To get all games of one user
  * data = getGamesDB({user = [1]})
  * */
-const getGamesDB = async ({ limit = 10, offset = 0, gameId = undefined, user = undefined, winner = undefined, loser = undefined, orderByAsc = false }) => {
+const getGamesDB = async ({ limit = 10, offset = 0, gameId = undefined, user = undefined, winner = undefined, loser = undefined, /*orderByAsc = false*/ }) => {
     if (typeof gameId === 'number') {
         gameId = [gameId];
     }
@@ -46,7 +46,13 @@ const getGamesDB = async ({ limit = 10, offset = 0, gameId = undefined, user = u
         }
     }
     const [{ value: totalCount }] = await db.select({ value: count() }).from(games).where(...checks);
-    const gamesData = await db.select().from(messages).where(...checks).offset(offset).limit(limit).orderBy(orderByAsc ? asc(games.createdAt) : desc(games.createdAt));
+    const gamesData = await db
+        .select()
+        .from(games)
+        .where(...checks)
+        .offset(offset)
+        .limit(limit)
+        //.orderBy();
 
     return { totalCount, offset, limit, gamesData }
 

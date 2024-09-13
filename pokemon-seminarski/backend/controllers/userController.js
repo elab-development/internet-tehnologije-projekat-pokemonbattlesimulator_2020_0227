@@ -2,14 +2,15 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const generateToken = require('../utils/generateToken');
 const { stringToBoolean, isStringInteger, parseIntegerStrict, dynamicParseStringToPrimitives } = require('../utils/parsesForPrimitives');
-const { getUserByUsername, createUser, getUserById, getUserByEmail, updateUserDB, getUsersPokemonsDB, deleteUserDB, getUsersMessagesDB, insertResetPasswordToken, getResetPasswordToken, getUserDB, getUsersDB, deleteUsersPokemonDB, evolvePokemonDB } = require('../db/services/userServices');
+const { getUserByUsername, createUser, getUserById, getUserByEmail, updateUserDB, getUsersPokemonsDB, deleteUserDB, getUsersMessagesDB, insertResetPasswordToken, getResetPasswordToken, getUserDB, getUsersDB, deleteUsersPokemonDB, evolvePokemonDB, deleteResetPasswordToken } = require('../db/services/userServices');
 const { insertUserSchema, selectUserSchema, selectUserPokemonsSchema, updateUserSchema, usernameWeakValidation } = require('../validations/userValidation');
 const { ZodError, z, ZodIssueCode } = require('zod');
 const { ADMIN } = require('../enums/roles');
 const { ResponseError } = require('../utils/typedefs');
-const { generateResetPasswordToken, validateResetPasswordToken } = require('../utils/generateResetPasswordToken');
+const { generateResetPasswordToken, validateResetPasswordToken, hashToken } = require('../utils/generateResetPasswordToken');
 const { sendPasswordResetEmail } = require('../utils/sendPasswordResetEmail');
 const { validateToken } = require('../utils/validateToken');
+const { ConsoleLogWriter } = require('drizzle-orm');
 
 /**
  * @description     Login user & get token
@@ -32,11 +33,6 @@ const loginUser = async (req, res) => {
     }
 
     let { username, email, password } = req.body;
-    /*try {
-        username = usernameWeakValidation.parse(username);
-    } catch (error) {
-        return res.status(400).json(new ResponseError('Invalid username', error, 'body', 'username'));
-    }*/
     let user;
 
     try {
@@ -50,7 +46,7 @@ const loginUser = async (req, res) => {
     }
 
     try {
-        user = (await getUserDB({ username, email, password }))[0];
+        user = (await getUserDB({ username }))[0];
     } catch (error) {
         return res.status(500).json(new ResponseError(error.message));
     }
@@ -58,7 +54,7 @@ const loginUser = async (req, res) => {
     if (user && (await bcrypt.compare(String(password), user.password))) {
         return res.status(200).json({
             ...(selectUserSchema.parse(user)),
-            token: generateToken(user.id)
+            token: generateToken({ id: user.id })
         });
     } else {
         return res.status(401).json(new ResponseError('Invalid credentials'));
@@ -98,6 +94,7 @@ const registerUser = async (req, res) => {
             token: generateToken(user.id)
         });
     } catch (err) {
+        console.error(err);
         if (err instanceof ZodError) {
             return res.status(400).json(new ResponseError('Bad Request', err, 'body'));
         } else {
@@ -151,7 +148,7 @@ const getUser = async (req, res) => {
 /**
  * @description     Gets array of users
  * @route           GET /api/users
- * @access          Private
+ * @access          Public
  * 
  * @type {import('express').RequestHandler<{param: string}, any, any, qs.ParsedQs, Record<string, any>}
  */
@@ -181,20 +178,18 @@ const getUsers = async (req, res) => {
     let queryUsername = req.body.queryUsername;
 
     try {
-        const result = await getUsersDB(Object.keys({
-            offset,
-            limit,
-            userIds,
-            queryUsername
-        }).forEach(key => obj[key] === undefined && delete obj[key]));
+        let obj = { offset, limit, userIds, queryUsername };
+        Object.keys({ offset, limit, userIds, queryUsername }).forEach(key => obj[key] === undefined && delete obj[key]);
+        const result = await getUsersDB(obj);
 
         return res.status(200).json({
             totalCount: result.totalCount,
-            next: result.offset + result.limit >= result.totalCount ? null : `${process.env.HOST ?? `http://localhost:${process.env.PORT ?? 5000}`}/api/users?offset=${result.offset + result.limit < 0 ? 0 : result.offset}&limit=${result.offset + 2 * result.limit > result.totalresult ? result.totalCount - result.limit : result.limit}`,
-            previous: offset === 0 ? null : `${process.env.HOST ?? `http://localhost:${process.env.PORT ?? 5000}`}/api/users/${userId}/messages?offset=${(result.offset - result.limit < 0) ? 0 : (result.offset - result.limit > result.totalCount ? result.totalCount - result.limit : result.offset - result.limit)}&limit=${result.offset - result.limit < 0 ? result.offset : result.limit}`,
+            next: result.offset + result.limit >= result.totalCount ? null : `${process.env.HOST ?? `http://localhost:${process.env.PORT ?? 5000}`}/api/users?offset=${result.offset + result.limit < 0 ? 0 : result.offset}&limit=${result.offset + 2 * result.limit > result.totalresult ? result.totalCount - result.limit : (result.limit <= 0 ? Math.min(20, result.totalCount) : result.limit)}`,
+            previous: result.offset === 0 ? null : `${process.env.HOST ?? `http://localhost:${process.env.PORT ?? 5000}`}/api/users?offset=${(result.offset - result.limit <= 0) ? 0 : (result.offset - result.limit > result.totalCount ? result.totalCount - result.limit : result.offset - result.limit)}&limit=${result.offset - result.limit < 0 ? result.offset : result.limit}`,
             data: result.usersData
         });
     } catch (error) {
+        console.error(error);
         return res.status(500).json(new ResponseError(error.message));
     }
 }
@@ -262,6 +257,10 @@ const evolvePokemon = async (req, res) => {
             return res.status(404).json(new ResponseError("Pokemon not found"));
         }
 
+        if (pokemonToEvolve.xp < 100) {
+            return res.status(404).json(new ResponseError("Bad Request - you need 100 xp to evolve pokemone and you have" + pokemonToEvolve.xp + " xp."));
+
+        }
         if (usersPokemons.some(val => val.id === pokemonToEvolve.evolvesToPokemonId)) {
             return res.status(400).json(new ResponseError("Bad Request - you already own the evolved version of this pokemon"));
         }
@@ -338,7 +337,8 @@ const updateUser = async (req, res) => {
         // Ako je admin napravio request
         if (req.user.role === ADMIN) {
             let id = z.number().int().parse(parseIntegerStrict(param)); // Baca ZodError ako nije moj tip Integer-a
-            if ((await getUserById(id))) {
+            let userToUpdate = await getUserById(id);
+            if (!userToUpdate) {
                 return res.status(404).json(new ResponseError('User not found'));
             }
             await updateUserDB({ id, ...user });
@@ -409,30 +409,25 @@ const getUsersMessages = async (req, res) => {
     }
 
     let x;
-    offset = req.query.offset == null ? parseInt(req.query.offset, 10) : undefined;
-    limit = req.query.limit == null && (x = parseInt(req.query.limit, 10)) !== 0 ? x : undefined; //if 0 then default value
+    offset = req.query.offset != null ? parseInt(req.query.offset, 10) : undefined;
+    limit = req.query.limit != null && (x = parseInt(req.query.limit, 10)) !== 0 ? x : undefined; //if 0 then default value
     chatsWith = req.query.chatsWith ? parseInt(req.query.chatsWith, 10) : undefined;
 
 
     try {
-        const result = await getUsersMessagesDB(Object.keys({
-            userId,
-            offset,
-            limit,
-            chatsWith,
-            receivedMessages,
-            sentMessages,
-            orderByAsc
-        }).forEach(key => obj[key] === undefined && delete obj[key]));
+        let obj = { userId, offset, limit, chatsWith, receivedMessages, sentMessages, orderByAsc };
+        Object.keys(obj).forEach(key => obj[key] === undefined && delete obj[key]);
+        const result = await getUsersMessagesDB({ ...obj });
 
         return res.status(200).json({
             totalCount: result.totalCount,
-            next: result.offset + result.limit >= totalCount ? null : `${process.env.HOST ?? `http://localhost:${process.env.PORT ?? 5000}`}/api/users/${userId}/messages?offset=${result.offset + result.limit < 0 ? 0 : result.offset}&limit=${result.offset + 2 * result.limit > result.totalresult ? result.totalCount - result.limit : result.limit}${chatsWith != null && '&chatsWith=' + chatsWith}${receivedMessages != null && '&recivedMessages=' + receivedMessages}${sentMessages != null && '&sentMessages=' + sentMessages}&orderByAsc=${orderByAsc ?? false}`,
-            previous: offset === 0 ? null : `${process.env.HOST ?? `http://localhost:${process.env.PORT ?? 5000}`}/api/users/${userId}/messages?offset=${(result.offset - result.limit < 0) ? 0 : (result.offset - result.limit > result.totalCount ? result.totalCount - result.limit : result.offset - result.limit)}&limit=${result.offset - result.limit < 0 ? result.offset : result.limit}${chatsWith != null && '&chatsWith=' + chatsWith}${receivedMessages != null && '&recivedMessages=' + receivedMessages}${sentMessages != null && '&sentMessages=' + sentMessages}&orderByAsc=${orderByAsc ?? false}`,
+            next: result.offset + result.limit >= result.totalCount ? null : `${process.env.HOST ?? `http://localhost:${process.env.PORT ?? 5000}`}/api/users/${userId}/messages?offset=${result.offset + result.limit < 0 ? 0 : result.offset}&limit=${result.offset + 2 * result.limit > result.totalresult ? result.totalCount - result.limit : (result.limit <= 0 ? Math.min(20, result.totalCount) : result.limit)}${chatsWith != null ? '&chatsWith=' + chatsWith : ""}${receivedMessages != null ? '&recivedMessages=' + receivedMessages : ""}${sentMessages != null ? '&sentMessages=' + sentMessages : ""}&orderByAsc=${orderByAsc ?? false}`,
+            previous: result.offset === 0 ? null : `${process.env.HOST ?? `http://localhost:${process.env.PORT ?? 5000}`}/api/users/${userId}/messages?offset=${(result.offset - result.limit <= 0) ? 0 : (result.offset - result.limit > result.totalCount ? result.totalCount - result.limit : result.offset - result.limit)}&limit=${result.offset - result.limit < 0 ? result.offset : result.limit}${chatsWith != null ? '&chatsWith=' + chatsWith : ""}${receivedMessages != null ? '&recivedMessages=' + receivedMessages : ""}${sentMessages != null ? '&sentMessages=' + sentMessages : ""}&orderByAsc=${orderByAsc ?? false}`,
             data: result.messagesData
         });
 
     } catch (error) {
+        console.error(error)
         return res.status(500).json(new ResponseError(error.message));
     }
 }
@@ -447,6 +442,7 @@ const getUsersMessages = async (req, res) => {
  * @type {import('../utils/typedefs').DefaultHandler}
  */
 const requestUserPasswordReset = async (req, res) => {
+    console.log('request password')
     const { email } = req.body;
     try {
         z.string().email().parse(email);
@@ -483,28 +479,34 @@ const requestUserPasswordReset = async (req, res) => {
 const resetUserPassword = async (req, res) => {
     const { token } = req.params;
     const { newPassword } = req.body;
-
     let user;
+    let email;
+    let parsedPassword;
     try {
-        const result = await getResetPasswordToken(token);
-        if (!validateResetPasswordToken(token, result.token, { createdAt: result.createdAt, expiresAt: result.expiresAt })) {
+        const result = await getResetPasswordToken(hashToken(token));
+        if (!validateResetPasswordToken(result)) {
             return res.status(403).json(new ResponseError('Forbidden'));
         }
 
-        user = updateUserSchema.parse({
+        parsedPassword = updateUserSchema.parse({
             password: newPassword
         });
 
+        email = result.email;
     } catch (err) {
         if (err instanceof ZodError) {
             return res.status(401).json(new ResponseError('Bad Request', err, 'body'));
         }
+        console.error(err);
         return res.status(401).json(new ResponseError('Unauthorized - ' + err.message));
     }
 
     try {
-        await updateUserDB(user);
-        return res.status(201).send({});
+        user = await getUserByEmail(email);
+        await updateUserDB({ id: user.id, data: { password: parsedPassword.password } });
+        await deleteResetPasswordToken(user.email);
+        return res.status(201).send({ message: 'successful password reset' });
+
     } catch (error) {
         return res.status(500).json(new ResponseError(error.message));
     }

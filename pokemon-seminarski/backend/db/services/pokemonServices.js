@@ -41,10 +41,10 @@ const getPokemonByIdDB = async (id) => {
         .where(eq(pokemons.id, id))
 
     const accumulatedPokemon = pokemonData.reduce((acc, row) => {
-        if (row.move?.id != null && acc[row.id].moves.some((val) => val.id === row.move.id)) {
+        if (row.move?.id != null && acc.moves.every((val) => val.id !== row.move.id)) {
             acc.moves.push(row.move);
         }
-        if (row.type?.id != null && acc[row.id].type.some((val) => val.id === row.type.id)) {
+        if (row.type?.id != null && acc.type.every((val) => val.id !== row.type.id)) {
             acc.type.push(row.type);
         }
         return acc;
@@ -52,8 +52,8 @@ const getPokemonByIdDB = async (id) => {
         id: pokemonData[0].id,
         baseStats: pokemonData[0].baseStats,
         evolvesToPokemonId: pokemonData[0].evolvesToPokemonId,
-        moves: [],
-        type: []
+        type: [],
+        moves: []
     });
 
     return accumulatedPokemon;
@@ -106,10 +106,10 @@ const getPokemonsDB = async ({ offset = 0, limit = 10 }) => {
                 evolvesToPokemonId: row.evolvesToPokemonId
             }
         }
-        if (row.move?.id != null && acc[row.id].moves.some((val) => val.id === row.move.id)) {
+        if (row.move?.id != null && acc[row.id].moves.every((val) => val.id !== row.move.id)) {
             acc[row.id].moves.push(row.move);
         }
-        if (row.type?.id != null && acc[row.id].type.some((val) => val.id === row.type.id)) {
+        if (row.type?.id != null && acc[row.id].type.every((val) => val.id !== row.type.id)) {
             acc[row.id].type.push(row.type);
         }
 
@@ -122,13 +122,13 @@ const getPokemonsDB = async ({ offset = 0, limit = 10 }) => {
 }
 
 /**@param {import('../../utils/typedefs').PokemonTable} */
-const insertPokemonDB = async ({ id }) => {
-    return (await db.insert(pokemons).values({ id }).returning())[0];
+const insertPokemonDB = async ({ id, defenseBase, healthPointsBase }) => {
+    return (await db.insert(pokemons).values({ id, defenseBase, healthPointsBase }).returning())[0];
 }
 
 /**@param {import('../../utils/typedefs').PokemonTable[]} pokemons */
-const insertBulkPokemonDB = async (pokemons) => {
-    return (await db.insert(pokemons).values(pokemons).returning({ count: count() }));
+const insertBulkPokemonDB = async (pokemonsData) => {
+    return (await db.insert(pokemons).values(pokemonsData).returning()).length;
 }
 
 /**@param {number} id */

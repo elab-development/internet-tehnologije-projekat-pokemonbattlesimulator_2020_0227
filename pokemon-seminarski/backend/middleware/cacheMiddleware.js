@@ -1,4 +1,4 @@
-const cache = require('./cache');
+const cache = require('./../utils/cache');
 
 /** @type {(model: string) => import('express').RequestHandler<{}, any, any, qs.ParsedQs, Record<string, any>, import('express').NextFunction>} */
 const getFromCache = (model) => (req, res, next) => {

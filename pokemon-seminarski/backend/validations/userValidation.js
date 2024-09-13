@@ -49,7 +49,6 @@ module.exports = {
     insertUserSchema,
     selectUserSchema,
     selectUserSchemaFull,
-    selectUserPokemonsSchema,
     updateUserSchema,
     usernameWeakValidation,
     arrayOfUserIdValidation

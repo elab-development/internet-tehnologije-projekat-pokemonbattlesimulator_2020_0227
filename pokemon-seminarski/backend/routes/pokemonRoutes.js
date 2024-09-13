@@ -9,3 +9,5 @@ const router = express.Router();
 
 router.route('/').get(getPokemons).post(protect, insertPokemons)
 router.route('/:id').get(getPokemonById).delete(protect, deletePokemon).patch(protect, updatePokemon);
+
+module.exports = router;

@@ -15,6 +15,4 @@ router.route('/:param/messages').get(protect, getUsersMessages);
 router.route('/:param/pokemons').get(protect, getUsersPokemons);
 router.route('/:param/pokemons/:id').get(protect, evolvePokemon);
 
-
-
 module.exports = router;

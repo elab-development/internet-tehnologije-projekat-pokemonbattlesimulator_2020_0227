@@ -5,3 +5,5 @@ const { getMessages } = require('../controllers/messagesController');
 const router = express.Router();
 
 router.route('/').get(protect, getMessages);
+
+module.exports = router;

@@ -10,6 +10,9 @@ class Cache {
     }
 
     set(key, value, model) {
+        if (this.size() > 50) {
+            this.clear();
+        }
         const cacheKey = this._getCacheKey(key, model);
         const expirationTime = Date.now() + this.ttlSeconds * 1000;
         this.cache.set(cacheKey, { value, expirationTime });
@@ -35,6 +38,10 @@ class Cache {
 
     clear() {
         this.cache.clear();
+    }
+
+    size() {
+        this.cache.size;
     }
 }
 

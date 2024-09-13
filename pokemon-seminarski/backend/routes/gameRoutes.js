@@ -6,3 +6,5 @@ const router = express.Router();
 
 router.route('/').get(getGames);
 router.route('/:id').get(getGameById);
+
+module.exports = router;

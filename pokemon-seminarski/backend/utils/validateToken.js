@@ -13,7 +13,12 @@ const validateToken = async (token) => {
         val = token.split(' ')[1];
         const decoded = jwt.verify(val, process.env.JWT_SECRET);
 
-        return selectUserSchemaFull.parse(await getUserById(decoded.id));
+        let user = await getUserById(decoded.id);
+
+        if (!user) { // NEKAKO JE IZBRISAO NALOG I POKUŠAO DA SE ULOGUJE
+            throw new Error('just why');
+        }
+        return selectUserSchemaFull.parse(user);
     }
     throw new Error('no token provided');
 }

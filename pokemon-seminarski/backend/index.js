@@ -8,6 +8,11 @@ const server = require('http').createServer(app);
 
 
 // Routes
+const gameRoutes = require('./routes/gameRoutes');
+const gifRoutes = require('./routes/gifRoutes');
+const messagesRoutes = require('./routes/messageRoutes');
+const usersRoutes = require('./routes/userRoutes');
+const pokemonsRoutes = require('./routes/pokemonRoutes');
 
 // Middleware
 
@@ -18,6 +23,11 @@ app.get('/', (_, res) => {
 });
 
 // Route registrations
+app.use('/api/games', gameRoutes);
+app.use('/api/gifs', gifRoutes);
+app.use('/api/messages', messagesRoutes);
+app.use('/api/users', usersRoutes);
+app.use('/api/pokemons', pokemonsRoutes);
 
 // Middleware registrations
 

@@ -1,4 +1,4 @@
-const { eq, getTableColumns, asc, desc, count, inArray, ilike } = require("drizzle-orm");
+const { eq, getTableColumns, asc, desc, count, inArray, ilike, or, and, sql } = require("drizzle-orm");
 const db = require("../../config/db");
 const { users, usersStats, usersPokemons, messages, passwordResetTokens, pokemons, moves, pokemonsMoves, types, pokemonsTypes, evolution } = require("../schema");
 const { alias } = require("drizzle-orm/pg-core");
@@ -11,14 +11,14 @@ const { alias } = require("drizzle-orm/pg-core");
  * @param {CreateUserParams} param0
  */
 const createUser = async ({ username, email, password }) => {
-    return await db.transaction(async (tx) => {
-        let threePokemons = await tx.select().from(pokemons).orderBy(asc(pokemons.id)).limit(3);
-        if (threePokemons.length !== 3) return tx.rollback();
+    let threePokemons = await db.select().from(pokemons).orderBy(sql`RANDOM()`).limit(3);
+    //if (threePokemons.length !== 3) return; zažmurimo na jedno oko
 
-        let user = (await db.insert(users).values({ username: username, email: email, password: password }).returning())[0];
-        (await db.insert(usersPokemons).values(threePokemons.map(p => ({ pokemonId: p.id, userId: user.id }))));
-        return user;
-    })
+    let user = (await db.insert(users).values({ username: username, email: email, password: password }).returning())[0];
+
+    (await db.insert(usersStats).values({ userId: user.id }));
+    (await db.insert(usersPokemons).values(threePokemons.map(p => ({ pokemonId: p.id, userId: user.id }))));
+    return user;
 }
 
 
@@ -72,7 +72,7 @@ const getUserByEmail = async (email, populate = false) => {
     }
 
     if (populate) {
-        baseQuery.stats = usersStats;
+        baseQuery.stats = getTableColumns(usersStats);
     }
 
     const result = await db
@@ -88,7 +88,7 @@ const getUserByEmail = async (email, populate = false) => {
  * @param {{limit: number, offset: number, userIds: number[], queryUsername: string}} param0 
  * @returns 
  */
-const getUsersDB = async ({ limit = 1, offset = 10, userIds = [], queryUsername = undefined }) => {
+const getUsersDB = async ({ limit = 20, offset = 0, userIds = [], queryUsername = undefined }) => {
 
     let { password, email, ...baseQuery } = getTableColumns(users)
 
@@ -97,7 +97,7 @@ const getUsersDB = async ({ limit = 1, offset = 10, userIds = [], queryUsername 
         .from(users);
 
     const usersData = await db
-        .select(...baseQuery)
+        .select({ ...baseQuery })
         .from(users)
         .where(users.length > 0 ? inArray(users.id, userIds) : undefined, ilike(users.username, `%${queryUsername}%`))
         .orderBy(asc(users.id))
@@ -118,7 +118,7 @@ const getUserDB = async ({ userId = undefined, username = undefined, email = und
         email ? eq(users.email, email) : undefined,
         password ? eq(users.password, password) : undefined,
     ];
-
+    console.log('got here')
     const conditions = logicalConjunction ? and(...listOfConditions) : or(...listOfConditions)
 
     return (await db.select().from(users).where(conditions));
@@ -127,7 +127,8 @@ const getUserDB = async ({ userId = undefined, username = undefined, email = und
 // Error check to not cause massive update
 /** @param {import("../../utils/typedefs").UserTable} data */
 const updateUserDB = async ({ id, ...data }) => {
-    if (!data && id == null) throw new Error('Data to be updated, userId or email are not provided.');
+    console.log(id == null);
+    if (data == null || id == null) throw new Error('Data to be updated, userId or email are not provided.');
     await db.update(users).set({ ...data }).where(eq(users.id, id)).returning({ id: users.id });
 }
 
@@ -210,10 +211,10 @@ const getUsersPokemonsDB = async (userId) => {
                 createdAt: row.createdAt,
             }
         }
-        if (row.move?.id != null && acc[row.id].moves.some((val) => val.id === row.move.id)) {
+        if (row.move?.id != null && acc[row.id].moves.every((val) => val.id !== row.move.id)) {
             acc[row.id].moves.push(row.move);
         }
-        if (row.type?.id != null && acc[row.id].type.some((val) => val.id === row.type.id)) {
+        if (row.type?.id != null && acc[row.id].type.every((val) => val.id !== row.type.id)) {
             acc[row.id].type.push(row.type);
         }
 
@@ -233,27 +234,25 @@ const deleteUsersPokemonDB = async (userId, pokemonId) => {
 }
 
 const evolvePokemonDB = async (userId, pokemonId) => {
-    if (userId, pokemonId) throw new Error('Not provided anything user and/or pokemon');
-    return await db.transaction(async (tx) => {
-        let usersPokemon = (await tx
-            .select({
-                id: usersPokemons.id,
-                evolvesToId: evolution.evolvesToId
-            })
-            .from(usersPokemons)
-            .innerJoin(usersPokemons.pokemonId, pokemons.id)
-            .leftJoin(usersPokemons.pokemonId, evolution.pokemonId)
-            .where(eq(usersPokemons.pokemonId, pokemonId))
-            .limit(1)
-        )[0];
-        if (usersPokemon == null)
-            return tx.rollback(); // No pokemonid found in usersPokemons or pokemon doesnt exist
-        if (usersPokemon.evolvesToId == null)
-            return tx.rollback();
+    if (userId == null || pokemonId == null) throw new Error('Required data not provided');
+    let usersPokemon = (await db
+        .select({
+            id: usersPokemons.id,
+            evolvesToId: evolution.evolvesToId
+        })
+        .from(usersPokemons)
+        .innerJoin(usersPokemons.pokemonId, pokemons.id)
+        .leftJoin(usersPokemons.pokemonId, evolution.pokemonId)
+        .where(eq(usersPokemons.pokemonId, pokemonId))
+        .limit(1)
+    )[0];
+    if (usersPokemon == null)
+        throw new Error('How did you get this? - No pokemon is found to evolve') // No pokemonid found in usersPokemons or pokemon doesnt exist
+    if (usersPokemon.evolvesToId == null)
+        throw new Error("How did you get this? - Pokemon can't evolve to anything");
 
-        await tx.delete(usersPokemons).where(and(eq(usersPokemons.pokemonId, pokemonId), eq(usersPokemons.userId, userId)));
-        return (await tx.insert(usersPokemons).values({ pokemonId: pokemonId, userId: userId }).returning())[0];
-    });
+    await db.delete(usersPokemons).where(and(eq(usersPokemons.pokemonId, pokemonId), eq(usersPokemons.userId, userId)));
+    return (await db.insert(usersPokemons).values({ pokemonId: pokemonId, userId: userId }).returning())[0];
 }
 
 // Error check to not cause massive update
@@ -304,6 +303,7 @@ const getUsersMessagesDB = async ({ userId, offset = 0, limit = 10, chatsWith = 
         chatsWith ? or(eq(messages.senderUserId, chatsWith), eq(messages.receiverUserId, chatsWith)) : undefined
     );
 
+
     const [{ value: totalCount }] = await db
         .select({ value: count() })
         .from(messages)
@@ -312,7 +312,7 @@ const getUsersMessagesDB = async ({ userId, offset = 0, limit = 10, chatsWith = 
     const messagesData = await db
         .select()
         .from(messages)
-        .where(...conditions)
+        .where(conditions)
         .orderBy(orderByAsc ? asc(messages.createdAt) : desc(messages.createdAt))
         .offset(offset)
         .limit(limit)
@@ -345,8 +345,13 @@ const insertResetPasswordToken = async (email, hashedToken, expiresAt) => {
 /**
  * @param {string} hashedToken 
  */
-const getResetPasswordToken = async (token) => {
-    return (await db.select().from(passwordResetTokens).where(eq(passwordResetTokens, hashedToken)))[0];
+const getResetPasswordToken = async (hashedToken) => {
+    return (await db.select().from(passwordResetTokens).where(eq(passwordResetTokens.token, hashedToken)))[0];
+}
+
+const deleteResetPasswordToken = async (email) => {
+    if (email == undefined) throw new Error('email needs to be provided');
+    return (await db.delete(passwordResetTokens).where(eq(passwordResetTokens.email, email)));
 }
 
 module.exports = {
@@ -364,5 +369,6 @@ module.exports = {
     evolvePokemonDB,
     deleteUserDB,
     insertResetPasswordToken,
-    getResetPasswordToken
+    getResetPasswordToken,
+    deleteResetPasswordToken
 }
