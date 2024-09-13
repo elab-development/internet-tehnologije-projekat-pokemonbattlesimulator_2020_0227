@@ -49,8 +49,8 @@ const pokemons = pgTable('pokemons', {
 
 const evolution = pgTable('evolution', {
     id: serial('id').primaryKey(),
-    pokemonId: integer('pokemon_id').notNull().references(() => pokemons.id, { onDelete: 'cascade' }),
-    evolvesToId: integer('evolves_to_id').references(() => pokemons.id, { onDelete: 'cascade' }),
+    pokemonId: integer('pokemon_id').notNull().references(() => pokemons.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+    evolvesToId: integer('evolves_to_id').references(() => pokemons.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
     //expirienceRequired: integer('expirience_required').notNull(),
 });
 
@@ -70,24 +70,24 @@ const moves = pgTable('moves', {
 
 
 const pokemonsMoves = pgTable('pokemons_moves', {
-    moveId: integer('move_id').notNull(),
-    pokemonId: integer('pokemon_id').notNull()
+    moveId: integer('move_id').notNull().references(() => moves.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+    pokemonId: integer('pokemon_id').notNull().references(() => pokemons.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
 }, (t) => ({
     pk: primaryKey({ columns: [t.moveId, t.pokemonId] })
 }));
 
 
 const typeEffectivness = pgTable('type_effectiveness', {
-    attackerTypeId: integer('attacker_type_id').notNull(),
-    defenderTypeId: integer('defender_type_id').notNull(),
+    attackerTypeId: integer('attacker_type_id').notNull().references(() => types.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+    defenderTypeId: integer('defender_type_id').notNull().references(() => types.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
     effectivness: numeric('effectivness', { precision: 2, scale: 1 }).notNull(),
 }, (t) => ({
     pk: primaryKey({ columns: [t.attackerTypeId, t.defenderTypeId] })
 }));
 
 const pokemonsTypes = pgTable('pokemon_type', {
-    pokemonId: integer('pokemon_id').notNull(),
-    typeId: integer('type_id').notNull()
+    pokemonId: integer('pokemon_id').notNull().references(() => pokemons.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+    typeId: integer('type_id').notNull().references(() => types.id, { onDelete: 'cascade', onUpdate: 'cascade' })
 });
 
 const usersPokemons = pgTable('users_pokemons', {

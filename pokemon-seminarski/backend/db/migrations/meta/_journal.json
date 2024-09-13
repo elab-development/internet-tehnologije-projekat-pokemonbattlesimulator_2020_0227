@@ -15,6 +15,13 @@
       "when": 1726187199104,
       "tag": "0001_magical_boomer",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1726223444491,
+      "tag": "0002_mature_sugar_man",
+      "breakpoints": true
     }
   ]
 }
