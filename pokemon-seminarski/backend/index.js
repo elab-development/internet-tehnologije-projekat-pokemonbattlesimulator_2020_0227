@@ -4,7 +4,7 @@ require('./config/db');
 
 const app = express();
 const server = require('http').createServer(app);
-
+const cors = require('cors');
 
 
 // Routes
@@ -17,6 +17,7 @@ const pokemonsRoutes = require('./routes/pokemonRoutes');
 // Middleware
 
 const PORT = process.env.PORT || 5001;
+app.use(cors());
 app.use(express.json());
 app.get('/', (_, res) => {
     res.send('Api is running...');
@@ -35,7 +36,7 @@ app.use('/api/pokemons', pokemonsRoutes);
 // socket.io setup
 const handleSocketConnections = require('./config/socket');
 const { Server } = require('socket.io');
-const io = new Server(server);
+const io = require('socket.io')(server);
 
 const startServer = async () => {
     try {

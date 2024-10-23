@@ -1,4 +1,4 @@
-import React, { createContext, useRef, useState } from 'react'
+import React, { createContext, useEffect, useRef, useState } from 'react'
 
 /**
  * @typedef {{currentGame: number | null}} SocketInformation
@@ -24,8 +24,8 @@ import React, { createContext, useRef, useState } from 'react'
 /**
  * @typedef T_UserContextState
  * @property {User} info
- * @property {import("react").Dispatch<import('react').SetStateAction<T_UserContext>>} setUser
- * @property {string} token
+ * @property {import("react").Dispatch<import('react').SetStateAction<User>>} setInfo
+ * @property {import("react").MutableRefObject<string>} disconnectReason
  */
 
 /*@type {React.Context<import('react').MutableRefObject<T_UserContext>>} */
@@ -33,14 +33,20 @@ import React, { createContext, useRef, useState } from 'react'
 /**@type {React.Context<T_UserContextState>} */
 export const UserContext = createContext();
 
-export default UserContextProvider = ({ children }) => {
-    /**@type {[user: T_UserContext, setUser: import("react").Dispatch<import('react').SetStateAction<T_UserContext>>]} */
-    const  [user, setUser] = useState({info: null, token: ""});
-    
+const UserContextProvider = ({ children }) => {
+    /**@type {[user: User, setInfo: import("react").Dispatch<import('react').SetStateAction<User>>]} */
+    const [info, setInfo] = useState(null);
+    const disconnectReason = useRef("");
+
+    useEffect(() => {
+        console.log(info);
+    }, [info])
+
     return (
-        <UserContext.Provider value={{ user, setUser }}>
+        <UserContext.Provider value={{ info, setInfo, disconnectReason }}>
             {children}
         </UserContext.Provider>
     )
 }
+export default UserContextProvider;
 

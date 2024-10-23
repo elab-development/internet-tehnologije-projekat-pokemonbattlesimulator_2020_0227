@@ -1,5 +1,6 @@
 const throttle = require('../utils/throttle');
 const axios = require('axios');
+const { ResponseError } = require('../utils/typedefs');
 /** 
  * Get's gifs with provided query string
  * @description     Gets gifs
@@ -10,6 +11,7 @@ const axios = require('axios');
  */
 const getGifs = async (req, res, next) => {
     const { q: query = '' } = req.query;
+    if (typeof query !== 'string') return res.status(400).json(new ResponseError('Bad Request', { q: 'Expected string' }, 'query'))
     const cacheKey = `/search?q=${query.trim()}`;
 
     // Store the cacheKey in res.locals for the setCache middleware

@@ -1,8 +1,12 @@
 import { io } from 'socket.io-client';
 
-const URL = 'http://localhost:4000';
+//const URL = 'http://localhost:5000'; neće jer cors smrdljivi
 
-export const socket = io(URL, {
+export const socket = io({
     autoConnect: false,
-    auth: (cb) => cb(localStorage.getItem('token'))
+    reconnectionAttempts: 3,
+    auth: (cb) => {
+        //console.log(localStorage.getItem('token'))
+        return cb({ token: localStorage.getItem('token') })
+    }
 });

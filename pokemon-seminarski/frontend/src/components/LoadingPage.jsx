@@ -4,7 +4,7 @@ import { getRandomImage } from './assets/loadingPageAssets/loadingImages'
 const LoadingPage = () => {
   return (
     <div className='loading-page'>
-      <img src={getRandomImage()}></img>
+      <img src={getRandomImage()} alt=""></img>
       <p>Loading...</p>
     </div>
   )

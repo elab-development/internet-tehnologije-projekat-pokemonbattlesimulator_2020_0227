@@ -11,14 +11,14 @@ const GLOBAL_CHAT_ROOM = "chat:global";
  * @param {import("../utils/typedefs").SocketInformation} socketInformation
  */
 module.exports = (io, socket, socketInformation) => {
-    const messageGlobal = (text) => {
+    const messageGlobal = (data) => {
         const user = socketInformation.allConnectedUsers.find((user) => user.socket.id === socket.id);
         const message = {
             id: user.id,
             username: user.username,
-            message: text,
+            message: data?.message,
         }
-        io.to(GLOBAL_ROOM).emit('message:global:received', message);
+        io.to(GLOBAL_CHAT_ROOM).emit('message:global:received', message);
     }
 
     const messageFriend = async (friend, text) => {

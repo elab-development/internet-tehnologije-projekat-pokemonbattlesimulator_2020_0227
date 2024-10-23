@@ -17,11 +17,6 @@ const { ResponseError } = require('../utils/typedefs');
  * @type {import('../utils/typedefs').DefaultHandler}
  */
 const getMessages = async (req, res) => {
-    if (req.user.role !== ADMIN &&
-        (user1 != null && typeof user1 === 'number' && req.user.id !== user1) || (user2 != null && typeof user2 === 'number' && req.user.id === user2)) {
-        return res.status(401).json(new ResponseError("Not authorized - Can't request messages between other users"));
-    }
-
     let zerrors = new ZodError([]);
     let user1 = undefined, user2 = undefined;
 
@@ -37,12 +32,13 @@ const getMessages = async (req, res) => {
             zerrors.addIssue({ code: ZodIssueCode.invalid_type, path: ["user1"], message: 'Expected integer or array of integers' });
         } else {
             user1 = req.query.user1.map((val) => dynamicParseStringToPrimitives(val));
-            zerrors.addIssues(
-                arrayOfUserIdValidation.safeParse(user1).error?.issues.map((val) => {
-                    val.path.unshift('user1');
-                    return val;
-                })
-            );
+            let issues = arrayOfUserIdValidation.safeParse(user1).error?.issues.map((val) => {
+                val.path.unshift('user1');
+                return val;
+            });
+            console.log('user1')
+            console.log(issues);
+            if (issues) zerrors.addIssues(issues);
         }
     }
     if (req.query.user2 != null && !isStringInteger(req.query.user2)) {
@@ -50,22 +46,34 @@ const getMessages = async (req, res) => {
             zerrors.addIssue({ code: ZodIssueCode.invalid_type, path: ["user2"], message: 'Expected integer or array of integers' });
         } else {
             user2 = req.query.user2.map((val) => dynamicParseStringToPrimitives(val));
-            zerrors.addIssues(
-                arrayOfUserIdValidation.safeParse(user2).error?.issues.map((val) => {
-                    val.path.unshift('user2');
-                    return val;
-                })
-            );
+            let issues = arrayOfUserIdValidation.safeParse(user2).error?.issues.map((val) => {
+                val.path.unshift('user2');
+                return val;
+            })
+            console.log('user2')
+            console.log(issues);
+            if (issues) zerrors.addIssues(issues);
         }
     }
-    zerrors.addIssue(directionMessageValidation.optional().safeParse(req.query.direction).error?.issues);
+    let issue = directionMessageValidation.optional().safeParse(req.query.direction).error?.issues;
+    if (issue) zerrors.addIssue(issue);
 
-    if (zerrors.issues.length !== 0) {
+    if (!zerrors.isEmpty) {
         return res.status(400).json(new ResponseError('Bad Request', zerrors, 'query'));
     }
 
     user1 = user1 ?? (req.query.user1 ? parseInt(req.query.user1, 10) : null);
     user2 = user2 ?? (req.query.user2 ? parseInt(req.query.user2, 10) : null);
+
+
+    if (req.user.role !== ADMIN &&
+        !(user1 != null && typeof user1 === 'number' && req.user.id === user1) &&
+        !(user2 != null && typeof user2 === 'number' && req.user.id === user2)
+    ) return res.status(401).json(new ResponseError("Not authorized - Can't request messages between other users"));
+
+
+
+
     let { direction, q } = req.query;
     let x;
     let offset = req.query.offset != null ? parseInt(req.query.offset, 10) : undefined;
@@ -83,6 +91,7 @@ const getMessages = async (req, res) => {
             data: result.messagesData
         });
     } catch (error) {
+        console.error(error);
         return res.status(500).json(new ResponseError(error.message));
     }
 }

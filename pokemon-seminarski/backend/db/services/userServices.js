@@ -2,6 +2,7 @@ const { eq, getTableColumns, asc, desc, count, inArray, ilike, or, and, sql } = 
 const db = require("../../config/db");
 const { users, usersStats, usersPokemons, messages, passwordResetTokens, pokemons, moves, pokemonsMoves, types, pokemonsTypes, evolution } = require("../schema");
 const { alias } = require("drizzle-orm/pg-core");
+const { escapeLikePattern } = require("../../utils/sqlParser");
 
 /**
  * @typedef {Object} CreateUserParams
@@ -94,12 +95,13 @@ const getUsersDB = async ({ limit = 20, offset = 0, userIds = [], queryUsername 
 
     const [{ value: totalCount }] = await db
         .select({ value: count() })
-        .from(users);
+        .from(users)
+        .where(and(userIds.length > 0 ? inArray(users.id, userIds) : undefined, ilike(users.username, `%${escapeLikePattern(queryUsername) ?? ""}%`)));
 
     const usersData = await db
         .select({ ...baseQuery })
         .from(users)
-        .where(users.length > 0 ? inArray(users.id, userIds) : undefined, ilike(users.username, `%${queryUsername}%`))
+        .where(and(userIds.length > 0 ? inArray(users.id, userIds) : undefined, ilike(users.username, `%${escapeLikePattern(queryUsername) ?? ""}%`)))
         .orderBy(asc(users.id))
         .offset(offset)
         .limit(limit);

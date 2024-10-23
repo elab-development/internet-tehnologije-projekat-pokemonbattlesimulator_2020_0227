@@ -72,7 +72,7 @@ class ResponseError {
                 _errors: [validationErrors] // Form errors - suggested to call
             };
         } else if (validationErrors instanceof Object && Object.getPrototypeOf(validationErrors) == Object.prototype) {
-            this.validationErrors = createZodErrorFormat(validationErrors); // Prosleđivanje ručno
+            this.validationErrors = ResponseError.createZodErrorFormat(validationErrors); // Prosleđivanje ručno
 
         } else {
             this.validationErrors = validationErrors;
@@ -105,7 +105,7 @@ class ResponseError {
                 formattedError[key] = createZodErrorFormat(obj[key]);
             } else {
                 // Add an error message for the current key
-                formattedError[key] = { _errors: [`Invalid value for ${key}`] };
+                formattedError[key] = { _errors: [`${obj[key]}`] };
             }
         }
 

@@ -1,3 +1,4 @@
+import { socket } from "../sockets/sockets";
 
 /**
  * 
@@ -29,7 +30,6 @@ function addPrivateMessages(ourId, messages, setUsersCallback, options = { newMe
                     username: user.username,
                     newMessage: false,
                     messages: [msg],
-                    newMessage: false,
                     fetched: false,
                 });
             }
@@ -56,7 +56,7 @@ function addPrivateMessages(ourId, messages, setUsersCallback, options = { newMe
 
 
 function sendPrivateMessageTo(receiverId, message) {
-    socket.emit('chat:message:private', { receiver: userId, message: message });
+    socket.emit('chat:message:private', { receiver: receiverId, message: message });
 }
 
 function sendGlobalMessage(message) {

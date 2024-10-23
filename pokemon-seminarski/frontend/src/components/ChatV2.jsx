@@ -30,7 +30,7 @@ const ChatV2 = () => {
     /**@type {[GlobalMessage[], React.Dispatch<React.SetStateAction<GlobalMessage[]>>]} */    // GLOBALMESSAGES -> ID === 0
     const [globalMessages, setGlobalMessages] = useState([]);
     const [isNewGlobal, setIsNewGlobal] = useState(false);
-    
+
     const [isFriendSearchOpen, setIsFriendSearchOpen] = useState(false);
     /**@type {[UsersResult[], React.Dispatch<React.SetStateAction<UsersResult[]>>]} */
     const [usersQueryResult, setUsersQueryResult] = useState([]);
@@ -50,7 +50,7 @@ const ChatV2 = () => {
     }, [])
     const changeNamespace = useCallback((namespaceId) => {
         let fetched = false;
-        if (!friends.some((val) => val.id === namespaceId && val.fetched === true)) {
+        if (friends.find((val) => val.id === namespaceId).fetched) {
             fetched = true;
         }
         setLoaded(prev => ({ ...prev, namespace: false }));
@@ -63,7 +63,7 @@ const ChatV2 = () => {
     }
     const handleOpenNewChat = async (namespaceId) => {
         if (info.id === namespaceId) return;
-        if (!friends.some((val) => val.id === namespaceId)) {
+        if (friends.every((val) => val.id !== namespaceId)) {
             let user;
             try {
                 user = (await API.get(`/users/${namespaceId}`)).data
@@ -94,11 +94,15 @@ const ChatV2 = () => {
             sendPrivateMessageTo(selectedNamespace, messageText);
         }
     }
+    const handleOpenFriend = () => {
+        setIsFriendSearchOpen(prev => !prev);
+    }
 
 
     // EVENT REGISTRATION
     useEffect(() => {
         function onGlobalMessageReceived(data) {
+            console.log(data);
             setIsNewGlobal(true);
             setGlobalMessages(prev => [...prev, data]);
         }
@@ -113,25 +117,32 @@ const ChatV2 = () => {
             socket.off('message:global:received', onGlobalMessageReceived);
             socket.off('message:private:received', onPrivateMessageReceived);
         }
-    }, []);
+    }, [info.id]);
 
     // INITAL LOAD FOR FRIENDS
     useEffect(() => {
         let friends = localStorage.getItem('friends');
         try {
-            friends = JSON.parse(friends);
+            friends = JSON.parse(friends ?? undefined);
         } catch (error) {
             console.log(error.message);
             friends = [];
             localStorage.setItem('friends', JSON.stringify(friends))
         }
-        API.get('/users', { data: { users: friends } }).then((result) => {
+        console.log('Friends i have: ', friends);
+        API.get('/users', {
+            params: { users: friends, l: 'y' }
+        }).then((result) => {
+            console.log(result);
+            console.log('Friends data i found: ', result.data);
             addFriends(result.data.data.map((user) => ({ ...user, fetched: false, newMessage: false })));
             setLoaded(prev => ({ ...prev, friends: true }))
         }).catch((err) => {
+            // NO FRIENDS FOUND OR QUERY IS BAD
+            setLoaded(prev => ({ ...prev, friends: true }));
             console.error(err);
         });
-    }, []);
+    }, [addFriends]);
 
     // LOAD MESSAGES FOR SELECTED NAMESPACE
     useEffect(() => {
@@ -140,7 +151,8 @@ const ChatV2 = () => {
             return;
         }
 
-        API.get(`/messages?user1=${info.id}&user2=${selectedNamespace}&direction=both`).then((result) => {
+        API.get(`/messages?user1=${info.id}&user2=${selectedNamespace.id}&direction=both`).then((result) => {
+            console.log(result.data);
             const messages = result.data.data;
             addPrivateMessages(info.id, messages, setFriends, { fetched: true });
             setLoaded(prev => ({ ...prev, namespace: true }));
@@ -149,14 +161,14 @@ const ChatV2 = () => {
             setSelectedNamespace({ id: GLOBAL_NAMESPACE, fetched: true });
             console.error(err);
         });
-    }, [selectedNamespace])
+    }, [selectedNamespace, info.id])
 
     // UPDATES LOCAL STORAGE
     useEffect(() => {
         (async () => { // async to offload the app
             if (friends.length > 0) {
                 try {
-                    const jsonified = JSON.parse(friends);
+                    const jsonified = JSON.stringify(friends);
                     localStorage.setItem('friends', jsonified);
                 } catch (error) {
                     console.error(error);
@@ -170,8 +182,9 @@ const ChatV2 = () => {
         const controller = new AbortController();
         const signal = controller.signal;
 
-        // setLoaded(prev => ({...prev, usersQuery: false})) -> AKO ME NE BUDE MRZELO
-        API.get('/users', { data: { queryUsername: usersQueryDebounced }, signal: signal }).then((result) => {
+        //setLoaded(prev => ({...prev, usersQuery: false})) -> AKO ME NE BUDE MRZELO
+        API.get(`/users?usernameQuery=${usersQueryDebounced}`, { signal: signal }).then((result) => {
+            console.log(result);
             setUsersQueryResult(result.data.data);
         }).catch((err) => {
             if (axios.isCancel(err)) {
@@ -194,7 +207,7 @@ const ChatV2 = () => {
         const controller = new AbortController();
         const signal = controller.signal;
 
-        API.get(`/gifs?q=${tenorQueryDebounced}`, { data: { queryUsername: tenorQueryDebounced }, signal: signal }).then((result) => {
+        API.get(`/gifs/search?q=${tenorQueryDebounced}`, { signal: signal }).then((result) => {
             setTenorQueryResult(result.data.data);
         }).catch((err) => {
             if (axios.isCancel(err)) {
@@ -209,7 +222,7 @@ const ChatV2 = () => {
         return () => {
             controller.abort();
         }
-    }, [usersQueryDebounced]);
+    }, [tenorQueryDebounced]);
 
 
 
@@ -250,11 +263,11 @@ const ChatV2 = () => {
                             : (
                                 loaded.namespace ?
                                     (
-                                        selectedNamespace === 0 ? globalMessages.map((val, index) => {
-                                            return <Message text={val.message} us={val.id === info.id} username={val.username} key={index} />
-                                        }) : friends.find((user) => user.id === selectedNamespace).messages.map((val) => {
-                                            return <Message text={val.message} us={val.sender.id === info.id} username={val.sender.username} />
-                                        })
+                                        selectedNamespace.id === GLOBAL_NAMESPACE ? globalMessages.map((val, index) =>
+                                            <Message text={val.message} us={val.id === info.id} username={val.username} key={index} />
+                                        ) : friends.find((user) => user.id === selectedNamespace).messages.map((val) =>
+                                            <Message text={val.message} us={val.sender.id === info.id} username={val.sender.username} />
+                                        )
                                     ) :
                                     (
                                         <p className='chat-loading-text'>loading...</p>

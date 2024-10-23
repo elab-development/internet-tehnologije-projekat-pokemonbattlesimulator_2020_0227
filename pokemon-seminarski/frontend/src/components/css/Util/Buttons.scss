@@ -1,0 +1,43 @@
+@import '../colors';
+
+@property --gradPoint {
+    syntax: '<percentage>';
+    inherits: false;
+    initial-value: 40%;
+}
+
+button {
+    display: block;
+    height: 38px;
+
+    &:hover {
+        cursor: pointer;
+    }
+}
+
+.button-full {
+    width: 158px;
+    border-radius: 20px;
+    border: 3px solid $light-purple;
+    background: radial-gradient(circle at center,
+            rgba($dark-purple, 0.7) 0 calc(var(--gradPoint) - 80%),
+            rgba($purple, 0.3) calc(var(--gradPoint) - 40%) calc(var(--gradPoint)),
+            $dark-purple calc(var(--gradPoint) + 40%));
+
+    transition: --gradPoint 0.25s ease-in-out,
+        box-shadow 0.15s ease-in-out;
+    transition-delay: 0, 0.1s; //Kako ne bi ranije izašao border box
+
+    &:hover {
+        --gradPoint: 100%;
+        box-shadow: inset 20px 0 20px -20px $light-purple, inset -20px 0 20px -20px $light-purple;
+    }
+
+    &:disabled {
+        color: gray;
+    }
+}
+
+.button-half {
+    width: 138px;
+}

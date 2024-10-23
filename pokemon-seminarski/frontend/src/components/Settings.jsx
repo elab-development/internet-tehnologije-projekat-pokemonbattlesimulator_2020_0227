@@ -47,38 +47,38 @@ const Settings = () => {
         let tempUserError = {}
 
         //check - email
-        if (input.email) {
-            let parseResult = z.string().email().optional().safeParse(input.email);
+        if (inputDebounced.email) {
+            let parseResult = z.string().email().optional().safeParse(inputDebounced.email);
             parseResult.error?.issues.forEach(val => zerrors.push("email - " + val.message));
             !parseResult.success && (tempUserError.email = true);
         }
 
         //check - inputname
-        if (input.username) {
+        if (inputDebounced.username) {
             let parseResult = z.string().min(3).max(15)
                 .regex(/^(?![_]).*(?<![_])$/, { message: "Can't begin or end with underscore" })
                 .regex(/^(?!.*[_]{2}).*$/, { message: "Can't have two underscores in succesion" })
                 .regex(/^[a-zA-Z0-9_]+$/, { message: "Only alphanumerical values " })
-                .safeParse(input.username)
+                .safeParse(inputDebounced.username)
             parseResult.error?.issues.forEach(val => zerrors.push("username - " + val.message))
             !parseResult.success && (tempUserError.username = true);
         }
 
         //check - password
-        if (input.password) {
+        if (inputDebounced.password) {
             let parseResult = z.string().min(5)
                 .regex(/^(?=.*?[A-Z]).*$/, { message: 'At least one big letter' }) // Barem jedno Jedno veliko slovo
                 .regex(/^(?=.*?[a-z]).*$/, { message: 'At least one small letter' }) // Barem jedno malo slovo
                 .regex(/^(?=.*?[0-9]).*$/, { message: 'At least one number' }) // Barem jedan broj
                 .regex(/^(?=.*?[#?!@$ %^&*-]).*$/, { message: 'At least one special character' }) //Barem jedan znak
-                .safeParse(input.password);
+                .safeParse(inputDebounced.password);
             parseResult.error?.issues.forEach(val => zerrors.push("password - " + val.message));
             !parseResult.success && (tempUserError.password = true);
 
         }
 
         //check - confirm
-        if (input.password && input.confirm && input.password !== input.confirm) {
+        if (inputDebounced.password && inputDebounced.confirm && inputDebounced.password !== inputDebounced.confirm) {
             zerrors.push("confirm password - not matching");
             tempUserError.confirm = true;
         }

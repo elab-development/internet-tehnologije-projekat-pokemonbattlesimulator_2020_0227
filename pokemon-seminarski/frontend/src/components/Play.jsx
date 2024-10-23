@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import PokemonCard from './utils/PokemonCard'
 import Collection from './Collection'
 import { socket } from './sockets/sockets';
-import { replace, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const Play = () => {
    const navigate = useNavigate();
@@ -50,7 +50,7 @@ const Play = () => {
          socket.off('game:queue:leave:success', onCancelGame);
          socket.off('game:queue:leave:failed');
       }
-   }, []);
+   }, [navigate]);
 
    return (
       <div className='choose-pokemon-screen'>

@@ -1,7 +1,8 @@
-const { and, SQL, inArray, ilike, desc } = require("drizzle-orm");
+const { and, SQL, inArray, ilike, desc, or, count, eq } = require("drizzle-orm");
 const db = require("../../config/db");
 const { messages, users } = require("../schema");
 const { alias } = require("drizzle-orm/pg-core");
+const { escapeLikePattern } = require("../../utils/sqlParser");
 
 /**
  * 
@@ -47,11 +48,11 @@ const getMessagesDB = async ({ offset = 0, limit = 10, user1 = undefined, user2 
                 ));
             } else if (user1 != null && user2 == null && user1.length > 0) { // user1 <=> any -> proveravamo length
                 checks.push(or(
-                    inArray(messages.senderUserId, user1), inArray(messages.receiverUserId, user2)
+                    inArray(messages.senderUserId, user1), inArray(messages.receiverUserId, user1)
                 ));
-            } else if (user1 != null && user2 == null && user1.length > 0) { // user1 <=> any -> proveravamo length
+            } else if (user2 != null && user1 == null && user2.length > 0) { // user1 <=> any -> proveravamo length
                 checks.push(or(
-                    inArray(messages.senderUserId, user2), inArray(messages.receiverUserId, user1)
+                    inArray(messages.senderUserId, user2), inArray(messages.receiverUserId, user2)
                 ));
             } else {
                 throw new Error('Invalid argument, array.length must be greater then 0');
@@ -62,7 +63,7 @@ const getMessagesDB = async ({ offset = 0, limit = 10, user1 = undefined, user2 
     }
 
     if (q) {
-        checks.push(ilike(messages.message, `%${q}%`));
+        checks.push(ilike(messages.message, `%${escapeLikePattern(q) ?? ""}%`));
     }
 
     const [{ value: totalCount }] = await db.select({ value: count() }).from(messages).where(...checks);

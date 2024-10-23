@@ -1,23 +1,24 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 
-const TypeWritter = ({ text, delayPerLetter = 100, totalDuration = null, initialDelay = 0 }) => {
+const TypeWritter = ({ text, delayPerLetter = 200, totalDuration = null } = {}) => {
     const [displayedText, setDisplayedText] = useState('');
 
     useEffect(() => {
-        let currentIndex = 0;
-        let timer;
+        setDisplayedText('');
+    }, [text])
 
-        const typeText = (initDelay) => {
-            if (currentIndex < text.length) {
-                setDisplayedText(prev => prev + text[currentIndex]);
-                currentIndex++;
-                const delay = totalDuration ? totalDuration / text.length : delayPerLetter;
-                timer = setTimeout(typeText, delay + initDelay);
-            }
+    useEffect(() => {
+        let timeouts = [];
+        for (let index = 0; index < text.length; index++) {
+            const letter = text[index];
+            timeouts.push(setTimeout(() => setDisplayedText(prev => prev + letter), index * delayPerLetter));
         }
 
-        typeText(initialDelay);
-        return () => clearTimeout(timer);
+        return () => {
+            for (const timeout of timeouts) {
+                clearTimeout(timeout);
+            }
+        };
     }, [text, delayPerLetter, totalDuration]);
 
     return (

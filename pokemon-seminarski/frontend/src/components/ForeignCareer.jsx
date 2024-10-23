@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { splitCamelCase } from './CareerWrapper';
 import Collection from './Collection';
 import { useParams } from 'react-router-dom';
+import API from './utils/API';
 
 const ForeignCareer = () => {
    const params = useParams();
@@ -25,7 +26,7 @@ const ForeignCareer = () => {
          }
       }
       loadUser();
-   }, [])
+   }, [params])
 
    return (
       <>

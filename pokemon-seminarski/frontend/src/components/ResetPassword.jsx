@@ -1,7 +1,9 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import API from './utils/API';
 import useDebounce from './utils/useDebounce';
+import { z } from 'zod'
+import InputField from './utils/InputField';
 
 const ResetPassword = () => {
   const params = useParams();
@@ -9,7 +11,7 @@ const ResetPassword = () => {
   const [successMessage, setSuccessMessage] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [buttonPressed, setButtonPressed] = useState(false);
-  const [textError, setTextError] = useState({password: false, confirm: false});
+  const [textError, setTextError] = useState({ password: false, confirm: false });
 
   const debouncedText = useDebounce(text);
 
@@ -17,20 +19,20 @@ const ResetPassword = () => {
     let zerrors = [];
     let tempTextError = {}
     //check - password
-    if (text.password) {
+    if (debouncedText.password) {
       let parseResult = z.string().min(5)
         .regex(/^(?=.*?[A-Z]).*$/, { message: 'At least one big letter' }) // Barem jedno Jedno veliko slovo
         .regex(/^(?=.*?[a-z]).*$/, { message: 'At least one small letter' }) // Barem jedno malo slovo
         .regex(/^(?=.*?[0-9]).*$/, { message: 'At least one number' }) // Barem jedan broj
         .regex(/^(?=.*?[#?!@$ %^&*-]).*$/, { message: 'At least one special character' }) //Barem jedan znak
-        .safeParse(text.password);
+        .safeParse(debouncedText.password);
       parseResult.error?.issues.forEach(val => zerrors.push("password - " + val.message));
       !parseResult.success && (tempTextError.password = true);
 
     }
 
     //check - confirm
-    if (text.password && text.confirm && text.password !== text.confirm) {
+    if (debouncedText.password && debouncedText.confirm && debouncedText.password !== debouncedText.confirm) {
       zerrors.push("confirm password - not matching");
       tempTextError.confirm = true;
     }
@@ -65,10 +67,10 @@ const ResetPassword = () => {
       <form onSubmit={handleSubmit}>
 
         <label htmlFor='password'>password</label>
-        <InputField id="password" name="password" type='text' onChange={handleChange} value={text.password} autoFocus={true}  valid={text.password ? textError.password : null}/>
+        <InputField id="password" name="password" type='text' onChange={handleChange} value={text.password} autoFocus={true} valid={text.password ? textError.password : null} />
 
         <label htmlFor='confirm'>confirm password</label>
-        <InputField id="confirm" name="confirm" type='text' onChange={handleChange} value={text.confirm} valid={text.confirm ? textError.confirm : null}/>
+        <InputField id="confirm" name="confirm" type='text' onChange={handleChange} value={text.confirm} valid={text.confirm ? textError.confirm : null} />
 
         {errorMessage !== "" ? <label className='auth-error-message'>{errorMessage}</label> : null}
         {successMessage ? <label className='auth-success-message'>Password is reset!</label> : <input className="button" type="submit" value="request" disabled={buttonPressed} />}

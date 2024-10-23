@@ -10,7 +10,13 @@ const { Socket } = require("socket.io");
  */
 module.exports = (socketInformation, socket) =>
     (reason, description = undefined) => {
+        console.log(socketInformation.allConnectedUsers);
         const user = socketInformation.allConnectedUsers.find(cu => cu.socket.id === socket.id);
+        if (user == null) {
+            console.log('Zamenio je soket i disconnectovao sa starog');
+            return;
+        }
+
         console.log("/////////////////////\n" + user.id + "entered disconnect event");
         console.log('user disconnected: ' + socket.disconnected);
         console.log('resason: ' + reason);

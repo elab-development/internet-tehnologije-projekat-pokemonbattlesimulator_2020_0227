@@ -65,7 +65,7 @@ const GameScreen = () => {
          //    ZAMENILI SU POKEMONA -> -||-
          setPlayer(player);
          setEnemy(enemy);
-         setIsAnimating(false);
+         setisWaitingForServer(false);
       }
       function onEnd({ message }) {
          setGameResult(message);
@@ -103,7 +103,7 @@ const GameScreen = () => {
          socket.off('game:action:leave:failed', onLeaveFailed);
          socket.off('game:end', onEnd);
       }
-   }, []);
+   }, [animate, navigate, params]);
 
 
 

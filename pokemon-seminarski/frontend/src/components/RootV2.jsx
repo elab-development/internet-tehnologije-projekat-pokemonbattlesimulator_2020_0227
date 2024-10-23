@@ -1,12 +1,12 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { socket } from './sockets/sockets'
-import { Outlet, replace, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import { UserContext } from '../contexts/UserContextProvider';
 import LoadingPage from './LoadingPage';
 import { RootContext } from '../contexts/RootContextProvider';
 
 const RootV2 = () => {
-    const { setUser } = useContext(UserContext);
+    const { setInfo, disconnectReason } = useContext(UserContext);
     const [loadingState, setloadingState] = useState(true);
     const redirect = useRef({ onSuccess: null, onError: null });
     const navigate = useNavigate();
@@ -22,6 +22,7 @@ const RootV2 = () => {
             }
 
             if (options.resetConnection) {
+                console.log('attempting to reconnect after a login');
                 setloadingState(true);
                 socket.connect();
             }
@@ -31,7 +32,7 @@ const RootV2 = () => {
 
     useEffect(() => {
         function onConnectUser(data) { // Successfuly authorized and recived userData -> It's okay
-            setUser(prev => ({ ...prev, info: data.user }));
+            setInfo(prev => ({ ...prev, ...data.user }));
             setloadingState(false);
             if (redirect.current.onSuccess) {
                 let temp = redirect.current.onSuccess;
@@ -40,16 +41,15 @@ const RootV2 = () => {
             }
         }
 
-        function onConnectError(reason) { // Failed to authorize -> It's okay
-            console.error(reason.message);
-            if (socket.active) {
+        function onConnectError(reason) { // Failed to connect
+            if (socket.active) { // Is connectivity issue? -> Try again
                 return;
             }
 
-            setUser({ info: null, token: "" });
+            setInfo(null); // Not authorized -> Delete Info
             setloadingState(false);
 
-            if (errorRedirectTo != null) { // redirect to 
+            if (redirect.current.onError != null) { // redirect to 
                 let temp = redirect.current.onError;
                 redirect.current.onError = null;
                 navigate(temp, { replace: true, state: { error: reason.message } });
@@ -57,22 +57,40 @@ const RootV2 = () => {
         }
 
         function onDisconnect() { // Logged out forcefully -> Redirect to Welcome page
-            setUser({ info: null, token: "" });
+            console.log('disconnected');
+            setInfo(null);
+        }
+
+        function onErrorNewConnection() {
+            disconnectReason.current = "new_connection";
+            console.error('new_connection')
+        }
+
+        function onReconnectFailed() { // Failed to connect cause server expiriences issues -> go to error
+            //navigate('/error', { replace: true, state: { error: 'Failed to reconnect, please try later', reconnectButton: true } })
+            //TODO
+            //throw new Error("Failed to reconnect, refresh the page to try again");
+            setInfo(null); // SETS INFO TO NULL AND REDIRECTS, THIS IS WRONG, SHOULD FIX LATER
+            setloadingState(false);
         }
 
         socket.on('connect:user', onConnectUser)
+        socket.on('disconnect:new:connection', onErrorNewConnection)
         socket.on('connect_error', onConnectError);
         socket.on('disconnect', onDisconnect);
-
+        socket.io.on('reconnect_failed', onReconnectFailed);
         return () => {
             socket.off('connect:user', onConnectUser)
             socket.off('connect_error', onConnectError);
+            socket.off('disconnect:new:connection', onErrorNewConnection)
             socket.off('disconnect', onDisconnect);
+            socket.io.off('reconnect_failed', onReconnectFailed);
         }
-    }, []);
+    }, [redirect, setInfo, navigate, disconnectReason]);
 
     // Inital attempt at logging in
     useEffect(() => {
+        console.log('runned once: check if logged in');
         socket.connect();
     }, []);
 

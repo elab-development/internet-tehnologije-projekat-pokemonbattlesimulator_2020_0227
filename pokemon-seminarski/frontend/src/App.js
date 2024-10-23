@@ -1,7 +1,5 @@
 import React from 'react';
-import './App.css';
 import { createBrowserRouter, createRoutesFromElements, Route, RouterProvider } from 'react-router-dom'
-import Root from './components/Root';
 import Welcome from './components/Welcome';
 import Register from './components/Register';
 import NoAuthLayout from './components/NoAuthLayout';
@@ -16,10 +14,12 @@ import RequestPasswordReset from './components/RequestPasswordReset';
 import MainLayout from './components/MainLayout';
 import Settings from './components/Settings';
 import CareerWrapper from './components/CareerWrapper';
+import ResetPassword from './components/ResetPassword';
+import RootV2 from './components/RootV2';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
-    <Route id='root' element={<Root />}>
+    <Route id='root' element={<RootV2 />}>
       <Route id='req-auth' element={<AuthLayout />}>
         <Route element={<MainLayout />}>
           <Route path='/home' element={<Home />} />

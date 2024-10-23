@@ -34,14 +34,14 @@ const Career = () => {
          }
       }
       loadStats();
-   }, []);
+   }, [ctx.info.id]);
 
 
    return (
       <div className='carrer'>
          <div className='carrer-info-wrapper'>
             <div className='carrer-setting-button-wrapper' onClick={navigate('/settings', { replace: true })}>
-               <img src='carrer-setting-icon' /><span className='carrer-setting-text'>setting</span>
+               <img src='carrer-setting-icon' alt="settings-icon" /><span className='carrer-setting-text'>setting</span>
             </div>
             <div className='carrer-setting-table'>
                {!loaded.stats ? null :

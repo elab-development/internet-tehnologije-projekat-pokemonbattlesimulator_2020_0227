@@ -32,7 +32,7 @@ const PokemonCard = ({ pokemon, onClick, options: { evolvable = false, selectabl
             </div>
             <div className='pokemon-card-moves'>
                 {pokemon.moves.map(move => (
-                    <div className='pokemon-card-move' style={{ outline: ``, boxShadow }}> {/**TODO POZADINA ZA POKRET*/}
+                    <div className='pokemon-card-move' style={{ outline: ``,  }}> {/**TODO POZADINA ZA POKRET boxShadow*/}
                         <p className='move-type' style={{ borderBottom: "1px solid black" }}>{move.type.name}</p>
                         <div className='move-info-wrap'>
                             <p className='move-dmg' style={{ borderRight: "1px solid black" }}>DMG:</p><p className='move-dmg-val'>{move.attackBase * (1 + (pokemon.xp === 0 ? 0 : pokemon.xp / 100))}</p>

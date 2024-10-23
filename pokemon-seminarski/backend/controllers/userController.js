@@ -144,7 +144,7 @@ const getUser = async (req, res) => {
 }
 
 
-//Pagination, Filtration (body -> {users: number[], queryUsername: string  })
+//Pagination, Filtration (body -> {users: number[], usernameQuery: string, l: boolean  }) -> l for expecting a list
 /**
  * @description     Gets array of users
  * @route           GET /api/users
@@ -160,23 +160,38 @@ const getUsers = async (req, res) => {
     if (req.query.limit != null && !isStringInteger(req.query.limit, { negative: false }))
         zerrors.addIssue({ code: ZodIssueCode.invalid_type, message: 'Expected positive integer', path: ['limit'] });
 
-    if (req.body.users !== undefined) {
-        z.array(z.number().int()).safeParse(req.body.users).error?.issues.forEach((val) => zerrors.addIssue({ code: val.code, message: val.message, path: ['users', ...val.path] }));
+    if (req.query.l != null && ((req.query.l = stringToBoolean(req.query.sentMessages)) === undefined)) {
+        zerrors.addIssue({ code: ZodIssueCode.invalid_type, path: ['sentMessages'], message: 'Expected boolean. Allowed values are: ["true", "1", "yes", "y", "false", "0", "no", "n"]' })
     }
-    if (req.body.queryUsername !== undefined) {
-        z.string().safeParse(req.body.queryUsername).error?.issues.forEach((val) => zerrors.addIssue({ code: val.code, message: val.message, path: ['queryUsername', ...val.path] }));
+    if (req.query.users != undefined || req.query.l != undefined) {
+        if (req.query.users == undefined) {
+            zerrors.addIssue({ code: ZodIssueCode.invalid_type, path: ['users'], message: 'Required' });
+        } else {
+            if (!Array.isArray(req.query.users)) {
+                req.query.users = [req.query.users];
+            }
+            req.query.users = req.query.users.map(val => dynamicParseStringToPrimitives(val));
+            z.array(z.number().int()).nonempty().safeParse(req.query.users).error?.issues.forEach((val) => zerrors.addIssue({ code: val.code, message: val.message, path: ['users', ...val.path] }));
+        }
+    }
+    if (req.query.usernameQuery != undefined) {
+        z.string().safeParse(req.query.usernameQuery).error?.issues.forEach((val) => zerrors.addIssue({ code: val.code, message: val.message, path: ['usernameQuery', ...val.path] }));
+    }
+    if (req.query.usernameQuery != undefined && req.query.users != undefined) {
+        zerrors.addIssue({ code: ZodIssueCode.invalid_type, message: 'Select either users or usernameQuery', path: ['users'] });
+        zerrors.addIssue({ code: ZodIssueCode.invalid_type, message: 'Select either users or usernameQuery', path: ['usernameQuery'] });
     }
 
     if (!zerrors.isEmpty) {
         return res.status(400).json(new ResponseError('Bad Request', zerrors, 'query'));
     }
 
+
     let x;
     let offset = req.query.offset ? parseInt(req.query.offset, 10) : undefined;
     let limit = req.query.limit && (x = parseInt(req.query.limit, 10)) === 0 ? x : undefined;
-    let userIds = req.body.users;
-    let queryUsername = req.body.queryUsername;
-
+    let userIds = req.query.users;
+    let queryUsername = req.query.usernameQuery;
     try {
         let obj = { offset, limit, userIds, queryUsername };
         Object.keys({ offset, limit, userIds, queryUsername }).forEach(key => obj[key] === undefined && delete obj[key]);

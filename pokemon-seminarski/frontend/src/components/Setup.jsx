@@ -1,5 +1,6 @@
 import React, { useRef } from 'react'
-import { useAsyncValue } from 'react-router-dom';
+import { Outlet, useAsyncValue } from 'react-router-dom';
+import { UserContext } from '../contexts/UserContextProvider';
 
 const Setup = () => {
   const resolvedData = useAsyncValue();
