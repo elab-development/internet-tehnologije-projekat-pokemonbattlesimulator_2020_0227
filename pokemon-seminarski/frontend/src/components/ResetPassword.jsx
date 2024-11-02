@@ -4,6 +4,7 @@ import API from './utils/API';
 import useDebounce from './utils/useDebounce';
 import { z } from 'zod'
 import InputField from './utils/InputField';
+import './css/NoAuth/RequestPassword.scss'
 
 const ResetPassword = () => {
   const params = useParams();
@@ -12,6 +13,8 @@ const ResetPassword = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [buttonPressed, setButtonPressed] = useState(false);
   const [textError, setTextError] = useState({ password: false, confirm: false });
+  const [errRerun, setErrRerun] = useState(false);
+
 
   const debouncedText = useDebounce(text);
 
@@ -28,7 +31,6 @@ const ResetPassword = () => {
         .safeParse(debouncedText.password);
       parseResult.error?.issues.forEach(val => zerrors.push("password - " + val.message));
       !parseResult.success && (tempTextError.password = true);
-
     }
 
     //check - confirm
@@ -38,7 +40,9 @@ const ResetPassword = () => {
     }
 
     if (zerrors.length > 0) {
-      setErrorMessage(zerrors[0] + zerrors.length > 1 && `. (${zerrors.length - 1} more error${zerrors.length - 1 > 1 ? "s" : ""})`);
+      let m1 = zerrors[0].length > 67 ? zerrors[0].length.substring(0, 67) + "..." : zerrors[0];
+      let message = m1 + zerrors.length > 1 && `. (${zerrors.length - 1} more error${zerrors.length - 1 > 1 ? "s" : ""})`
+      setErrorMessage(message);
       setTextError(tempTextError);
     }
   }, [debouncedText])
@@ -52,18 +56,31 @@ const ResetPassword = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    if (textError.confirm || textError.password) {
+      setErrorMessage('fields are incorrect');
+      setErrRerun(prev => !prev);
+      return
+    }
+    if (text.confirm === "" || text.password === "") {
+      setErrorMessage("fields can't be empty");
+      setErrRerun(prev => !prev);
+      return;
+    }
+
     setButtonPressed(true);
     API.post('/reset-password/' + params.id, { password: text.password }).then((result) => {
       setSuccessMessage(true);
     }).catch((err) => {
-      setErrorMessage(err.message);
+      setErrorMessage(err.message?.length > 70 ? err.message.substring(0, 67) + "..." : err.message);
+      setErrRerun(prev => !prev);
     }).finally(() => {
       setButtonPressed(false);
     })
   }
 
   return (
-    <div className='reset-password'>
+    <div className='reset-password-page'>
       <form onSubmit={handleSubmit}>
 
         <label htmlFor='password'>password</label>
@@ -72,9 +89,12 @@ const ResetPassword = () => {
         <label htmlFor='confirm'>confirm password</label>
         <InputField id="confirm" name="confirm" type='text' onChange={handleChange} value={text.confirm} valid={text.confirm ? textError.confirm : null} />
 
-        {errorMessage !== "" ? <label className='auth-error-message'>{errorMessage}</label> : null}
-        {successMessage ? <label className='auth-success-message'>Password is reset!</label> : <input className="button" type="submit" value="request" disabled={buttonPressed} />}
+        {successMessage ?
+          <label className='auth-success-message'>Password is reset!</label> :
+          <button className="button-full" type="submit" disabled={buttonPressed} >request reset</button>
+        }
       </form>
+      {errorMessage !== "" ? <label className='error'>{errorMessage}</label> : null}
     </div>
   )
 }

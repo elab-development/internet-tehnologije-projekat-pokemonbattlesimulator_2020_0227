@@ -20,9 +20,9 @@ const { ConsoleLogWriter } = require('drizzle-orm');
  * @type {import('../utils/typedefs').DefaultHandler}
  */
 const loginUser = async (req, res) => {
-    if (req.headers.authorization != null) {
+    /*if (req.headers.authorization != null) {
         try {
-            let user = validateToken(req.headers.authorization);
+            let user = await validateToken(req.headers.authorization);
             return res.status(200).json({
                 ...(selectUserSchema.parse(user)),
                 token: req.headers.authorization
@@ -30,7 +30,7 @@ const loginUser = async (req, res) => {
         } catch (error) {
             return res.status(401).json(new ResponseError('Invalid token - ' + error.message))
         }
-    }
+    }*/
 
     let { username, email, password } = req.body;
     let user;

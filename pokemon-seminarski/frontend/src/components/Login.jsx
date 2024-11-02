@@ -9,11 +9,9 @@ import { AnimatePresence, motion } from 'framer-motion'
 import './css/NoAuth/Login.scss';
 import './css/Util/Buttons.scss';
 import catexplode from './assets/general/cat-explosion.gif'
-import { Axios } from 'axios';
 
 const Login = () => {
     const location = useLocation();
-    const navigate = useNavigate();
     const { notify } = useContext(RootContext);
     const [user, setUser] = useState({ username: "" });
     const [text, setText] = useState("");
@@ -73,7 +71,12 @@ const Login = () => {
             notify({ options: { resetConnection: true, redirectTo: '/home' } }); // Successful login -> Refresh whole page
         }).catch(err => {
             setErrRerun(prev => !prev);
-            setErr(err.response?.data ?? err.response?.message ?? 'Something went wrong!\nServer is probably offline, try again later');
+            console.log(err);
+            console.log(err.response);
+            console.log(err.response?.data);
+
+
+            setErr(err.response?.data?.message ?? 'Something went wrong!\nServer is probably offline, try again later');
         }).finally(() => {
             setButtonPressed(false);
         })
