@@ -1,0 +1,19 @@
+@import '../colors';
+
+input[type=text],
+input[type=password],
+input[type=email] {
+    display: block;
+    text-align: center;
+    background-color: $black-purple;
+    height: 38px;
+    border: 4px solid $dark-purple;
+    border-radius: 20px;
+    width: 208px;
+    transition: .2s outline ease-in-out;
+
+    &:focus {
+        outline: 1px solid  $light-purple;
+    }
+
+}

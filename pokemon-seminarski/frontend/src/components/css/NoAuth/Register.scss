@@ -1,0 +1,44 @@
+@import '../colors';
+
+.auth-register {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-direction: column;
+
+    .auth-title {
+        position: static;
+        transform: none;
+        margin: 25px 0 20px 0;
+    }
+
+    form {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        flex-direction: column;
+        width: 100%;
+    }
+
+    label {
+        margin-bottom: 8px;
+    }
+
+    .input-text {
+        margin-bottom: 4px;
+    }
+
+    .already-have-acc {
+        font-size: 0.9em;
+    }
+
+    .auth-login-label.error {
+        position: static;
+        width: 70%;
+        color: $pink-blood;
+        font-size: 0.8em;
+        text-align: center;
+        transform: none;
+        margin-top: 0.5em;
+    }
+}
