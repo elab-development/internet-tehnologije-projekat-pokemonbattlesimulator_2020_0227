@@ -9,6 +9,10 @@ import useDebounce from './utils/useDebounce';
 import UserCardSmall from './utils/UserCardSmall';
 import axios from 'axios';
 import './css/Auth/Chat.scss'
+import { getGifs } from './utils/api/services/gifServices';
+import { getUsers } from './utils/api/services/userServices';
+import { getMessages } from './utils/api/services/messageServices';
+import { parseUserToFriend } from './utils/api/parsers/userParser';
 
 /**
  * @typedef {import('./typedefs/chatTypeDefs').FriendUser} FriendUser
@@ -138,28 +142,22 @@ const ChatV2 = () => {
         try {
             friends = JSON.parse(friends ?? undefined);
         } catch (error) {
-            console.log(error.message);
-            friends = [];
-            localStorage.setItem('friends', JSON.stringify(friends))
+            friends = []; localStorage.setItem('friends', JSON.stringify(friends))
+        }
+        if (friends.length <= 0) {
+            return setLoaded(prev => ({ ...prev, friends: true }));
         }
 
-        if (friends.length <= 0) {
-            setLoaded(prev => ({ ...prev, friends: true }));
-            return;
-        }
-        API.get('/users', {
-            params: { users: friends, l: 'y' }
-        }).then((result) => {
-            console.log(result);
-            console.log('Friends data i found: ', result.data);
-            addFriends(result.data.data.map((user) => ({ ...user, fetched: false, newMessage: false })));
-        }).catch((err) => {
-            // NO FRIENDS FOUND OR QUERY IS BAD
-            console.error(err);
-        }).finally(() => {
-            setLoaded(prev => ({ ...prev, friends: true }))
-        });
+        getUsers({ ids: friends })
+            .then((users) => addFriends(users.map(parseUserToFriend)))
+            .catch((err) => console.error(err))
+            .finally(() => setLoaded(prev => ({ ...prev, friends: true })));
     }, [addFriends]);
+
+    // UPDATES LOCAL STORAGE  async to offload the app
+    useEffect(() => {
+        (async () => { if (friends.length > 0) try { localStorage.setItem('friends', JSON.stringify(friends)) } catch (error) { console.error(error) } })();
+    }, [friends])
 
     // LOAD MESSAGES FOR SELECTED NAMESPACE
     useEffect(() => {
@@ -168,31 +166,20 @@ const ChatV2 = () => {
             return;
         }
 
-        API.get(`/messages?user1=${info.id}&user2=${selectedNamespace.id}&direction=both`).then((result) => {
-            console.log(result.data);
-            const messages = result.data.data;
-            addPrivateMessages(info.id, messages, setFriends, { fetched: true });
-            setLoaded(prev => ({ ...prev, namespace: true }));
-        }).catch((err) => {
-            //changeNamespace(GLOBAL_NAMESPACE);
-            setSelectedNamespace({ id: GLOBAL_NAMESPACE, fetched: true });
-            console.error(err);
-        });
+        getMessages({ user1: info.id, user2: selectedNamespace.id })
+            .then((messages) => {
+                addPrivateMessages(info.id, messages, setFriends, { fetched: true })
+                // Ako me u budućnosti bude zanimalo što ovako, pa nema zašta da imam finally block
+                //  kad će ovaj useEffect se opet pokrenuti i gore namestiti
+                setLoaded(prev => ({ ...prev, namespace: true }));
+            })
+            .catch((err) => {
+                setSelectedNamespace({ id: GLOBAL_NAMESPACE, fetched: true });
+                console.error(err);
+            });
     }, [selectedNamespace, info.id])
 
-    // UPDATES LOCAL STORAGE
-    useEffect(() => {
-        (async () => { // async to offload the app
-            if (friends.length > 0) {
-                try {
-                    const jsonified = JSON.stringify(friends);
-                    localStorage.setItem('friends', jsonified);
-                } catch (error) {
-                    console.error(error);
-                }
-            }
-        })();
-    }, [friends])
+
 
     // UPDATES USERS QUERY RESULT WHEN DEBOUNCED SERACH IS CHANGED
     useEffect(() => {
@@ -200,16 +187,12 @@ const ChatV2 = () => {
         const signal = controller.signal;
 
         //setLoaded(prev => ({...prev, usersQuery: false})) -> AKO ME NE BUDE MRZELO
-        API.get(`/users?usernameQuery=${usersQueryDebounced}`, { signal: signal }).then((result) => {
-            console.log(result);
-            setUsersQueryResult(result.data.data);
-        }).catch((err) => {
-            if (axios.isCancel(err)) {
-                console.log("All good 👍: cancelled old request");
-            } else {
-                console.error(err);
-            }
-        });
+        getUsers({ searchQuery: usersQueryDebounced }, signal)
+            .then((users) => setUsersQueryResult(users))
+            .catch((err) => {
+                if (axios.isCancel(err)) console.log("All good 👍: cancelled old request");
+                else console.error(err);
+            });
 
         return () => {
             controller.abort();
@@ -218,23 +201,15 @@ const ChatV2 = () => {
 
     // UPDATES TENOR GIFS QUERY RESULT WHEN DEBOUNCED SERACH IS CHANGED
     useEffect(() => {
-        setLoaded(prev => ({ ...prev, tenor: false }));
-    }, [])
-    useEffect(() => {
         const controller = new AbortController();
         const signal = controller.signal;
 
-        API.get(`/gifs/search?q=${tenorQueryDebounced}`, { signal: signal }).then((result) => {
-            setTenorQueryResult(result.data.data);
-        }).catch((err) => {
-            if (axios.isCancel(err)) {
-                console.log("All good 👍: cancelled old request");
-            } else {
-                console.error(err);
-            }
-        }).finally(() => {
-            setLoaded(prev => ({ ...prev, tenor: false }))
-        });
+        getGifs({ searchQuery: tenorQueryDebounced }, signal)
+            .then((gifs) => setTenorQueryResult(gifs))
+            .catch((err) => axios.isCancel(err) ? console.log("All good 👍: cancelled old request") : console.error(err))
+            .finally(() => {
+                setLoaded(prev => ({ ...prev, tenor: false }))
+            });
 
         return () => {
             controller.abort();
