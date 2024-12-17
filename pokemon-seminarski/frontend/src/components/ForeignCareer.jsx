@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { splitCamelCase } from './CareerWrapper';
 import Collection from './Collection';
 import { useParams } from 'react-router-dom';
-import API from './utils/API';
+import API from './utils/api/API';
 
 const ForeignCareer = () => {
    const params = useParams();

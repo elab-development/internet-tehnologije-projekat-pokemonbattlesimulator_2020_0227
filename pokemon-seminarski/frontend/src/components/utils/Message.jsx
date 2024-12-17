@@ -10,9 +10,11 @@ const Message = ({ username, text, us }) => {
     <div className={`chat-message${us ? " chat-message-us" : ""}`}>
       <p className='chat-message-username'>{username}</p>
       {
-        isValidTenorUrl(text) ? 
-        <img src={text} alt={"If you can see this that means we couldn't find the image 😕" + text}/> :
-        <p className='chat-message-text'>{text}</p>
+        isValidTenorUrl(text) ? (
+          <img src={text} alt={"If you can see this that means we couldn't find the image 😕" + text} />
+        ) : (
+          <p className='chat-message-text'>{text}</p>
+        )
       }
     </div>
   )

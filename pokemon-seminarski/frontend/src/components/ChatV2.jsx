@@ -1,13 +1,14 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { socket } from './sockets/sockets';
 import { UserContext } from '../contexts/UserContextProvider';
-import API from './utils/API';
+import API from './utils/api/API';
 import UserFriendCard from './utils/UserFriendCard';
 import Message from './utils/Message';
 import { addPrivateMessages, sendGlobalMessage, sendPrivateMessageTo } from './utils/chatEvents';
 import useDebounce from './utils/useDebounce';
 import UserCardSmall from './utils/UserCardSmall';
 import axios from 'axios';
+import './css/Auth/Chat.scss'
 
 /**
  * @typedef {import('./typedefs/chatTypeDefs').FriendUser} FriendUser
@@ -44,14 +45,18 @@ const ChatV2 = () => {
     const [tenorQueryResult, setTenorQueryResult] = useState([]);
     const tenorQueryDebounced = useDebounce(tenorQuery);
 
+    const inputRef = useRef(null);
 
     const addFriends = useCallback((friends) => {
         setFriends(prev => Array.isArray(friends) ? [...prev, ...friends] : [...prev, friends]);
     }, [])
     const changeNamespace = useCallback((namespaceId) => {
         let fetched = false;
-        if (friends.find((val) => val.id === namespaceId).fetched) {
-            fetched = true;
+        if (namespaceId !== GLOBAL_NAMESPACE) {
+            let friend = friends.find((val) => val.id === namespaceId);
+            if (friend !== undefined) {
+                fetched = !!friend.fetched;
+            }
         }
         setLoaded(prev => ({ ...prev, namespace: false }));
         setSelectedNamespace({ id: namespaceId, fetched: fetched });
@@ -59,6 +64,8 @@ const ChatV2 = () => {
 
 
     const handleOnClickNamespace = (namespaceId) => {
+        console.log(namespaceId);
+        inputRef.current.focus();
         changeNamespace(namespaceId)
     }
     const handleOpenNewChat = async (namespaceId) => {
@@ -88,11 +95,17 @@ const ChatV2 = () => {
     }
     const handleSendMessage = (e) => {
         e.preventDefault();
+        if (messageText.trim().length === 0) {
+            return;
+        }
+
         if (selectedNamespace.id === GLOBAL_NAMESPACE) {
             sendGlobalMessage(messageText);
         } else {
             sendPrivateMessageTo(selectedNamespace, messageText);
         }
+
+        setMessageText("");
     }
     const handleOpenFriend = () => {
         setIsFriendSearchOpen(prev => !prev);
@@ -104,7 +117,7 @@ const ChatV2 = () => {
         function onGlobalMessageReceived(data) {
             console.log(data);
             setIsNewGlobal(true);
-            setGlobalMessages(prev => [...prev, data]);
+            setGlobalMessages(prev => [data, ...prev]);
         }
         function onPrivateMessageReceived(data) {
             addPrivateMessages(info.id, data.messages, setFriends, { newMessage: true });
@@ -129,18 +142,22 @@ const ChatV2 = () => {
             friends = [];
             localStorage.setItem('friends', JSON.stringify(friends))
         }
-        console.log('Friends i have: ', friends);
+
+        if (friends.length <= 0) {
+            setLoaded(prev => ({ ...prev, friends: true }));
+            return;
+        }
         API.get('/users', {
             params: { users: friends, l: 'y' }
         }).then((result) => {
             console.log(result);
             console.log('Friends data i found: ', result.data);
             addFriends(result.data.data.map((user) => ({ ...user, fetched: false, newMessage: false })));
-            setLoaded(prev => ({ ...prev, friends: true }))
         }).catch((err) => {
             // NO FRIENDS FOUND OR QUERY IS BAD
-            setLoaded(prev => ({ ...prev, friends: true }));
             console.error(err);
+        }).finally(() => {
+            setLoaded(prev => ({ ...prev, friends: true }))
         });
     }, [addFriends]);
 
@@ -228,76 +245,78 @@ const ChatV2 = () => {
 
 
     return (
-        <div className='chat'>
-            <div className='chat-and-friends'>
-                <div className='chat-box'>
-                    {
-                        isFriendSearchOpen ? (
-                            <div className='friends-query'>
-                                {
-                                    usersQuery !== usersQueryDebounced ? (
-                                        <p className='chat-loading-text'>loading...</p>
-                                    ) : (
-                                        usersQueryResult.map((val, index) => {
-                                            return val.id === info.id ? null :
-                                                <UserCardSmall val={val} onClickMessage={handleOpenNewChat} key={index} />
-                                        })
-                                    )
-                                }
-                            </div>
-                        ) : isTenorOpen ? (
-                            <div className='gif-query'>
-                                {
-                                    tenorQuery !== tenorQueryDebounced ? (
-                                        <p className='chat-loading-text'>loading...</p>
-                                    ) : (
-                                        <>
-                                            <div className="gif-column">{tenorQueryResult.map((val, index) => index % 3 !== 0 ? null : <img src={val.mediaFormats.nanogif} alt={val.title} className='nanogif' key={index} onClick={() => { setMessageText(val.tinygif); setIsTenorOpen(false) }} />)}</div>
-                                            <div className="gif-column">{tenorQueryResult.map((val, index) => index % 3 !== 1 ? null : <img src={val.mediaFormats.nanogif} alt={val.title} className='nanogif' key={index} onClick={() => { setMessageText(val.tinygif); setIsTenorOpen(false) }} />)}</div>
-                                            <div className="gif-column">{tenorQueryResult.map((val, index) => index % 3 !== 2 ? null : <img src={val.mediaFormats.nanogif} alt={val.title} className='nanogif' key={index} onClick={() => { setMessageText(val.tinygif); setIsTenorOpen(false) }} />)}</div>
-                                        </>
-                                    )
-                                }
-                            </div>
-                        )
-                            : (
-                                loaded.namespace ?
-                                    (
+        <div className='chat-page'>
+            <div className="chat">
+                <div className='chat-and-friends'>
+                    <div className='content-box'>
+                        {
+                            isFriendSearchOpen ? (
+                                <div className='friends-query'>
+                                    {
+                                        usersQuery !== usersQueryDebounced ? (
+                                            <p className='chat-loading-text'>loading...</p>
+                                        ) : (
+                                            usersQueryResult.map((val, index) => {
+                                                return val.id === info.id ? null :
+                                                    <UserCardSmall val={val} onClickMessage={handleOpenNewChat} key={index} />
+                                            })
+                                        )
+                                    }
+                                </div>
+                            ) : isTenorOpen ? (
+                                <div className='gif-query'>
+                                    {
+                                        tenorQuery !== tenorQueryDebounced ? (
+                                            <p className='chat-loading-text'>loading...</p>
+                                        ) : (
+                                            <>
+                                                <div className="gif-column">{tenorQueryResult.map((val, index) => index % 3 !== 0 ? null : <img src={val.mediaFormats.nanogif} alt={val.title} className='nanogif' key={index} onClick={() => { setMessageText(val?.mediaFormats?.tinygif); setIsTenorOpen(false); inputRef.current?.focus() }} />)}</div>
+                                                <div className="gif-column">{tenorQueryResult.map((val, index) => index % 3 !== 1 ? null : <img src={val.mediaFormats.nanogif} alt={val.title} className='nanogif' key={index} onClick={() => { setMessageText(val?.mediaFormats?.tinygif); setIsTenorOpen(false); inputRef.current?.focus() }} />)}</div>
+                                                <div className="gif-column">{tenorQueryResult.map((val, index) => index % 3 !== 2 ? null : <img src={val.mediaFormats.nanogif} alt={val.title} className='nanogif' key={index} onClick={() => { setMessageText(val?.mediaFormats?.tinygif); setIsTenorOpen(false); inputRef.current?.focus() }} />)}</div>
+                                            </>
+                                        )
+                                    }
+                                </div>
+                            ) : loaded.namespace ? (
+                                <div className='chat-box'>
+                                    {
                                         selectedNamespace.id === GLOBAL_NAMESPACE ? globalMessages.map((val, index) =>
                                             <Message text={val.message} us={val.id === info.id} username={val.username} key={index} />
                                         ) : friends.find((user) => user.id === selectedNamespace).messages.map((val) =>
                                             <Message text={val.message} us={val.sender.id === info.id} username={val.sender.username} />
                                         )
-                                    ) :
-                                    (
-                                        <p className='chat-loading-text'>loading...</p>
-                                    )
+                                    }
+                                    <div id="scroll-anchor" />
+                                </div>
+                            ) : (
+                                <p className='chat-loading-text'>loading...</p>
                             )
-                    }
-                </div>
-                <div className='friend-box'>
-                    <div className='friend-box-inner-wrapper'>
-                        <UserFriendCard val={{ id: 0, username: 'global' }} onClickMessage={handleOnClickNamespace} highlight={selectedNamespace === 0} isNewMessage={isNewGlobal} />
-                        <br />
-                        {
-                            loaded.friends ?
-                                (<>
-                                    {friends.map((val) => <UserFriendCard val={val} key={val.id} onClickMessage={handleOnClickNamespace} highlight={val.id === selectedNamespace} isNewMessage={val.newMessage} />)}
-                                </>)
-                                : (
-                                    <p className='chat-loading-text'>loading...</p>
-                                )
                         }
                     </div>
-                    <div className='find friends button'>
-                        <button type='button' onClick={handleOpenFriend}>find friends!</button>
+                    <div className='friend-box'>
+                        <div className='friend-box-inner-wrapper'>
+                            <UserFriendCard val={{ id: 0, username: 'global' }} onClickMessage={handleOnClickNamespace} highlight={selectedNamespace.id === 0} isNewMessage={isNewGlobal} />
+                            <hr />
+                            {
+                                loaded.friends ?
+                                    (<>
+                                        {friends.map((val) => <UserFriendCard val={val} key={val.id} onClickMessage={handleOnClickNamespace} highlight={val.id === selectedNamespace} isNewMessage={val.newMessage} />)}
+                                    </>)
+                                    : (
+                                        <p className='chat-loading-text'>loading...</p>
+                                    )
+                            }
+                        </div>
+                        <div className='find-friends-button'>
+                            <button type='button' className='button-full' onClick={handleOpenFriend}>find friends!</button>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div className='send-message-wrapper'>
-                <input className='input-message' name='input' type='text' onChange={handleInput} value={isFriendSearchOpen ? usersQuery : (isTenorOpen ? tenorQuery : messageText)} />
-                {isFriendSearchOpen || isTenorOpen ? null : <button className='send-message-button' onClick={handleSendMessage}>send</button>}
-                {isFriendSearchOpen ? null : <button className='open-tenor-explore' onClick={() => setIsTenorOpen(prev => !prev)}>open gif</button>}
+                <form className='send-message-wrapper' onSubmit={handleSendMessage}>
+                    <input className='input-message' name='input' type='text' onChange={handleInput} value={isFriendSearchOpen ? usersQuery : (isTenorOpen ? tenorQuery : messageText)} autoComplete='off' ref={inputRef} />
+                    {isFriendSearchOpen || isTenorOpen ? null : <button type="submit" className='button-full'>send</button>}
+                    {isFriendSearchOpen ? null : <button className='button-full' onClick={() => setIsTenorOpen(prev => !prev)}>{isTenorOpen ? "close gif" : "open gif"}</button>}
+                </form>
             </div>
         </div>
     )

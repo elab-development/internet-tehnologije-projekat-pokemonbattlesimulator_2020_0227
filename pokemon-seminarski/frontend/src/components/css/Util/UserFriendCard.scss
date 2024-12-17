@@ -1,0 +1,60 @@
+@import "../colors";
+
+.user-friend {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    //border: 1px white solid;
+    width: 100%;
+    padding: 0 5px;
+
+    &.user-friend-highlight::after {
+        content: "";
+        display: block;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 5px;
+        height: 5px;
+        border-radius: 100%;
+        animation: 1s linear newMessagePulse infinite;
+    }
+
+    // Selected namespace
+    &.user-friend-pulse {}
+
+    // Activate pulse border
+
+    .user-friend-info {
+        .ufc-username {}
+    }
+
+    .user-friend-card-small-action {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding-top: 3px;
+
+        .user-info-button {}
+
+        // Anchor tag -> is disabled when 
+        button {
+            border: none;
+        }
+    }
+}
+
+@keyframes newMessagePulse {
+    25% {
+        background-color: transparent;
+    }
+
+    75% {
+        background-color: $pink-blood;
+    }
+
+    100% {
+        background-color: transparent;
+    }
+}

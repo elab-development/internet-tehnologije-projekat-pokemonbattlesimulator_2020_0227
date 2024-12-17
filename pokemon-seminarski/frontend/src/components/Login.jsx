@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useLayoutEffect, useRef, useState } from 
 import InputField from './utils/InputField';
 import TypeWritter from './utils/TypeWritter';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import API from './utils/API';
+import API from './utils/api/API';
 import { socket } from './sockets/sockets';
 import { RootContext } from '../contexts/RootContextProvider';
 import { AnimatePresence, motion } from 'framer-motion'

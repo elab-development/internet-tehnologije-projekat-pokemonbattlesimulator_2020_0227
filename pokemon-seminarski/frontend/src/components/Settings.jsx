@@ -3,7 +3,7 @@ import { UserContext } from '../contexts/UserContextProvider'
 import InputField from './utils/InputField';
 import useDebounce from './utils/useDebounce';
 import { z } from 'zod'
-import API from './utils/API';
+import API from './utils/api/API';
 
 const Settings = () => {
     const { info } = useContext(UserContext);

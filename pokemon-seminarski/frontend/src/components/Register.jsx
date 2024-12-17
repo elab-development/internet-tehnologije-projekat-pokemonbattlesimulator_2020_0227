@@ -4,7 +4,7 @@ import { z } from 'zod'
 import InputField from './utils/InputField';
 import TypeWritter from './utils/TypeWritter';
 import useDebounce from './utils/useDebounce';
-import API from './utils/API';
+import API from './utils/api/API';
 import { socket } from './sockets/sockets';
 import './css/NoAuth/Register.scss'
 

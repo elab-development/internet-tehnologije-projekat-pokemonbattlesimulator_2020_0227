@@ -1,0 +1,200 @@
+@import '../Util/Buttons.scss';
+
+.chat-page {
+    // Wrappuje ceo čet i centrira prozor
+    max-height: 100%;
+    height: 100%;
+    width: 100%;
+
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.chat {
+    // prozor u kome se nalazi zapravo chat, deli ga na dve sekcije (chat i friends i sendMessage deo)
+    border-radius: 20px;
+
+    height: 500px;
+    width: 700px;
+
+
+    padding: 10px;
+
+    margin: 0 20px;
+
+    display: flex;
+    flex-direction: column;
+
+    border: 1px solid black;
+    overflow: hidden;
+}
+
+.chat-and-friends {
+    // wrapper chat-box i friends elementa
+    display: flex;
+    flex-grow: 1;
+
+    padding: 10px 10px 0 10px;
+    gap: 10px;
+
+    overflow: hidden;
+}
+
+.content-box {
+    //sam chat-box
+    padding: 5px;
+
+    border: 1px solid black;
+    border-radius: 5px;
+
+    flex-grow: 1;
+    overflow-x: hidden;
+
+    display: flex;
+
+    &>* {
+        overflow-y: auto;
+    }
+
+    .chat-box {
+        display: flex;
+        flex-direction: column-reverse;
+        align-items: flex-start;
+        justify-content: flex-start;
+        gap: 5px;
+
+        width: 100%;
+
+        & * {
+            overflow-anchor: none;
+        }
+
+        #scroll-anchor {
+            overflow-anchor: auto;
+            min-height: 1px;
+        }
+    }
+
+    .chat-message {
+        border: 1px solid black;
+        border-radius: 5px;
+        padding: 2.5px 0;
+        max-width: 80%;
+        min-width: 50%;
+        word-break: break-all;
+
+        &>* {
+            padding: 2.5px 5px;
+        }
+
+        .chat-message-username {
+            font-size: 0.8em;
+        }
+
+        &.chat-message-us {
+            border: 1px solid white;
+            align-self: flex-end;
+            text-align: end;
+
+            .chat-message-text {
+                text-align: left;
+            }
+
+            img {
+                display: block;
+                width: 100%;
+                object-position: center;
+                padding: 5px 20%;
+            }
+        }
+    }
+
+    .gif-query {
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        padding-top: 2.5px;
+        gap: 5px;
+        width: 100%;
+
+        .gif-column {
+            width: calc(100% / 3 - 5px);
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+    }
+
+    .friends-query {
+        display: flex;
+        align-items: flex-start;
+        flex-direction: column;
+        width: 100%;
+    }
+}
+
+.friend-box {
+    // friend-box
+    min-width: 170px;
+    padding: 5px;
+
+    display: flex;
+    flex-direction: column;
+
+    border: 1px solid black;
+
+    .friend-box-inner-wrapper {
+        // unutrašnji wrapper da odvoji dugme od svega
+        flex: 1 0 auto;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+        overflow: auto;
+
+        hr {
+            justify-self: center;
+            margin: 5px 0;
+            border-color: red;
+            width: 95%;
+        }
+    }
+
+    .find-friends-button {
+        display: flex;
+        justify-content: center;
+
+        .button-full {
+            width: 100px;
+        }
+    }
+}
+
+
+.send-message-wrapper {
+    min-height: 50px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 5px;
+
+    .input-message {
+        flex: 1 0 auto;
+        text-align: left;
+        padding: 0 20px;
+
+        transition: #{$base-transition},
+        all 0.2s ease-in-out;
+        @include transitionButton();
+
+    }
+
+    button {
+        width: 100px;
+        min-width: 60px;
+    }
+}

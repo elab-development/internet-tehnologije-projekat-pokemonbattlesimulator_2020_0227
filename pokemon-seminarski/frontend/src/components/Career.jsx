@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { UserContext } from '../contexts/UserContextProvider'
-import API from './utils/API';
+import API from './utils/api/API';
 import Collection, { loadApiData } from './Collection';
 import { useNavigate } from 'react-router-dom';
 import { splitCamelCase } from './CareerWrapper';

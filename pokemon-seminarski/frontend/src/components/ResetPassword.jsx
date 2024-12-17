@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import API from './utils/API';
+import API from './utils/api/API';
 import useDebounce from './utils/useDebounce';
 import { z } from 'zod'
 import InputField from './utils/InputField';

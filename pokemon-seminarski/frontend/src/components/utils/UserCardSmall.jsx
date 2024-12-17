@@ -1,19 +1,21 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import './../css/Util/UserCardSmall.scss'
 
 const UserCardSmall = ({ val, onClickMessage }) => {
+    const navigate = useNavigate();
     return (
         <div className='user-card-small'>
             <div className='user-card-small-info'>
-                <p className='usc-username'>{val.username}</p>
-                <p className='usc-other'>
-                    <span className='usc-id'>{"id -> " + val.id}</span>
-                    <span className='usc-created-at'>{val.createdAt + " <- created at"}</span>
+                <p className='ucs-username'>{val.username}</p>
+                <p className='ucs-other'>
+                    <span className='ucs-id'>{"id -> " + val.id}</span>
+                    <span className='ucs-created-at'>{"created at -> " + new Date(val.createdAt).toLocaleDateString('en-us', { day: "numeric", month: "short", year: "numeric" })}</span>
                 </p>
             </div>
             <div className='user-card-small-action'>
-                <Link className='user-info-button' to={`/user/${val.id}`} >info</Link>
-                <button onClick={() => onClickMessage(val.id)}>chat</button>
+                <button className='button-full' onClick={() => navigate(`/user/${val.id}`, { replace: true })}>more info</button>
+                <button className='button-full' onClick={() => onClickMessage(val.id)}>chat</button>
             </div>
         </div>
     )

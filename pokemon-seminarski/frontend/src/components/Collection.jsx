@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react'
-import API from './utils/API';
+import API from './utils/api/API';
 import { UserContext } from '../contexts/UserContextProvider';
 import axios from 'axios';
 import PokemonCard from './utils/PokemonCard';

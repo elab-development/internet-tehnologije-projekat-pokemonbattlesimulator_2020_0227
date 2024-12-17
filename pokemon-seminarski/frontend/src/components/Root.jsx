@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react'
-import API from './utils/API';
+import API from './utils/api/API';
 import { Await, defer, useLoaderData } from 'react-router-dom';
 import LoadingPage from './LoadingPage';
 import ErrorOffline from './ErrorOffline';

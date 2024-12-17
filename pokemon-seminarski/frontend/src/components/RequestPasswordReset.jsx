@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import API from './utils/API';
+import API from './utils/api/API';
 import { z } from 'zod'
 import TypeWritter from './utils/TypeWritter';
 import InputField from './utils/InputField';

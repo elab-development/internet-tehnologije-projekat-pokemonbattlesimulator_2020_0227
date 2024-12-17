@@ -5,7 +5,7 @@ import { UserContext } from '../contexts/UserContextProvider';
 import InputField from './utils/InputField';
 import UserCardSmall from './utils/UserCardSmall';
 import UserFriendCard from './utils/UserFriendCard';
-import API from './utils/API';
+import API from './utils/api/API';
 
 const Chat = ({ friendsSearchOpen = false, ...props }) => {
    const { info } = useContext(UserContext);

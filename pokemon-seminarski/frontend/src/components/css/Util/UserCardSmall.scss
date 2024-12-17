@@ -1,0 +1,35 @@
+.user-card-small {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 7.5px 15px;
+    border: 1px solid orangered;
+
+    border-radius: 10px;
+}
+
+.user-card-small-info {
+    display: flex;
+    flex-direction: column;
+
+    .ucs-username {}
+
+    .ucs-other {
+        border: 1px orange solid;
+
+        display: flex;
+        flex-direction: column;
+    }
+}
+
+.user-card-small-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+
+    button {
+        width: 80px;
+    }
+}
