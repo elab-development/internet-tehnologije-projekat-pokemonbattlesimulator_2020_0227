@@ -116,12 +116,18 @@ const addFetchedMessages = (userId, messages, setUsersCallback) => setUsersCallb
             fetched: false,
         }
     } else {
-        
-        
+        const lastNewMessage = user.messages[user.messages.length - 1]?.createdAt ?? new Date();
+        let index = 0;
+        for (let i = 0; i < messages.length; i++) {
+            if (messages[i].createdAt <= lastNewMessage) {
+                index = i; break;
+            }
+        }
+        user.messages = [...user.messages, messages.slice(-index)]; // May break here
     }
 
-    
-
+    user.fetched = true;
+    return [user, friends.filter(val => val.id != user.id)];
 });
 
 

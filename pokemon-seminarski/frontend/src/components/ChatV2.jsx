@@ -261,7 +261,6 @@ const ChatV2 = () => {
                                             <Message text={val.message} us={val.sender.id === info.id} username={val.sender.username} />
                                         )
                                     }
-                                    <div id="scroll-anchor" />
                                 </div>
                             ) : (
                                 <p className='chat-loading-text'>loading...</p>
