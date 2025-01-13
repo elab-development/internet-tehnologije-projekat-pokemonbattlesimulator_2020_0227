@@ -17,7 +17,7 @@ const getUsers = async ({ ids, searchQuery }, signal = undefined) => {
 }
 
 const getUserById = async (id, signal = undefined) => {
-    const response = await API.get(`/users/${id}`, { params: params, signal: signal });
+    const response = await API.get(`/users/${id}`, { signal: signal });
     return parseUser(response.data);
 }
 

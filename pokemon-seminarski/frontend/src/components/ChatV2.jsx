@@ -1,16 +1,15 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { socket } from './sockets/sockets';
 import { UserContext } from '../contexts/UserContextProvider';
-import API from './utils/api/API';
 import UserFriendCard from './utils/UserFriendCard';
 import Message from './utils/Message';
-import { addPrivateMessages, sendGlobalMessage, sendPrivateMessageTo } from './utils/chatEvents';
+import { addFetchedMessages, addNewPrivateMessage, addPrivateMessages, sendGlobalMessage, sendPrivateMessageTo } from './utils/chatEvents';
 import useDebounce from './utils/useDebounce';
 import UserCardSmall from './utils/UserCardSmall';
 import axios from 'axios';
 import './css/Auth/Chat.scss'
 import { getGifs } from './utils/api/services/gifServices';
-import { getUsers } from './utils/api/services/userServices';
+import { getUserById, getUsers } from './utils/api/services/userServices';
 import { getMessages } from './utils/api/services/messageServices';
 import { parseUserToFriend } from './utils/api/parsers/userParser';
 
@@ -57,9 +56,10 @@ const ChatV2 = () => {
     const changeNamespace = useCallback((namespaceId) => {
         let fetched = false;
         if (namespaceId !== GLOBAL_NAMESPACE) {
-            let friend = friends.find((val) => val.id === namespaceId);
-            if (friend !== undefined) {
+            let friend = friends.find((val) => val.id === namespaceId); // Ako ga ima 
+            if (friend !== undefined) {                                 // proveri da li ima poruke fetched
                 fetched = !!friend.fetched;
+                console.log("fetched", fetched, friend.fetched);
             }
         }
         setLoaded(prev => ({ ...prev, namespace: false }));
@@ -68,24 +68,10 @@ const ChatV2 = () => {
 
 
     const handleOnClickNamespace = (namespaceId) => {
-        console.log(namespaceId);
         inputRef.current.focus();
         changeNamespace(namespaceId)
     }
-    const handleOpenNewChat = async (namespaceId) => {
-        if (info.id === namespaceId) return;
-        if (friends.every((val) => val.id !== namespaceId)) {
-            let user;
-            try {
-                user = (await API.get(`/users/${namespaceId}`)).data
-                setFriends(prev => [...prev, user]);
-            } catch (error) {
-                console.error(error);
-                return;
-            }
-        }
-        changeNamespace(namespaceId)
-    }
+
     const handleInput = (e) => {
         e.preventDefault();
         const { value } = e.target;
@@ -106,7 +92,9 @@ const ChatV2 = () => {
         if (selectedNamespace.id === GLOBAL_NAMESPACE) {
             sendGlobalMessage(messageText);
         } else {
-            sendPrivateMessageTo(selectedNamespace, messageText);
+            console.log('selectedNamespace', selectedNamespace)
+            console.log('text', messageText);
+            sendPrivateMessageTo(selectedNamespace.id, messageText);
         }
 
         setMessageText("");
@@ -124,7 +112,8 @@ const ChatV2 = () => {
             setGlobalMessages(prev => [data, ...prev]);
         }
         function onPrivateMessageReceived(data) {
-            addPrivateMessages(info.id, data.messages, setFriends, { newMessage: true });
+            console.log("private", data);
+            addNewPrivateMessage(info.id, data, setFriends);
         }
 
         socket.on('message:global:received', onGlobalMessageReceived);
@@ -149,37 +138,40 @@ const ChatV2 = () => {
         }
 
         getUsers({ ids: friends })
-            .then((users) => addFriends(users.map(parseUserToFriend)))
+            .then((users) => setFriends(users.map(parseUserToFriend)))
             .catch((err) => console.error(err))
             .finally(() => setLoaded(prev => ({ ...prev, friends: true })));
     }, [addFriends]);
 
     // UPDATES LOCAL STORAGE  async to offload the app
     useEffect(() => {
-        (async () => { if (friends.length > 0) try { localStorage.setItem('friends', JSON.stringify(friends)) } catch (error) { console.error(error) } })();
+        (async () => { if (friends.length > 0) try { localStorage.setItem('friends', JSON.stringify(friends.map(v => v.id))) } catch (error) { console.error(error) } })();
     }, [friends])
 
-    // LOAD MESSAGES FOR SELECTED NAMESPACE
+    // LOAD MESSAGES FOR SELECTED NAMESPACE AND LOAD THE USER UP THE FRIENDS LIST
     useEffect(() => {
+        console.log("namespace changed", selectedNamespace);
         if (selectedNamespace.id === GLOBAL_NAMESPACE || selectedNamespace.fetched === true) { // Everything is already loaded
             setLoaded(prev => ({ ...prev, namespace: true }))
             return;
         }
 
-        getMessages({ user1: info.id, user2: selectedNamespace.id })
-            .then((messages) => {
-                addPrivateMessages(info.id, messages, setFriends, { fetched: true })
-                // Ako me u budućnosti bude zanimalo što ovako, pa nema zašta da imam finally block
-                //  kad će ovaj useEffect se opet pokrenuti i gore namestiti
-                setLoaded(prev => ({ ...prev, namespace: true }));
+        getUserById(selectedNamespace.id)
+            .then((user) => {
+                return getMessages({ user1: info.id, user2: user.id })
+                    .then((messages) => {
+                        addFetchedMessages(user, messages, setFriends)
+                        // Ako me u budućnosti bude zanimalo što ovako, pa nema zašta da imam finally block
+                        //  kad će ovaj useEffect se opet pokrenuti i gore namestiti
+                        setLoaded(prev => ({ ...prev, namespace: true }));
+                        setIsFriendSearchOpen(false);
+                    })
             })
             .catch((err) => {
                 setSelectedNamespace({ id: GLOBAL_NAMESPACE, fetched: true });
                 console.error(err);
             });
     }, [selectedNamespace, info.id])
-
-
 
     // UPDATES USERS QUERY RESULT WHEN DEBOUNCED SERACH IS CHANGED
     useEffect(() => {
@@ -217,6 +209,9 @@ const ChatV2 = () => {
     }, [tenorQueryDebounced]);
 
 
+    useEffect(() => {
+        console.log(friends);
+    }, [friends]);
 
 
     return (
@@ -233,7 +228,7 @@ const ChatV2 = () => {
                                         ) : (
                                             usersQueryResult.map((val, index) => {
                                                 return val.id === info.id ? null :
-                                                    <UserCardSmall val={val} onClickMessage={handleOpenNewChat} key={index} />
+                                                    <UserCardSmall val={val} onClickMessage={handleOnClickNamespace} key={index} />
                                             })
                                         )
                                     }
@@ -255,10 +250,15 @@ const ChatV2 = () => {
                             ) : loaded.namespace ? (
                                 <div className='chat-box'>
                                     {
-                                        selectedNamespace.id === GLOBAL_NAMESPACE ? globalMessages.map((val, index) =>
-                                            <Message text={val.message} us={val.id === info.id} username={val.username} key={index} />
-                                        ) : friends.find((user) => user.id === selectedNamespace).messages.map((val) =>
-                                            <Message text={val.message} us={val.sender.id === info.id} username={val.sender.username} />
+                                        selectedNamespace.id === GLOBAL_NAMESPACE ? (
+                                            globalMessages.map((val, index) =>
+                                                <Message text={val.message} us={val.id === info.id} username={val.username} key={index} />
+                                            )
+                                        ) : (
+                                            friends.find((user) => user.id === selectedNamespace.id).messages.map((val, index) =>
+                                                <Message text={val.message} us={val.sender.id === info.id} username={val.sender.username} key={index} />
+                                            )
+
                                         )
                                     }
                                 </div>
@@ -269,8 +269,8 @@ const ChatV2 = () => {
                     </div>
                     <div className='friend-box'>
                         <div className='friend-box-inner-wrapper'>
-                            <UserFriendCard val={{ id: 0, username: 'global' }} onClickMessage={handleOnClickNamespace} highlight={selectedNamespace.id === 0} isNewMessage={isNewGlobal} />
-                            <hr />
+                            <UserFriendCard val={{ id: 0, username: 'global' }} key={0} onClickMessage={handleOnClickNamespace} highlight={selectedNamespace.id === 0} isNewMessage={isNewGlobal} />
+                            <hr key="hr" />
                             {
                                 loaded.friends ?
                                     (<>

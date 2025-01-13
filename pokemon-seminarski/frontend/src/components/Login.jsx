@@ -67,7 +67,7 @@ const Login = () => {
             password: text.trim(),
         }).then(res => {
             const data = res.data;
-            localStorage.setItem('token', 'Bearer ' + data.token);
+            localStorage.setItem('token', "Bearer " + data.token);
             notify({ options: { resetConnection: true, redirectTo: '/home' } }); // Successful login -> Refresh whole page
         }).catch(err => {
             setErrRerun(prev => !prev);

@@ -25,7 +25,7 @@ const router = createBrowserRouter(
           <Route path='/home' element={<Home />} />
           <Route path='/play' element={<Play />} />
           <Route path='/settings' element={<Settings />} />
-          <Route path='/user/:id' element={<CareerWrapper />} />
+          <Route path='/users/:id' element={<CareerWrapper />} />
         </Route>
         <Route path='/game/:id' element={<GameScreen />} />
       </Route>

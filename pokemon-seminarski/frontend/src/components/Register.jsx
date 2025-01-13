@@ -92,7 +92,7 @@ const Register = () => {
     setButtonPressed(true);
     API.post('/register', { email: user.email, username: user.username, password: user.password }).then((result) => {
       const data = result.data;
-      localStorage.setItem('token', 'Bearer ' + data.token);
+      localStorage.setItem('token', "Bearer " + data.token);
       socket.connect();
     }).catch((err) => {
       setErr(err.message);

@@ -55,7 +55,7 @@ const getMessages = async (req, res) => {
             if (issues) zerrors.addIssues(issues);
         }
     }
-    let issue = directionMessageValidation.optional().safeParse(req.query.direction).error?.issues;
+    let issue = directionMessageValidation.safeParse({ direction: req.query.direction }).error?.issues;
     if (issue) zerrors.addIssue(issue);
 
     if (!zerrors.isEmpty) {

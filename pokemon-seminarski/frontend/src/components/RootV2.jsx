@@ -64,6 +64,7 @@ const RootV2 = () => {
         function onErrorNewConnection() {
             disconnectReason.current = "new_connection";
             console.error('new_connection')
+            navigate('/', { replace: true })
         }
 
         function onReconnectFailed() { // Failed to connect cause server expiriences issues -> go to error
@@ -93,6 +94,14 @@ const RootV2 = () => {
         console.log('runned once: check if logged in');
         socket.connect();
     }, []);
+
+    /*useEffect(() => {
+        const i = setInterval(() => console.log(socket.id, socket.connected), 500)
+
+        return () => {
+            clearInterval(i);
+        }
+    }, []);*/
 
     return (
         <RootContext.Provider value={{ notify }}>

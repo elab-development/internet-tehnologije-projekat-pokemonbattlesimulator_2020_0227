@@ -35,6 +35,7 @@ const handleSocketConnections = async (io) => {
             if (alreadyOn) {
                 console.log("User \"" + user.username + "\"is already online!\nPrevious socket.id " + alreadyOn.socket.id + " \nNew socket.id " + socket.id + "\n\n\n");
                 alreadyOn.socket.emit('disconnect:new:connection');
+                alreadyOn.socket.disconnect();
                 alreadyOn.socket = socket;
             } else {
                 socketInformation.allConnectedUsers.push(

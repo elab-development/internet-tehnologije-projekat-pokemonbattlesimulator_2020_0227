@@ -61,10 +61,7 @@ function addPrivateMessages(ourId, messages, setUsersCallback, options = { newMe
         return Array.from(usersMap.values());
     });
 }
-/*
-function addNewPrivateMessage(ourId, message, setUsersCallback) {
-    set
-}*/
+
 /**
  * 
  * @param {number} ourId - ID of the current user
@@ -73,23 +70,25 @@ function addNewPrivateMessage(ourId, message, setUsersCallback) {
  * @returns 
  */
 const addNewPrivateMessage = (ourId, message, setUsersCallback) => setUsersCallback((prev) => {
-    let friends = [...prev];
-    const id = message.sender.id === ourId ? message.receiver : message.sender;
-    let user = friends.find((friend) => friend.id === id);
+    const opositeUser = message.sender.id === ourId ? message.receiver : message.sender;
+    let user = prev.find((friend) => friend.id === opositeUser.id);
 
     if (user == null) {
+        console.log('creating a user!');
         user = {
-            id: user.id,
-            username: user.username,
+            id: opositeUser.id,
+            username: opositeUser.username,
             newMessage: false,
             messages: [],
             fetched: false,
         }
+    } else {
+        user = structuredClone(user);
     }
 
     user.messages = [message, ...user.messages];
     user.newMessage = true;
-    return [user, ...friends.filter(val => val.id !== user.id)];
+    return [user, ...prev.filter(val => val.id !== user.id)];
 });
 
 /**
@@ -99,35 +98,47 @@ const addNewPrivateMessage = (ourId, message, setUsersCallback) => setUsersCallb
  * @param {import("react").Dispatch<import('react').SetStateAction<import("../typedefs/chatTypeDefs").FriendUser[]>>} setUsersCallback - Callback to update the state of users
  * @returns 
  */
-const addFetchedMessages = (userId, messages, setUsersCallback) => setUsersCallback((prev) => {
+const addFetchedMessages = (userData, messages, setUsersCallback) => setUsersCallback((prev) => {
     if (messages == null) {
         return prev;
     }
-
+    if (typeof userData !== 'object' || Array.isArray(userData) || userData == null) {
+        return prev;
+    }
     let friends = [...prev];
-    let user = friends.find((friend) => friend.id === userId);
-
-    if (user == null) {
+    let user = friends.find((friend) => friend.id === userData.id);
+    if (user == null) { // PREVIOUS IMPLEMENTATION WHO KNOWS WHATS WRONG
         user = {
-            id: user.id,
-            username: user.username,
+            ...userData,
             newMessage: false,
             messages: [...messages],
             fetched: false,
         }
-    } else {
-        const lastNewMessage = user.messages[user.messages.length - 1]?.createdAt ?? new Date();
-        let index = 0;
+    } else if (user.messages.length > 0) {
+        const lastNewMessage = user.messages[user.messages.length - 1].createdAt ?? new Date();
+        let index = messages.length - 1;
         for (let i = 0; i < messages.length; i++) {
-            if (messages[i].createdAt <= lastNewMessage) {
-                index = i; break;
+            if (lastNewMessage > messages[i].createdAt) {
+                index = i; console.log(i); break;
             }
         }
-        user.messages = [...user.messages, messages.slice(-index)]; // May break here
+        user.messages = [...user.messages, ...messages.slice(index)]; // May break here but will produce more accurate solution
+    } else {
+        user.messages = [...messages];
     }
 
+    /*if (user == null) { // Retarded solution
+        user = {
+            ...userData,
+            newMessage: false,
+            fetched: false,
+        }
+    }*/
+
+    user.messages = [...messages];
+
     user.fetched = true;
-    return [user, friends.filter(val => val.id != user.id)];
+    return [user, ...friends.filter(val => val.id != user.id)];
 });
 
 
@@ -142,6 +153,8 @@ function sendGlobalMessage(message) {
 
 export {
     addPrivateMessages,
+    addFetchedMessages,
+    addNewPrivateMessage,
     sendPrivateMessageTo,
     sendGlobalMessage
 }

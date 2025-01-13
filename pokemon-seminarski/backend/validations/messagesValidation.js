@@ -6,7 +6,7 @@ const insertMessageSchema = createInsertSchema(messages);
 const selectMessageSchema = createSelectSchema(messages);
 const updateMessageSchema = insertMessageSchema.optional();
 
-const directionMessageValidation = z.object({direction: z.enum(['both', 'sent', 'received'])});
+const directionMessageValidation = z.object({direction: z.enum(['both', 'sent', 'received']).optional()});
 
 module.exports = {
     insertMessageSchema,
