@@ -13,6 +13,6 @@ router.route('/reset-password/:token').patch(resetUserPassword);
 router.route('/:param').get(getUser).patch(protect, updateUser).delete(protect, deleteUser);
 router.route('/:param/messages').get(protect, getUsersMessages);
 router.route('/:param/pokemons').get(protect, getUsersPokemons);
-router.route('/:param/pokemons/:id').get(protect, evolvePokemon);
+router.route('/:param/pokemons/:id').put(protect, evolvePokemon);
 
 module.exports = router;

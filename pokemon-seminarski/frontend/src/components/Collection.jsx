@@ -92,26 +92,34 @@ const loadUserPokemons = async (userId) => {
 
 /** 
  * Collection of users pokemon
- * @param {{horizontal?: boolean, cardClickEvent: (clickedpokemon: UsersPokemonExpanded, setPokemons: React.Dispatch<React.SetStateAction<UsersPokemonExpanded>>) => Promise, id?: number | undefined, cardOptions: {evolvable?: boolean, selectable?: boolean}}}}
+ * @param {{
+ *    horizontal?: boolean, 
+ *    cardClickEvent: (clickedpokemon: UsersPokemonExpanded) => Promise, 
+ *    id?: number | undefined, 
+ *    cardOptions: {evolvable?: boolean, selectable?: boolean}
+ * }} 
  */
 const Collection = ({ horizontal = false, cardClickEvent = undefined, id = undefined, cardOptions }) => {
    const { info } = useContext(UserContext);
    const [loaded, setLoaded] = useState(false);
    /**@type {[UsersPokemonExpanded[], React.Dispatch<React.SetStateAction<UsersPokemonExpanded[]>>]} */
    const [pokemons, setPokemons] = useState([]);
+   const [resetQuery, setResetQuery] = useState({});
 
    /**@param {UsersPokemonExpanded} pokemon*/
    const handleClick = async (pokemon) => {
-      await cardClickEvent?.(pokemon, setPokemons);
+      console.log("collection clicked");
+      await cardClickEvent?.(pokemon);
+      setResetQuery({});
    }
 
    useEffect(() => {
       (async () => {
-         const loaded = await loadUserPokemons(id ?? info.id) ?? [];
+         const loaded = (await loadUserPokemons(id ?? info.id)) ?? [];
          setPokemons(loaded);
          setLoaded(true);
       })();
-   }, [info, id])
+   }, [info, id, resetQuery])
 
    return (
       <div className={`collection${horizontal ? " collection-horizontal" : ""}`}>

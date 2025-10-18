@@ -269,22 +269,27 @@ const evolvePokemon = async (req, res) => {
 
         const usersPokemons = await getUsersPokemonsDB(req.user.id);
         const pokemonToEvolve = usersPokemons.find(val => val.id === parsedPokemon)
-        if (find == null) {
+        if (pokemonToEvolve == null) {
             return res.status(404).json(new ResponseError("Pokemon not found"));
         }
 
+        if (pokemonToEvolve.evolvesToPokemonId == null) {
+            return res.status(400).json(new ResponseError("Bad request - Pokemon can't be evolved"));
+        }
+
         if (pokemonToEvolve.xp < 100) {
-            return res.status(404).json(new ResponseError("Bad Request - you need 100 xp to evolve pokemone and you have" + pokemonToEvolve.xp + " xp."));
+            return res.status(400).json(new ResponseError("Bad Request - you need 100 xp to evolve pokemone and you have" + pokemonToEvolve.xp + " xp."));
 
         }
         if (usersPokemons.some(val => val.id === pokemonToEvolve.evolvesToPokemonId)) {
             return res.status(400).json(new ResponseError("Bad Request - you already own the evolved version of this pokemon"));
         }
 
-        const pokemon = await evolvePokemonDB(userId, pokemonToEvolve.id);
+        const pokemon = await evolvePokemonDB(req.user.id, pokemonToEvolve.id, pokemonToEvolve.evolvesToPokemonId);
         console.log(`User "${req.user.username} deleted a pokemon (${pokemonToEvolve.id})for the sake of evolving"`);
-        return res.status(201).json({ ...pokemon });
+        return res.status(201).json(pokemon);
     } catch (error) {
+        console.error(error);
         return res.status(500).json(new ResponseError("Internal server error - " + error.message))
     }
 }

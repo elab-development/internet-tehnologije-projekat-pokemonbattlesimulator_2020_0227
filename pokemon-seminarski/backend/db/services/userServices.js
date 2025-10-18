@@ -245,26 +245,23 @@ const deleteUsersPokemonDB = async (userId, pokemonId) => {
     return (await db.delete(usersPokemons).where(and(eq(usersPokemons.userId, userId), eq(usersPokemons.userId, userId))));
 }
 
-const evolvePokemonDB = async (userId, pokemonId) => {
+/**
+ * Evolve users, provided by id `userId`, to pokemon `pokemonId` to pokemone `evolveToId 
+ * @param {number} userId 
+ * @param {number} pokemonId 
+ * @param {number} evolveToId 
+ */
+const evolvePokemonDB = async (userId, pokemonId, evolveToId) => {
     if (userId == null || pokemonId == null) throw new Error('Required data not provided');
-    let usersPokemon = (await db
-        .select({
-            id: usersPokemons.id,
-            evolvesToId: evolution.evolvesToId
-        })
-        .from(usersPokemons)
-        .innerJoin(usersPokemons.pokemonId, pokemons.id)
-        .leftJoin(usersPokemons.pokemonId, evolution.pokemonId)
-        .where(eq(usersPokemons.pokemonId, pokemonId))
-        .limit(1)
-    )[0];
-    if (usersPokemon == null)
-        throw new Error('How did you get this? - No pokemon is found to evolve') // No pokemonid found in usersPokemons or pokemon doesnt exist
-    if (usersPokemon.evolvesToId == null)
-        throw new Error("How did you get this? - Pokemon can't evolve to anything");
 
-    await db.delete(usersPokemons).where(and(eq(usersPokemons.pokemonId, pokemonId), eq(usersPokemons.userId, userId)));
-    return (await db.insert(usersPokemons).values({ pokemonId: pokemonId, userId: userId }).returning())[0];
+    await db
+        .delete(usersPokemons)
+        .where(and(eq(usersPokemons.pokemonId, pokemonId), eq(usersPokemons.userId, userId)));
+    return (await db
+        .insert(usersPokemons)
+        .values({ pokemonId: evolveToId, userId: userId })
+        .returning()
+    )[0];
 }
 
 // Error check to not cause massive update

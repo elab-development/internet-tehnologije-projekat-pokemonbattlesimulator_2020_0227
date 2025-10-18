@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import ProgressBar from './ProgressBar'
 import { getTypeName } from './pokemonTypes'
 import { pokeGITAPI } from '../Collection'
@@ -12,18 +12,25 @@ function getColor(typeID, transparent = false) {
  * FOR FUTURE REFERENCE!!!!
  * * maximum values for STATS are 200. 100 by base and + additional 100 by expirience
  * * maximum value for XP is 100, after which evolution is enabled
- * @param {{pokemon: import('../Collection').UsersPokemonExpanded, onClick: (pokemon: import('../Collection').UsersPokemonExpanded) => any, options: {evolvable?: boolean, selectable?: boolean}}} param0 
+ * @param {{pokemon: import('../Collection').UsersPokemonExpanded, onClick: (pokemon: import('../Collection').UsersPokemonExpanded) => Promise<void>, options: {evolvable?: boolean, selectable?: boolean}}} param0 
  */
 const PokemonCard = ({ pokemon, onClick, options: { evolvable = false, selectable = false } }) => {
     const color = getColor(pokemon.type[0].id)
     const colorTransparent = getColor(pokemon.type[0].id, true);
+    const [isClickedBlocked, setIsClickedBlocked] = useState(false);
 
     const handleClick = () => {
-        onClick(pokemon);
+        console.log("clicked");
+        if (evolvable && pokemon.canEvolve && !isClickedBlocked) {
+            setIsClickedBlocked(true)
+            onClick(pokemon).finally(() => {
+                setIsClickedBlocked(false);
+            });
+        }
     }
 
     return (
-        <div className="pokemon-card" onClick={handleClick} style={{ "--currentColor": color, "--currentTransparentColor": colorTransparent }}>
+        <div className="pokemon-card" onClick={handleClick} style={{ "--currentColor": color, "--currentTransparentColor": colorTransparent, ...(isClickedBlocked ? {cursor: "not-allowed"} : {}) }}>
             {evolvable && pokemon.canEvolve && (
                 <div className="evolve-picture">
                     <svg width="143" height="169" viewBox="0 0 143 169" fill="none" xmlns="http://www.w3.org/2000/svg">

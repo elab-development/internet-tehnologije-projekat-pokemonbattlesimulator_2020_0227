@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { UserContext } from '../contexts/UserContextProvider'
 import API from './utils/api/API';
-import Collection, { loadApiData } from './Collection';
+import Collection from './Collection';
 import { useNavigate, useParams } from 'react-router-dom';
 import LoadingPage from './LoadingPage';
 import CopyUrlButton from './utils/CopyUrlButton';
@@ -28,12 +28,16 @@ const Career = () => {
 
    /** @param {import('./Collection').UsersPokemonExpanded} pokemon @param {React.Dispatch<React.SetStateAction<import('./Collection').UsersPokemonExpanded[]>>} callback*/
    const handleEvolve = async (pokemon, callback) => {
+      console.log("handleEvolve");
       if (!pokemon.canEvolve) {
+         console.log("coudln't evolve :(");
          return;
       }
-      const data = await API.patch(`/users/${params.id}/pokemons/${pokemon.id}`); // CALLS OUR EVOLVE API TODO
-      const fullPokemon = await loadApiData(pokemon.id);
-      callback(prev => prev.map(p => p.id === data.data ? { ...data.data, ...fullPokemon } : { ...p })); // UPDATES THE POKEMONS TO REFLECT
+      try {
+         await API.put(`/users/${params.id}/pokemons/${pokemon.id}`);
+      } catch (error) {
+         console.error("Couldn't evolve the pokemone :(", error);
+      }
    }
 
 
@@ -95,7 +99,7 @@ const Career = () => {
          </div>
          <div className='collection-wrapper'>
             <h3>Collection</h3>
-            <Collection onCardClickEvent={handleEvolve} cardOptions={{ evolvable: isOurProfile }} id={user.id} />
+            <Collection cardClickEvent={handleEvolve} cardOptions={{ evolvable: isOurProfile }} id={user.id} />
          </div>
       </div>
    )
