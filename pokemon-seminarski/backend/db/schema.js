@@ -91,8 +91,8 @@ const pokemonsTypes = pgTable('pokemon_type', {
 });
 
 const usersPokemons = pgTable('users_pokemons', {
-    pokemonId: integer('pokemon_id').notNull().references(() => pokemons.id),
-    userId: integer('user_id').notNull().references(() => users.id),
+    pokemonId: integer('pokemon_id').notNull().references(() => pokemons.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+    userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
     xp: integer('xp').notNull().default(0),
     createdAt: timestamp('created_at').notNull().defaultNow()
 }, (t) => ({

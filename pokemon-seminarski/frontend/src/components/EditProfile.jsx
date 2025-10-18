@@ -4,9 +4,14 @@ import InputField from './utils/InputField';
 import useDebounce from './utils/useDebounce';
 import { z } from 'zod'
 import API from './utils/api/API';
+import './css/Auth/EditProfile.scss'
+import { RootContext } from '../contexts/RootContextProvider';
+import { Link, useNavigate } from 'react-router-dom';
 
-const Settings = () => {
+const EditProfile = () => {
     const { info } = useContext(UserContext);
+    const { logout } = useContext(RootContext);
+    const navigate = useNavigate();
     const [input, setInput] = useState({
         username: "",
         email: "",
@@ -17,6 +22,8 @@ const Settings = () => {
     const [valid, setValid] = useState({ email: true, password: true, username: true, confirm: true });
     const [err, setErr] = useState(undefined);
     const [succ, setSucc] = useState(undefined);
+
+    const [isLoadingResponse, setIsLoadingResponse] = useState(false);
 
     const handleInput = (e) => {
         e.preventDefault();
@@ -30,16 +37,31 @@ const Settings = () => {
             return;
         }
 
-        API.patch(`/user/${info.id}`, {
+        setIsLoadingResponse(true);
+        API.patch(`/users/${info.id}`, {
             ...Object.keys(input).reduce((acc, key) => (
                 input[key] !== info[key] && input[key] !== "" ? { ...acc, [key]: input[key] } : acc
             ), {})
-        }).then((result) => {
+        }).then(() => {
             setSucc('Success yipiiee');
         }).catch((err) => {
             console.error(err);
             setErr(err);
+        }).finally(() => {
+            setIsLoadingResponse(false)
         });
+    }
+
+    const handleDeleteAccount = (e) => {
+        e.preventDefault();
+        const answer = window.confirm("Are you sure you want to delete the Account? Actions cannot be undone");
+        if (answer) {
+            setIsLoadingResponse(true);
+            API.delete(`/users/${info.id}`)
+                .then(() => logout())
+                .catch((err) => setErr(err))
+                .finally(() => setIsLoadingResponse(false));
+        }
     }
 
     useEffect(() => {
@@ -89,31 +111,34 @@ const Settings = () => {
         }
     }, [inputDebounced]);
 
+
     return (
-        <div className='settings'>
-            <div className='settings-center-block'>
+        <div className='edit-profile'>
+            <div className='edit-profile-user-data'>
+                <button type='button' className='go-back' onClick={() => navigate(`/users/${info.id}`, { replace: true })}><i className="bi bi-arrow-left"></i> To My Career</button>
                 <form onSubmit={handleSubmit}>
-                    <div className='settings-username sf1'> {/**sf1 -> setting fields = 1 (in 1 row)*/}
-                        <InputField name="username" value={input.username} onChange={handleInput} placeHolder='username' valid={input.username !== "" ? input.username === info.username || valid.username : null} />
+                    <div className='edit-profile-username'>
+                        <InputField name="username" value={input.username} onChange={handleInput} placeHolder={`username: ${info.username}`} valid={input.username !== "" ? input.username === info.username || valid.username : null} />
                     </div>
-                    <div className='settings-email sf1'> {/** OVO TREBA POGELDATI DODATNO JER EMAIL SE NE ŠALJE //TODO */}
-                        <InputField type='email' name="email" value={input.email} onChange={handleInput} placeHolder='email' valid={input.email !== "" ? input.email === info.email || valid.email : null} />
+                    <div className='edit-profile-email'> {/** OVO TREBA POGELDATI DODATNO JER EMAIL SE NE ŠALJE //TODO */}
+                        <InputField type='email' name="email" value={input.email} onChange={handleInput} placeHolder={`email: ${info.email}`} valid={input.email !== "" ? input.email === info.email || valid.email : null} />
                     </div>
-                    <div className='settings-password-wrapper sf2'>
-                        <div className='settings-password'>
+                    <div className='edit-profile-password-wrapper'>
+                        <div className='edit-profile-password'>
                             <InputField name="password" value={input.password} onChange={handleInput} placeHolder='new password' valid={input.password !== "" ? input.password === input.confirm && valid.password : null} />
                         </div>
-                        <div className='settings-confirm'>
+                        <div className='edit-profile-confirm'>
                             <InputField name="confirm" value={input.confirm} onChange={handleInput} placeHolder='confirm new password' valid={input.confirm !== "" ? input.confirm === info.password : null} />
                         </div>
                     </div>
-                    <input type='submit' className='settings-submit' value="save" disabled={valid} />
+                    <button type='submit' className='button-full' disabled={valid || isLoadingResponse}>Save Info</button>
+                    <button type='button' className='button-full' onClick={handleDeleteAccount} disabled={isLoadingResponse}>Delete Account</button>
                 </form>
-                {err !== "" && <label className='settings-label error' >{err}</label>}
-                {succ !== "" && <label className='settings-label success' >{succ}</label>}
+                {err !== "" && <label className='edit-profile-label error' >{err}</label>}
+                {succ !== "" && <label className='edit-profile-label success' >{succ}</label>}
             </div>
         </div>
     )
 }
 
-export default Settings
+export default EditProfile

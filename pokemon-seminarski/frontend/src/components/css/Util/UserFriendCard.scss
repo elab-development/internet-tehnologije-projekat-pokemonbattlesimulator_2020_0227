@@ -9,32 +9,37 @@
     width: 100%;
     padding: 0 5px;
 
-    &.user-friend-highlight::after {
+    .ufc-username {
+        position: relative;
+    }
+
+    &.highlight .ufc-username::after {
         content: "";
+        background-color: green;
         display: block;
         position: absolute;
-        left: 0;
-        top: 0;
+        left: -5px;
+        top: 0px;
         width: 5px;
         height: 5px;
         border-radius: 100%;
+    }
+
+    &.pulse .ufc-username::after {
+        background-color: $pink-blood;
         animation: 1s linear newMessagePulse infinite;
     }
 
-    // Selected namespace
-    &.user-friend-pulse {}
-
-    // Activate pulse border
-
-    .user-friend-info {
-        .ufc-username {}
-    }
 
     .user-friend-card-small-action {
         display: flex;
         flex-direction: column;
         justify-content: center;
         padding-top: 3px;
+
+        * {
+            font-size: 14px;
+        }
 
         .user-info-button {}
 
@@ -46,15 +51,15 @@
 }
 
 @keyframes newMessagePulse {
-    25% {
-        background-color: transparent;
+    0% {
+        opacity: 0;
     }
 
-    75% {
-        background-color: $pink-blood;
+    50% {
+        opacity: 1;
     }
 
     100% {
-        background-color: transparent;
+        opacity: 0;
     }
 }

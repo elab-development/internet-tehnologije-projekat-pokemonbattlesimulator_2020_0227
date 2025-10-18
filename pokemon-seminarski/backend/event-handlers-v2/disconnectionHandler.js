@@ -23,7 +23,7 @@ module.exports = (socketInformation, socket) =>
         console.log('description: ' + description?.message + "\n/////////////////////\n");
         const game = socketInformation.allGameRooms.find(gr => gr.player1.id === user.id || gr.player2.id === user.id);
 
-        socketInformation.allConnectedUsers = socketInformation.allConnectedUsers.filter(val => val.id === user.id);
+        socketInformation.allConnectedUsers = socketInformation.allConnectedUsers.filter(val => val.id !== user.id);
         if (game == null) {
             return;
         }

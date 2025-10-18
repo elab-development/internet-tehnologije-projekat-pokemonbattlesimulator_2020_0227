@@ -5,6 +5,7 @@ const { directionMessageValidation } = require('../validations/messagesValidatio
 const { getMessagesDB } = require('../db/services/messagesServices');
 const { ADMIN } = require('../enums/roles');
 const { ResponseError } = require('../utils/typedefs');
+const getClientURL = require('../utils/getClientURL');
 
 
 // Pagination {limit: number, offset: number}, Filtration {user1: [senderId], user2: [reciverId], direction: 'both' | 'sent' | 'received', q: message, }
@@ -86,8 +87,8 @@ const getMessages = async (req, res) => {
 
         return res.status(200).json({
             totalCount: result.totalCount,
-            next: result.offset + result.limit >= result.totalCount ? null : `${process.env.HOST ?? `http://localhost:${process.env.PORT ?? 5000}`}/api/messages?offset=${result.offset + result.limit < 0 ? 0 : result.offset}&limit=${result.offset + 2 * result.limit > result.totalresult ? result.totalCount - result.limit : (result.limit <= 0 ? Math.min(20, result.totalCount) : result.limit)}${user1 != null ? (Array.isArray(user1) ? user1 : [user1]).map((val) => `&user1=${val}`) : ""}${user2 != null ? (Array.isArray(user2) ? user2 : [user2]).map((val) => `&user2=${val}`) : ""}${direction ? ("&direction=" + direction) : ""}${q ? ("&q=" + q) : ""}`,
-            previous: result.offset === 0 ? null : `${process.env.HOST ?? `http://localhost:${process.env.PORT ?? 5000}`}/api/messages?offset=${(result.offset - result.limit < 0) ? 0 : (result.offset - result.limit > result.totalCount ? result.totalCount - result.limit : result.offset - result.limit)}&limit=${result.offset - result.limit < 0 ? result.offset : result.limit}${user1 != null ? (Array.isArray(user1) ? user1 : [user1]).map((val) => `&user1=${val}`) : ""}${user2 != null ? (Array.isArray(user2) ? user2 : [user2]).map((val) => `&user2=${val}`) : ""}${direction ? ("&direction=" + direction) : ""}${q ? ("&q=" + q) : ""}`,
+            next: result.offset + result.limit >= result.totalCount ? null : `${getClientURL()}/api/messages?offset=${result.offset + result.limit < 0 ? 0 : result.offset}&limit=${result.offset + 2 * result.limit > result.totalresult ? result.totalCount - result.limit : (result.limit <= 0 ? Math.min(20, result.totalCount) : result.limit)}${user1 != null ? (Array.isArray(user1) ? user1 : [user1]).map((val) => `&user1=${val}`) : ""}${user2 != null ? (Array.isArray(user2) ? user2 : [user2]).map((val) => `&user2=${val}`) : ""}${direction ? ("&direction=" + direction) : ""}${q ? ("&q=" + q) : ""}`,
+            previous: result.offset === 0 ? null : `${getClientURL()}/api/messages?offset=${(result.offset - result.limit < 0) ? 0 : (result.offset - result.limit > result.totalCount ? result.totalCount - result.limit : result.offset - result.limit)}&limit=${result.offset - result.limit < 0 ? result.offset : result.limit}${user1 != null ? (Array.isArray(user1) ? user1 : [user1]).map((val) => `&user1=${val}`) : ""}${user2 != null ? (Array.isArray(user2) ? user2 : [user2]).map((val) => `&user2=${val}`) : ""}${direction ? ("&direction=" + direction) : ""}${q ? ("&q=" + q) : ""}`,
             data: result.messagesData
         });
     } catch (error) {

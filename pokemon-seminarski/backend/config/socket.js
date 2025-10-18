@@ -1,3 +1,4 @@
+//@ts-check
 const { Server } = require("socket.io");
 
 // Handlers
@@ -28,6 +29,7 @@ const handleSocketConnections = async (io) => {
     io.use(async (socket, next) => {
         console.log('new connection!');
         const token = socket.handshake.auth.token;
+        console.log('token we got from connection', token);
         try {
             let tempSocket = socket;
             const user = await validateToken(token);

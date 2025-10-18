@@ -19,7 +19,7 @@ import { parseUserToFriend } from './utils/api/parsers/userParser';
  * @typedef {import('../../../backend/utils/typedefs').UserSelect} UsersResult
  * @typedef {{id: number, fetched: boolean}} NamespaceInfo
  */
-
+/**@type {0} */
 const GLOBAL_NAMESPACE = 0;
 
 const ChatV2 = () => {
@@ -31,6 +31,7 @@ const ChatV2 = () => {
     const [friends, setFriends] = useState([]);
     /**@type {[NamespaceInfo, React.Dispatch<React.SetStateAction<NamespaceInfo>>]}*/         // SELECTED FRIEND ID
     const [selectedNamespace, setSelectedNamespace] = useState({ id: GLOBAL_NAMESPACE, fetched: false });
+    const selectedNamespaceIDRef = useRef(selectedNamespace.id);
     /**@type {[GlobalMessage[], React.Dispatch<React.SetStateAction<GlobalMessage[]>>]} */    // GLOBALMESSAGES -> ID === 0
     const [globalMessages, setGlobalMessages] = useState([]);
     const [isNewGlobal, setIsNewGlobal] = useState(false);
@@ -59,7 +60,6 @@ const ChatV2 = () => {
             let friend = friends.find((val) => val.id === namespaceId); // Ako ga ima 
             if (friend !== undefined) {                                 // proveri da li ima poruke fetched
                 fetched = !!friend.fetched;
-                console.log("fetched", fetched, friend.fetched);
             }
         }
         setLoaded(prev => ({ ...prev, namespace: false }));
@@ -67,10 +67,10 @@ const ChatV2 = () => {
     }, [friends])
 
 
-    const handleOnClickNamespace = (namespaceId) => {
+    const handleOnClickNamespace = useCallback((namespaceId) => {
         inputRef.current.focus();
         changeNamespace(namespaceId)
-    }
+    }, [changeNamespace]);
 
     const handleInput = (e) => {
         e.preventDefault();
@@ -103,7 +103,6 @@ const ChatV2 = () => {
         setIsFriendSearchOpen(prev => !prev);
     }
 
-
     // EVENT REGISTRATION
     useEffect(() => {
         function onGlobalMessageReceived(data) {
@@ -113,7 +112,7 @@ const ChatV2 = () => {
         }
         function onPrivateMessageReceived(data) {
             console.log("private", data);
-            addNewPrivateMessage(info.id, data, setFriends);
+            addNewPrivateMessage(info.id, data, setFriends, selectedNamespaceIDRef.current);
         }
 
         socket.on('message:global:received', onGlobalMessageReceived);
@@ -123,7 +122,13 @@ const ChatV2 = () => {
             socket.off('message:global:received', onGlobalMessageReceived);
             socket.off('message:private:received', onPrivateMessageReceived);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [info.id]);
+
+    // UPDATE THE selectedNamespaceIDRef TO HINT HANDLER TO/NOT TO SET "newMessage" PARAMETER
+    useEffect(() => {
+        selectedNamespaceIDRef.current = selectedNamespace.id;
+    }, [selectedNamespace]);
 
     // INITAL LOAD FOR FRIENDS
     useEffect(() => {
@@ -151,21 +156,23 @@ const ChatV2 = () => {
     // LOAD MESSAGES FOR SELECTED NAMESPACE AND LOAD THE USER UP THE FRIENDS LIST
     useEffect(() => {
         console.log("namespace changed", selectedNamespace);
-        if (selectedNamespace.id === GLOBAL_NAMESPACE || selectedNamespace.fetched === true) { // Everything is already loaded
+        if (selectedNamespace.id === GLOBAL_NAMESPACE) {
+            setIsNewGlobal(false);
+        }
+        if (selectedNamespace.id === GLOBAL_NAMESPACE || selectedNamespace.fetched) { // Everything is already loaded
             setLoaded(prev => ({ ...prev, namespace: true }))
             return;
         }
 
+        console.log("fetching messages for this namespace");
         getUserById(selectedNamespace.id)
-            .then((user) => {
-                return getMessages({ user1: info.id, user2: user.id })
-                    .then((messages) => {
-                        addFetchedMessages(user, messages, setFriends)
-                        // Ako me u budućnosti bude zanimalo što ovako, pa nema zašta da imam finally block
-                        //  kad će ovaj useEffect se opet pokrenuti i gore namestiti
-                        setLoaded(prev => ({ ...prev, namespace: true }));
-                        setIsFriendSearchOpen(false);
-                    })
+            .then(async (user) => {
+                const messages = await getMessages({ user1: info.id, user2: user.id });
+                addFetchedMessages(user, messages, setFriends);
+                // Ako me u budućnosti bude zanimalo što ovako, pa nema zašta da imam finally block
+                //  kad će ovaj useEffect se opet pokrenuti i gore namestiti
+                setLoaded(prev => ({ ...prev, namespace: true }));
+                setIsFriendSearchOpen(false);
             })
             .catch((err) => {
                 setSelectedNamespace({ id: GLOBAL_NAMESPACE, fetched: true });
@@ -209,13 +216,12 @@ const ChatV2 = () => {
     }, [tenorQueryDebounced]);
 
 
-    useEffect(() => {
-        console.log(friends);
-    }, [friends]);
-
-
     return (
         <div className='chat-page'>
+            <div className='chat-header'>
+                <h2>Chat</h2>
+                <h3>Welcome, {info.username}</h3>
+            </div>
             <div className="chat">
                 <div className='chat-and-friends'>
                     <div className='content-box'>
@@ -258,7 +264,6 @@ const ChatV2 = () => {
                                             friends.find((user) => user.id === selectedNamespace.id).messages.map((val, index) =>
                                                 <Message text={val.message} us={val.sender.id === info.id} username={val.sender.username} key={index} />
                                             )
-
                                         )
                                     }
                                 </div>
@@ -269,12 +274,12 @@ const ChatV2 = () => {
                     </div>
                     <div className='friend-box'>
                         <div className='friend-box-inner-wrapper'>
-                            <UserFriendCard val={{ id: 0, username: 'global' }} key={0} onClickMessage={handleOnClickNamespace} highlight={selectedNamespace.id === 0} isNewMessage={isNewGlobal} />
+                            <UserFriendCard val={{ id: 0, username: 'global' }} key={0} onClickMessage={handleOnClickNamespace} highlight={selectedNamespace.id === GLOBAL_NAMESPACE} isNewMessage={isNewGlobal} />
                             <hr key="hr" />
                             {
                                 loaded.friends ?
                                     (<>
-                                        {friends.map((val) => <UserFriendCard val={val} key={val.id} onClickMessage={handleOnClickNamespace} highlight={val.id === selectedNamespace} isNewMessage={val.newMessage} />)}
+                                        {friends.map((val) => <UserFriendCard val={val} key={val.id} onClickMessage={handleOnClickNamespace} highlight={val.id === selectedNamespace.id} isNewMessage={val.newMessage} />)}
                                     </>)
                                     : (
                                         <p className='chat-loading-text'>loading...</p>
@@ -282,7 +287,7 @@ const ChatV2 = () => {
                             }
                         </div>
                         <div className='find-friends-button'>
-                            <button type='button' className='button-full' onClick={handleOpenFriend}>find friends!</button>
+                            <button type='button' className='button-full' onClick={handleOpenFriend}>{isFriendSearchOpen ? "close finder" : "find friends!"}</button>
                         </div>
                     </div>
                 </div>

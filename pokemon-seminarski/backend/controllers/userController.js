@@ -11,6 +11,7 @@ const { generateResetPasswordToken, validateResetPasswordToken, hashToken } = re
 const { sendPasswordResetEmail } = require('../utils/sendPasswordResetEmail');
 const { validateToken } = require('../utils/validateToken');
 const { ConsoleLogWriter } = require('drizzle-orm');
+const getClientURL = require('../utils/getClientURL');
 
 /**
  * @description     Login user & get token
@@ -91,7 +92,7 @@ const registerUser = async (req, res) => {
 
         return res.status(201).json({
             ...user,
-            token: generateToken(user.id)
+            token: generateToken({ id: user.id })
         });
     } catch (err) {
         console.error(err);
@@ -199,8 +200,8 @@ const getUsers = async (req, res) => {
 
         return res.status(200).json({
             totalCount: result.totalCount,
-            next: result.offset + result.limit >= result.totalCount ? null : `${process.env.HOST ?? `http://localhost:${process.env.PORT ?? 5000}`}/api/users?offset=${result.offset + result.limit < 0 ? 0 : result.offset}&limit=${result.offset + 2 * result.limit > result.totalresult ? result.totalCount - result.limit : (result.limit <= 0 ? Math.min(20, result.totalCount) : result.limit)}`,
-            previous: result.offset === 0 ? null : `${process.env.HOST ?? `http://localhost:${process.env.PORT ?? 5000}`}/api/users?offset=${(result.offset - result.limit <= 0) ? 0 : (result.offset - result.limit > result.totalCount ? result.totalCount - result.limit : result.offset - result.limit)}&limit=${result.offset - result.limit < 0 ? result.offset : result.limit}`,
+            next: result.offset + result.limit >= result.totalCount ? null : `${getClientURL()}/api/users?offset=${result.offset + result.limit < 0 ? 0 : result.offset}&limit=${result.offset + 2 * result.limit > result.totalresult ? result.totalCount - result.limit : (result.limit <= 0 ? Math.min(20, result.totalCount) : result.limit)}`,
+            previous: result.offset === 0 ? null : `${getClientURL()}/api/users?offset=${(result.offset - result.limit <= 0) ? 0 : (result.offset - result.limit > result.totalCount ? result.totalCount - result.limit : result.offset - result.limit)}&limit=${result.offset - result.limit < 0 ? result.offset : result.limit}`,
             data: result.usersData
         });
     } catch (error) {
@@ -297,18 +298,17 @@ const evolvePokemon = async (req, res) => {
  * @type {import('express').RequestHandler<{param: string}, any, any, qs.ParsedQs, Record<string, any>}
  */
 const deleteUser = async (req, res) => {
-    if (req.user.id !== parseIntegerStrict(param) && req.user.username !== param && req.user.role !== ADMIN) {
+    if (req.user.id !== parseIntegerStrict(req.params.param)
+        && req.user.username !== req.params.param
+        && req.user.role !== ADMIN
+    ) {
         return res.status(401).json(new ResponseError("Unauthorized - Can't delete other user"));
     }
 
     try {
         if (req.user.role === ADMIN) {
-            const id = parseIntegerStrict(req.params.param);
-
-            if (id == null) {
-                return res.status(400).json(new ResponseError('Bad request', { param: 'Expected integer' }, 'params'));
-            }
-            await deleteUserDB(parseIntegerStrict(req.body.userId));
+            const param = parseIntegerStrict(req.params.param) ?? req.params.param;
+            await deleteUserDB(parseIntegerStrict(param));
         } else {
             await deleteUserDB(req.user.id);
         }
@@ -436,8 +436,8 @@ const getUsersMessages = async (req, res) => {
 
         return res.status(200).json({
             totalCount: result.totalCount,
-            next: result.offset + result.limit >= result.totalCount ? null : `${process.env.HOST ?? `http://localhost:${process.env.PORT ?? 5000}`}/api/users/${userId}/messages?offset=${result.offset + result.limit < 0 ? 0 : result.offset}&limit=${result.offset + 2 * result.limit > result.totalresult ? result.totalCount - result.limit : (result.limit <= 0 ? Math.min(20, result.totalCount) : result.limit)}${chatsWith != null ? '&chatsWith=' + chatsWith : ""}${receivedMessages != null ? '&recivedMessages=' + receivedMessages : ""}${sentMessages != null ? '&sentMessages=' + sentMessages : ""}&orderByAsc=${orderByAsc ?? false}`,
-            previous: result.offset === 0 ? null : `${process.env.HOST ?? `http://localhost:${process.env.PORT ?? 5000}`}/api/users/${userId}/messages?offset=${(result.offset - result.limit <= 0) ? 0 : (result.offset - result.limit > result.totalCount ? result.totalCount - result.limit : result.offset - result.limit)}&limit=${result.offset - result.limit < 0 ? result.offset : result.limit}${chatsWith != null ? '&chatsWith=' + chatsWith : ""}${receivedMessages != null ? '&recivedMessages=' + receivedMessages : ""}${sentMessages != null ? '&sentMessages=' + sentMessages : ""}&orderByAsc=${orderByAsc ?? false}`,
+            next: result.offset + result.limit >= result.totalCount ? null : `${getClientURL()}/api/users/${userId}/messages?offset=${result.offset + result.limit < 0 ? 0 : result.offset}&limit=${result.offset + 2 * result.limit > result.totalresult ? result.totalCount - result.limit : (result.limit <= 0 ? Math.min(20, result.totalCount) : result.limit)}${chatsWith != null ? '&chatsWith=' + chatsWith : ""}${receivedMessages != null ? '&recivedMessages=' + receivedMessages : ""}${sentMessages != null ? '&sentMessages=' + sentMessages : ""}&orderByAsc=${orderByAsc ?? false}`,
+            previous: result.offset === 0 ? null : `${getClientURL()}/api/users/${userId}/messages?offset=${(result.offset - result.limit <= 0) ? 0 : (result.offset - result.limit > result.totalCount ? result.totalCount - result.limit : result.offset - result.limit)}&limit=${result.offset - result.limit < 0 ? result.offset : result.limit}${chatsWith != null ? '&chatsWith=' + chatsWith : ""}${receivedMessages != null ? '&recivedMessages=' + receivedMessages : ""}${sentMessages != null ? '&sentMessages=' + sentMessages : ""}&orderByAsc=${orderByAsc ?? false}`,
             data: result.messagesData
         });
 
@@ -464,14 +464,19 @@ const requestUserPasswordReset = async (req, res) => {
         const user = await getUserByEmail(String(email));
 
         if (!user) {
-            return res.status(400).json(new ResponseError('User with this email does not exist'));
+            console.log("User attempted to send email to non existant user");
+            return res.status(201).send();
         }
 
         const { resetToken, passwordResetToken, expiresAt } = generateResetPasswordToken('10m');
         await insertResetPasswordToken(user.email, passwordResetToken, expiresAt);
 
-        const resetUrl = `${process.env.HOST ?? `http://localhost:${process.env.PORT ?? 5000}`}/api/users/reset-password/${resetToken}`;
-        sendPasswordResetEmail(user.email, resetUrl);
+        const resetUrl = `${getClientURL()}${process.env.RESET_PASSWORD_FRONTEND_ROUTE}/${resetToken}`;
+        try {
+            sendPasswordResetEmail(user.email, resetUrl);
+        } catch (error) {
+            console.error(error);
+        }
 
         return res.status(201).send();
     } catch (err) {

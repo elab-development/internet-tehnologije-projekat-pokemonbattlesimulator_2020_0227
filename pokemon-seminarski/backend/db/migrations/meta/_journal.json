@@ -22,6 +22,20 @@
       "when": 1726223444491,
       "tag": "0002_mature_sugar_man",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1760042398532,
+      "tag": "0003_massive_moondragon",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1760042490065,
+      "tag": "0004_graceful_loki",
+      "breakpoints": true
     }
   ]
 }

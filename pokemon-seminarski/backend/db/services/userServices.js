@@ -120,7 +120,6 @@ const getUserDB = async ({ userId = undefined, username = undefined, email = und
         email ? eq(users.email, email) : undefined,
         password ? eq(users.password, password) : undefined,
     ];
-    console.log('got here')
     const conditions = logicalConjunction ? and(...listOfConditions) : or(...listOfConditions)
 
     return (await db.select().from(users).where(conditions));

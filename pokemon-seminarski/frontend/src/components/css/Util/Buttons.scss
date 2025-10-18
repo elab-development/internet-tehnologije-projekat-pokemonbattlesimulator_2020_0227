@@ -34,6 +34,31 @@ $base-transition: --gradPoint 0.25s ease-in-out,
     transition: #{$base-transition};
     @include transitionButton();
 
+    &:not(:disabled):hover {
+        --gradPoint: 100%;
+        box-shadow: inset 20px 0 20px -20px $light-purple, inset -20px 0 20px -20px $light-purple;
+    }
+
+    &:disabled {
+        color: gray;
+        cursor: auto;
+    }
+}
+
+.button-half {
+    width: 138px;
+}
+
+.button-background {
+    background: radial-gradient(circle at center,
+            rgba($dark-purple, 0.7) 0 calc(var(--gradPoint) - 80%),
+            rgba($purple, 0.3) calc(var(--gradPoint) - 40%) calc(var(--gradPoint)),
+            $dark-purple calc(var(--gradPoint) + 40%));
+
+    transition: #{$base-transition};
+    @include transitionButton();
+
+
     &:hover {
         --gradPoint: 100%;
         box-shadow: inset 20px 0 20px -20px $light-purple, inset -20px 0 20px -20px $light-purple;
@@ -44,13 +69,8 @@ $base-transition: --gradPoint 0.25s ease-in-out,
     }
 }
 
-.button-half {
-    width: 138px;
-}
-
-
-
-a, .button-anchor {
+a,
+.button-anchor {
     width: auto;
     color: inherit;
     text-decoration: none;

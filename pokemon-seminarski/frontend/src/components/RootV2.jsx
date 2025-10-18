@@ -30,6 +30,13 @@ const RootV2 = () => {
         cb?.call();
     }, []);
 
+    const logout = useCallback(() => {
+        setInfo(null);
+        socket.disconnect();
+        localStorage.removeItem("token");
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     useEffect(() => {
         function onConnectUser(data) { // Successfuly authorized and recived userData -> It's okay
             setInfo(prev => ({ ...prev, ...data.user }));
@@ -95,16 +102,8 @@ const RootV2 = () => {
         socket.connect();
     }, []);
 
-    /*useEffect(() => {
-        const i = setInterval(() => console.log(socket.id, socket.connected), 500)
-
-        return () => {
-            clearInterval(i);
-        }
-    }, []);*/
-
     return (
-        <RootContext.Provider value={{ notify }}>
+        <RootContext.Provider value={{ notify, logout }}>
             {loadingState ? <LoadingPage /> : <Outlet />}
         </RootContext.Provider>
     )

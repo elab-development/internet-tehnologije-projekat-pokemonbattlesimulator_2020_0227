@@ -14,7 +14,8 @@ import { createContext } from "react";
 
 /**
  * @typedef {function({options: Options, cb: Callback}): void} T_RootNotify
- * @typedef {{notify: T_RootNotify}} T_RootContext
+ * @typedef {function(): void} T_RootLogout
+ * @typedef {{notify: T_RootNotify, logout: T_RootLogout}} T_RootContext
  */
 
 

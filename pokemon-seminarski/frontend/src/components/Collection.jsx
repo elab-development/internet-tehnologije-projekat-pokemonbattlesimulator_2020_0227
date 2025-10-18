@@ -42,7 +42,7 @@ export const pokeGITAPI = (id) => `https://raw.githubusercontent.com/PokeAPI/spr
 /**@param {(UsersPokemonBackend & UsersPokemonExpansion)[]} pokemons*/
 const evolutionToBoolean = (pokemons) => {
    for (const pokemon of pokemons) { // Removes evolves to id and adds a canEvolve property
-      pokemon.canEvolve = pokemon.evolvesToPokemonId != null && pokemons.some(val => val.id === pokemon.evolvesToPokemonId) && pokemon.xp >= 100;
+      pokemon.canEvolve = pokemon.evolvesToPokemonId != null && pokemon.xp >= 100 && !pokemons.some(p => p.id === pokemon.evolvesToPokemonId);
       delete pokemon.evolvesToPokemonId;
    }
 }
@@ -59,6 +59,9 @@ export const loadApiData = async (id) => {
    }
 }
 
+/**
+ * @returns {UsersPokemonExpanded[]}
+ */
 const loadUserPokemons = async (userId) => {
    try {
       /**@type {UsersPokemonBackend[]} */
@@ -69,20 +72,18 @@ const loadUserPokemons = async (userId) => {
       }
 
       const fetchPromises = pokemonsDB.map(async (element) => {
-         const { id } = element;
+         const pokemon = (await loadApiData(element.id));
          return {
             ...element,
-            ...loadApiData(id),
+            ...pokemon,
          };
       });
 
-      /**@type {UsersPokemonExpanded[]} */
-      const updatedPokemons = evolutionToBoolean(await Promise.all(fetchPromises));
+      const result = await Promise.all(fetchPromises);
+      evolutionToBoolean(result);
 
-
-      console.log('All pokemons have been loaded and updated:', updatedPokemons);
-
-      return updatedPokemons;
+      console.log('All pokemons have been loaded and updated:', result);
+      return result;
    } catch (error) {
       console.error(error.toJSON?.() || error.message);
       return null;
@@ -91,7 +92,7 @@ const loadUserPokemons = async (userId) => {
 
 /** 
  * Collection of users pokemon
- * @param {{horizontal?: boolean, cardClickEvent: (clickedpokemon: UsersPokemonExpanded, setPokemons: React.Dispatch<React.SetStateAction<UsersPokemonExpanded>>) => Promise, id?: number | undefined, cardOptions: {}}}
+ * @param {{horizontal?: boolean, cardClickEvent: (clickedpokemon: UsersPokemonExpanded, setPokemons: React.Dispatch<React.SetStateAction<UsersPokemonExpanded>>) => Promise, id?: number | undefined, cardOptions: {evolvable?: boolean, selectable?: boolean}}}}
  */
 const Collection = ({ horizontal = false, cardClickEvent = undefined, id = undefined, cardOptions }) => {
    const { info } = useContext(UserContext);
@@ -106,19 +107,21 @@ const Collection = ({ horizontal = false, cardClickEvent = undefined, id = undef
 
    useEffect(() => {
       (async () => {
-         setPokemons(await loadUserPokemons(id ?? info.id) ?? []);
+         const loaded = await loadUserPokemons(id ?? info.id) ?? [];
+         setPokemons(loaded);
          setLoaded(true);
       })();
    }, [info, id])
 
    return (
       <div className={`collection${horizontal ? " collection-horizontal" : ""}`}>
-         {!loaded ? null :
-            pokemons.map((pokemon) => {
-               return (
-                  <PokemonCard pokemon={pokemon} onClick={handleClick} options={cardOptions} />
-               );
-            })
+         {!loaded ? (
+            <div className='collection-loading'>
+               loading...
+            </div>
+         ) : (
+            pokemons.map((pokemon) => <PokemonCard key={pokemon.id} pokemon={pokemon} onClick={handleClick} options={cardOptions} />)
+         )
          }
       </div>
    )

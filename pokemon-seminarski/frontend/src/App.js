@@ -12,10 +12,10 @@ import UserContextProvider from './contexts/UserContextProvider';
 import GameScreen from './components/GameScreen';
 import RequestPasswordReset from './components/RequestPasswordReset';
 import MainLayout from './components/MainLayout';
-import Settings from './components/Settings';
-import CareerWrapper from './components/CareerWrapper';
+import EditProfile from './components/EditProfile';
 import ResetPassword from './components/ResetPassword';
 import RootV2 from './components/RootV2';
+import Career from './components/Career';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -24,8 +24,8 @@ const router = createBrowserRouter(
         <Route element={<MainLayout />}>
           <Route path='/home' element={<Home />} />
           <Route path='/play' element={<Play />} />
-          <Route path='/settings' element={<Settings />} />
-          <Route path='/users/:id' element={<CareerWrapper />} />
+          <Route path='/users/:id' element={<Career />} />
+          <Route path='/users/:id/edit' element={<EditProfile />} />
         </Route>
         <Route path='/game/:id' element={<GameScreen />} />
       </Route>

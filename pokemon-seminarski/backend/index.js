@@ -1,3 +1,4 @@
+//@ts-check
 const express = require('express');
 require('dotenv').config({ path: './../.env' });
 require('./config/db');
@@ -35,7 +36,6 @@ app.use('/api/pokemons', pokemonsRoutes);
 
 // socket.io setup
 const handleSocketConnections = require('./config/socket');
-const { Server } = require('socket.io');
 const io = require('socket.io')(server);
 
 const startServer = async () => {

@@ -1,5 +1,6 @@
 const { insertPokemonDB, insertBulkPokemonDB, getPokemonByIdDB, getPokemonsDB, deletePokemonDB, updatePokemonDB } = require("../db/services/pokemonServices");
 const { ADMIN } = require("../enums/roles");
+const getClientURL = require("../utils/getClientURL");
 const { parseIntegerStrict } = require("../utils/parsesForPrimitives");
 const { ResponseError } = require("../utils/typedefs");
 const { selectPokemonSchema, insertPokemonSchema, updatePokemonSchema } = require("../validations/pokemonValidation");
@@ -107,8 +108,8 @@ const getPokemons = async (req, res) => {
 
         return res.status(200).json({
             totalCount: result.totalCount,
-            next: result.offset + result.limit >= result.totalCount ? null : `${process.env.HOST ?? `http://localhost:${process.env.PORT ?? 5000}`}/api/pokemons?offset=${result.offset + result.limit < 0 ? 0 : result.offset}&limit=${result.offset + 2 * result.limit > result.totalresult ? result.totalCount - result.limit : (result.limit <= 0 ? Math.min(20, result.totalCount) : result.limit)}`,
-            previous: result.offset === 0 ? null : `${process.env.HOST ?? `http://localhost:${process.env.PORT ?? 5000}`}/api/pokemons?offset=${(result.offset - result.limit < 0) ? 0 : (result.offset - result.limit > result.totalCount ? result.totalCount - result.limit : result.offset - result.limit)}&limit=${result.offset - result.limit < 0 ? result.offset : result.limit}`,
+            next: result.offset + result.limit >= result.totalCount ? null : `${getClientURL()}/api/pokemons?offset=${result.offset + result.limit < 0 ? 0 : result.offset}&limit=${result.offset + 2 * result.limit > result.totalresult ? result.totalCount - result.limit : (result.limit <= 0 ? Math.min(20, result.totalCount) : result.limit)}`,
+            previous: result.offset === 0 ? null : `${getClientURL()}/api/pokemons?offset=${(result.offset - result.limit < 0) ? 0 : (result.offset - result.limit > result.totalCount ? result.totalCount - result.limit : result.offset - result.limit)}&limit=${result.offset - result.limit < 0 ? result.offset : result.limit}`,
             data: result.pokemonsData
         });
     } catch (error) {

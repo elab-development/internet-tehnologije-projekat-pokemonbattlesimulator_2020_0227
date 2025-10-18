@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom';
 import { z } from 'zod'
 import InputField from './utils/InputField';
@@ -7,8 +7,10 @@ import useDebounce from './utils/useDebounce';
 import API from './utils/api/API';
 import { socket } from './sockets/sockets';
 import './css/NoAuth/Register.scss'
+import { RootContext } from '../contexts/RootContextProvider';
 
 const Register = () => {
+  const { notify } = useContext(RootContext);
   const [user, setUser] = useState({ email: "", username: "", password: "", confirm: "" });
   const [userError, setUserError] = useState({ email: false, username: false, password: false, confirm: false });
   const [err, setErr] = useState("");
@@ -70,14 +72,12 @@ const Register = () => {
 
     if (zerrors.length > 0) {
       setErr(
-        zerrors[0].length > 70 ? zerrors[0].substring(0, 70) + "..." : zerrors[0] 
-        + (zerrors.length > 1 ? `; (${zerrors.length - 1} more error${zerrors.length - 1 > 1 ? "s" : ""})` : ""));
+        zerrors[0].length > 70 ? zerrors[0].substring(0, 70) + "..." : zerrors[0]
+          + (zerrors.length > 1 ? `; (${zerrors.length - 1} more error${zerrors.length - 1 > 1 ? "s" : ""})` : ""));
       setUserError(tempUserError);
     } else {
       setErr("")
     }
-
-    console.log(debouncedUser)
   }, [debouncedUser])
 
 
@@ -90,10 +90,10 @@ const Register = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     setButtonPressed(true);
-    API.post('/register', { email: user.email, username: user.username, password: user.password }).then((result) => {
+    API.post('/users', { email: user.email, username: user.username, password: user.password }).then((result) => {
       const data = result.data;
       localStorage.setItem('token', "Bearer " + data.token);
-      socket.connect();
+      notify({ options: { resetConnection: true, redirectTo: '/home' } }); // Successful login -> Refresh whole page
     }).catch((err) => {
       setErr(err.message);
     }).finally(() => {

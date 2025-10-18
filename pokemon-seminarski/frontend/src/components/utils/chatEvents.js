@@ -1,7 +1,7 @@
 import { socket } from "../sockets/sockets";
 
 /**
- * 
+ * Who tf knows what's this
  * @param {number} ourId - ID of the current user
  * @param {{sender: {id: number, username: string}, receiver: {id: number, username: string}, message: string, createdAt: Date}[]} messages - Array of messages
  * @param {import("react").Dispatch<import('react').SetStateAction<import("../typedefs/chatTypeDefs").FriendUser[]>>} setUsersCallback - Callback to update the state of users
@@ -63,18 +63,19 @@ function addPrivateMessages(ourId, messages, setUsersCallback, options = { newMe
 }
 
 /**
- * 
+ * Used to react to events. Adds the messages and possibly a new user as friends!
  * @param {number} ourId - ID of the current user
  * @param {{sender: {id: number, username: string}, receiver: {id: number, username: string}, message: string, createdAt: Date}} message - Array of messages
  * @param {import("react").Dispatch<import('react').SetStateAction<import("../typedefs/chatTypeDefs").FriendUser[]>>} setUsersCallback - Callback to update the state of users
- * @returns 
+ * @param {number} currentNamespace - since namespace is equal to `user.id`, we can check if we should mark the message as new or not, cause if person is currently looking at the given namespace,
+ *  then no need to mark it as new
  */
-const addNewPrivateMessage = (ourId, message, setUsersCallback) => setUsersCallback((prev) => {
+const addNewPrivateMessage = (ourId, message, setUsersCallback, currentNamespace) => setUsersCallback((prev) => {
     const opositeUser = message.sender.id === ourId ? message.receiver : message.sender;
     let user = prev.find((friend) => friend.id === opositeUser.id);
 
     if (user == null) {
-        console.log('creating a user!');
+        console.log('Adding new user to friend list!');
         user = {
             id: opositeUser.id,
             username: opositeUser.username,
@@ -86,13 +87,16 @@ const addNewPrivateMessage = (ourId, message, setUsersCallback) => setUsersCallb
         user = structuredClone(user);
     }
 
+    console.log("addNewPrivatemessage: " + currentNamespace);
+    // If we are not looking at the "user" (namespace), then it should be false.
+    //  used primarly to hint to the component that certain ui needs to be displayed
+    user.newMessage = user.id !== currentNamespace; 
     user.messages = [message, ...user.messages];
-    user.newMessage = true;
     return [user, ...prev.filter(val => val.id !== user.id)];
 });
 
 /**
- * 
+ * Used to load messages into given namespace
  * @param {number} ourId - ID of the current user
  * @param {{sender: {id: number, username: string}, receiver: {id: number, username: string}, message: string, createdAt: Date}[]} messages - Array of messages
  * @param {import("react").Dispatch<import('react').SetStateAction<import("../typedefs/chatTypeDefs").FriendUser[]>>} setUsersCallback - Callback to update the state of users
@@ -127,16 +131,8 @@ const addFetchedMessages = (userData, messages, setUsersCallback) => setUsersCal
         user.messages = [...messages];
     }
 
-    /*if (user == null) { // Retarded solution
-        user = {
-            ...userData,
-            newMessage: false,
-            fetched: false,
-        }
-    }*/
-
     user.messages = [...messages];
-
+    user.newMessage = false;
     user.fetched = true;
     return [user, ...friends.filter(val => val.id != user.id)];
 });

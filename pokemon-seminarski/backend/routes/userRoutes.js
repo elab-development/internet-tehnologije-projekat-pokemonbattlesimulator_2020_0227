@@ -10,7 +10,7 @@ router.route('/').get(getUsers).post(registerUser)
 router.route('/login').post(loginUser);
 router.route('/reset-password').put(requestUserPasswordReset);
 router.route('/reset-password/:token').patch(resetUserPassword);
-router.route('/:param').get(getUser).patch(protect, updateUser).delete(protect, deleteUser);;
+router.route('/:param').get(getUser).patch(protect, updateUser).delete(protect, deleteUser);
 router.route('/:param/messages').get(protect, getUsersMessages);
 router.route('/:param/pokemons').get(protect, getUsersPokemons);
 router.route('/:param/pokemons/:id').get(protect, evolvePokemon);
