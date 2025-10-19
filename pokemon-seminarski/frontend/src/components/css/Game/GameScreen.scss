@@ -1,0 +1,392 @@
+@import '../colors';
+
+$gap: 10px;
+
+$mini-size: 65px;
+
+.game {
+  display: flex;
+  flex-direction: column;
+  width: 100dvw;
+  height: 100dvh;
+  overflow: hidden;
+
+  .game-over {
+    display: flex;
+    width: 100dvw;
+    height: 100dvh;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 1.3*$gap;
+  }
+
+
+  .enemy-header {
+    display: flex;
+    width: 100%;
+
+    .enemy-header-group {
+      display: flex;
+      align-items: center;
+      gap: $gap;
+      padding: $gap;
+      border-bottom: 2px solid $light-purple;
+
+      .enemy-name {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        height: 100%;
+        font-size: 1.2rem;
+        padding: $gap;
+        border: 1px solid $pink-blood;
+        border-radius: $gap;
+        line-height: .8;
+      }
+
+      .enemy-header-spacer i {
+        color: $extra-light-purple;
+      }
+
+      .enemy-pokemons {
+        display: flex;
+        gap: $gap;
+
+        .enemy-mini-pokemon {
+          position: relative;
+          width: $mini-size;
+          height: $mini-size;
+          border: 1px solid $light-purple;
+          border-radius: $gap;
+          overflow: hidden;
+
+          &:has(.pokemon-dead) {
+            border-color: $pink-blood;
+          }
+
+          img {
+            width: 80px;
+            aspect-ratio: 1;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            translate: -50% -50%;
+          }
+
+          .pokemon-dead {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+
+            .x-bar {
+              display: block;
+              position: absolute;
+              background-color: $pink-blood;
+
+              width: 142%;
+              height: 5px;
+              top: 50%;
+              left: 50%;
+              translate: -50% -50%;
+              rotate: 45deg;
+
+              &:last-child {
+                rotate: -45deg;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    .enemy-empty-header-custom-border {
+      $border-thickness: 2px;
+      $spacing-for-diagonal: 50px;
+      $spacing-from-top: 20px;
+      $border-offset: 1px;
+      min-width: 20px;
+      flex: 1 0 auto;
+      height: 100%;
+
+      background-color: $light-purple;
+
+      clip-path: polygon(0 calc(100% - $border-thickness),
+          $spacing-for-diagonal $spacing-from-top,
+
+          calc(100% - $spacing-for-diagonal) $spacing-from-top,
+          100% calc(100% - $border-thickness),
+
+          100% 100%,
+
+          calc(100% - $border-offset) 100%,
+          calc(100% - $spacing-for-diagonal - $border-offset) ($border-thickness + $spacing-from-top),
+
+          ($spacing-for-diagonal + $border-offset) ($border-thickness + $spacing-from-top),
+          $border-offset 100%,
+
+          0 100%);
+    }
+
+    .enemy-mana-pname-display {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-bottom: 2px solid $light-purple;
+      padding: 0 3*$gap 0 1.5*$gap;
+
+      .mana {
+        margin-bottom: -.6rem;
+
+        code {
+          font-size: 1.3rem;
+          letter-spacing: -.1rem;
+        }
+      }
+    }
+  }
+
+  .game-screen {
+    position: relative;
+    height: 47dvh;
+    max-width: 1000px;
+    width: 100%;
+    align-self: center;
+
+
+    .pokemon-container {
+      width: 200px;
+      position: absolute;
+      display: flex;
+      gap: 5px;
+      flex-direction: column;
+      align-items: center;
+
+      .pokemon {
+        position: relative;
+      }
+
+      .health-bar {
+        width: calc(100% - 10px);
+      }
+
+      .pokemon-podium {
+        background-color: #ffffff1f;
+        position: absolute;
+        border-radius: 100%;
+        width: 100%;
+        bottom: 0;
+        left: 50%;
+        translate: -50% 0;
+        z-index: -1;
+      }
+
+      &.enemy {
+        right: 40px;
+        top: 30px;
+
+        .pokemon-image img {
+          width: 160px;
+        }
+
+        .pokemon-podium {
+          height: 30px;
+        }
+      }
+
+      &.us {
+        width: 250px;
+        left: 60px;
+        bottom: 40px;
+
+        .pokemon-image img {
+          width: 240px;
+        }
+
+        .pokemon-podium {
+          height: 50px;
+        }
+      }
+    }
+  }
+
+  .game-option-menu {
+    background-color: rgba($black-purple, .5);
+    padding: $gap;
+    flex: 1 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-top: 2px solid $light-purple;
+
+
+    // limits available space to the set amount
+    .game-option-wrapper {
+      max-width: 1000px;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3*$gap;
+
+      &>* {
+        background-color: rgba($light-purple, .2);
+        width: calc(50% - 3*$gap);
+        flex: 1 0 auto;
+      }
+    }
+
+    // Wrapper for the heading and the moves
+    .our-pokemon-moves-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.3*$gap;
+      padding: 1.3*$gap;
+      border: 2px solid $light-purple;
+      border-radius: $gap;
+    }
+
+    // Actual pokemon move box
+    .our-pokemon-moves {
+      border-top: 2px solid $purple;
+      width: 100%;
+      max-height: 300px;
+      padding: 1.3*$gap $gap 5px $gap;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 1.3*$gap;
+
+      .our-pokemon-move {
+        cursor: pointer; //TODO remove
+        flex: 1 0 auto;
+        width: 100%;
+        background-color: $purple;
+        border-radius: $gap;
+        transition: .2s ease-out background-color;
+        padding: $gap;
+
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        &:hover {
+          background-color: $light-purple;
+        }
+
+        .our-pokemon-move-name {
+          margin-left: .8rem;
+          font-size: 1.6rem;
+
+          span {
+            display: inline-block;
+            width: 1.5rem;
+            aspect-ratio: 1;
+            margin: 0 3px -2px -3px;
+          }
+        }
+
+        .our-pokemon-info-wrap {
+          display: flex;
+          flex-direction: column;
+
+          .our-pokemon-stat-info {
+            display: flex;
+            justify-content: flex-end;
+            gap: 5px;
+          }
+        }
+      }
+    }
+
+    .our-game-info {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid $light-purple;
+      border-radius: $gap;
+      padding: 1.3*$gap;
+      gap: 1.3*$gap;
+
+      .skip-btn-wrapper {
+        display: flex;
+        justify-content: center;
+        padding-bottom: 1.3*$gap;
+        width: 100%;
+        border-bottom: 2px solid $light-purple;
+      }
+
+      .our-pokemons-wraper {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: $gap;
+        padding: 3px 0 1.3*$gap 0;
+        border-top: 2px solid $light-purple;
+        border-bottom: 2px solid $light-purple;
+      }
+
+      .our-pokemons {
+        display: flex;
+        gap: $gap;
+
+        .mini-pokemon {
+          position: relative;
+          width: $mini-size;
+          height: $mini-size;
+          border: 1px solid $light-purple;
+          border-radius: $gap;
+          overflow: hidden;
+
+          &:has(.pokemon-dead) {
+            border-color: $pink-blood;
+          }
+
+          img {
+            width: 80px;
+            aspect-ratio: 1;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            translate: -50% -50%;
+          }
+
+          .pokemon-dead {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+
+            .x-bar {
+              display: block;
+              position: absolute;
+              background-color: $pink-blood;
+
+              width: 142%;
+              height: 5px;
+              top: 50%;
+              left: 50%;
+              translate: -50% -50%;
+              rotate: 45deg;
+
+              &:last-child {
+                rotate: -45deg;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

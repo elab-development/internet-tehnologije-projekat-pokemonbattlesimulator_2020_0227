@@ -2,7 +2,7 @@ const { Socket } = require("socket.io");
 
 /**
  * @typedef {{id: number, name: string, mana: number, atk: number, type: {id: number, name: string}}} MovesExpanded
- * @typedef {{id: number, name: string, xp: number, stats: {hp: number, def: number}, moves: MovesExpanded[], type: {id: number, name: string}[] }} PokemonExpanded
+ * @typedef {{id: number, name: string, xp: number, baseStats: {hp: number, def: number}, stats: {hp: number, def: number}, moves: MovesExpanded[], type: {id: number, name: string}[] }} PokemonExpanded
  * @typedef {{id: number, name: string, mana: number, selectedPokemonIndex: number, pokemons: PokemonExpanded[]}} SanitizedUser strips away socket object
  */
 /**
@@ -42,7 +42,7 @@ module.exports = class Player {
                 def: pokemon.baseStats.defenseBase * (1 + (pokemon.xp === 0 ? 0 : pokemon.xp / 100)),
                 hp: pokemon.baseStats.healthPointsBase * (1 + (pokemon.xp === 0 ? 0 : pokemon.xp / 100))
             }
-            delete pokemon.baseStats;
+            //delete pokemon.baseStats -> we need base to calculate in the frontend percentage and status bars
             for (const move of pokemon.moves) {
                 move.atk = move.attackBase * (1 + (pokemon.xp === 0 ? 0 : pokemon.xp / 100));
                 delete move.attackBase;

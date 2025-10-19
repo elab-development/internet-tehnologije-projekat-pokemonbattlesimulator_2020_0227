@@ -10,25 +10,35 @@ const { Socket } = require("socket.io");
  */
 module.exports = (socketInformation, socket) =>
     (reason, description = undefined) => {
-        console.log(socketInformation.allConnectedUsers);
+        console.log(`disconnect event for ${socket.id}`);
+
+        if (socket.data.replaced) {
+            console.log(`Socket ${socket.id} was replaced; skipped disconnect cleanup`); return;
+        }
+
+        console.log("connected users:", socketInformation.allConnectedUsers.map(u => u ? { ...u, socket: socket.id } : u));
         const user = socketInformation.allConnectedUsers.find(cu => cu.socket.id === socket.id);
+
         if (user == null) {
-            console.log('Zamenio je soket i disconnectovao sa starog');
+            console.log(`No connected user found for socket ${socket.id}.`); return;
+        }
+
+        console.log(`User "${user.username}" (${user.id}) disconnected. Reason: ${reason}`);
+
+        // Remove user from the connected list
+        socketInformation.allConnectedUsers = socketInformation.allConnectedUsers.filter(u => u.id !== user.id);
+
+        const game = socketInformation.allGameRooms.find(
+            gr => gr.player1.id === user.id || gr.player2.id === user.id
+        );
+
+        if (!game) {
             return;
         }
 
-        console.log("/////////////////////\n" + user.id + "entered disconnect event");
-        console.log('user disconnected: ' + socket.disconnected);
-        console.log('resason: ' + reason);
-        console.log('description: ' + description?.message + "\n/////////////////////\n");
-        const game = socketInformation.allGameRooms.find(gr => gr.player1.id === user.id || gr.player2.id === user.id);
-
-        socketInformation.allConnectedUsers = socketInformation.allConnectedUsers.filter(val => val.id !== user.id);
-        if (game == null) {
-            return;
-        }
         if (game.status === 'waiting') {
-            return game.delete();
+            game.delete();
+        } else {
+            game.endGame();
         }
-        game.endGame();
     }

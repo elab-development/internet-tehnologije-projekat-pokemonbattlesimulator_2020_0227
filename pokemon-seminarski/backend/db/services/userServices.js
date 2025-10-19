@@ -225,14 +225,22 @@ const getUsersPokemonsDB = async (userId) => {
     const finalResult = Object.values(groupedResult);
     return finalResult;
 }
-const updateUsersPokemonsDB = async (userId, pokemonId, { xp } = {}) => {
+
+/**
+ * updates the user pokemon with the xp amount
+ * @param {number} userId 
+ * @param {number} pokemonId 
+ * @param {number} xp amount of earned xp for that given pokemon
+ * @returns 
+ */
+const updateUsersPokemonsDB = async (userId, pokemonId, xp) => {
     // SAFE CHECK
     if (userId == null || pokemonId == null || xp == null) {
-        throw new Error('Must provide both userId and pokemonId');
+        throw new Error('Must provide both userId, pokemonId and xp amount');
     }
     return (await db
         .update(usersPokemons)
-        .set({ xp: xp })
+        .set({ xp: Math.round(xp) }) // XP is of type integer, it needs to be rounded
         .where(and(eq(usersPokemons.pokemonId, pokemonId), eq(usersPokemons.userId, userId)))
     )
 }
@@ -284,7 +292,7 @@ const updateUsersStatsDB = async (userId, data) => {
         throw new Error("Couldn't find the user");
     }
     let newStats = {
-        wins: playerStats.wins + data.won ? 1 : 0,
+        wins: playerStats.wins + (data.won ? 1 : 0),
         numOfDefeatedPokemon: playerStats.numOfDefeatedPokemon + data.numOfDefeatedPokemon,
         totalBattles: playerStats.totalBattles + 1
     }

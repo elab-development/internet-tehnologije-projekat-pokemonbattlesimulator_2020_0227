@@ -16,10 +16,11 @@ function getColor(typeID, transparent = false) {
  *  pokemon: import('../Collection').UsersPokemonExpanded, 
  *  onClick: (pokemon: import('../Collection').UsersPokemonExpanded) => Promise<void>, 
  *  options: {evolvable?: boolean, selectable?: boolean, deselectable?: boolean}, 
- *  isSelected?: boolean
+ *  isSelected?: boolean,
+ *  disabled?: boolean
  * }} param0 
  */
-const PokemonCard = ({ pokemon, onClick, options = {}, isSelected = false }) => {
+const PokemonCard = ({ pokemon, onClick, options = {}, isSelected = false, disabled = false }) => {
     const { evolvable = false, selectable = false, deselectable = false } = options;
     const color = getColor(pokemon.type[0].id)
     const colorTransparent = getColor(pokemon.type[0].id, true);
@@ -50,14 +51,14 @@ const PokemonCard = ({ pokemon, onClick, options = {}, isSelected = false }) => 
                 </div>
             )}
             {selectable && isSelected ? (
-                <div className='selected-overlay'>
+                <div className={`selected-overlay${disabled ? " disabled" : ""}`}>
                     <div><svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M50.5 10c-15 14-25 42-25 42C16 40.5 10 38 10 38" stroke="#28a745" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
                     </svg></div>
                 </div>
             ) : (<div className='not-selected-overlay' />)}
             {deselectable && (
-                <div className='deselectable-overlay'>
+                <div className={`deselectable-overlay${disabled ? " disabled" : ""}`}>
                     <div><svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M48.8789 7.87868c1.1716-1.17157 3.0706-1.17157 4.2422 0 1.1716 1.17157 1.1716 3.07062 0 4.24222L36 29.242s-1 .7872-1 1.758 1 1.7576 1 1.7576l17.1211 17.1211c1.1716 1.1716 1.1716 3.0706 0 4.2422-1.1716 1.1715-3.0706 1.1715-4.2422 0L31.7581 37S30.971 36 30 36c-.9709 0-1.758 1-1.758 1L11.1211 54.1209c-1.17156 1.1715-3.0706 1.1715-4.24218 0-1.17157-1.1716-1.17157-3.0706 0-4.2422L24 32.7576s1-.787 1-1.7578-1-1.7578-1-1.7578L6.87892 12.1209c-1.17157-1.1716-1.17157-3.07065 0-4.24222 1.17158-1.17157 3.07062-1.17157 4.24218 0L28.242 24.9995S29.0291 26 30 26c.971 0 1.7581-1.0005 1.7581-1.0005L48.8789 7.87868Z" fill="#E11848" />
                     </svg></div>

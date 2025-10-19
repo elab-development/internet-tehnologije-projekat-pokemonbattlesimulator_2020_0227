@@ -1,5 +1,4 @@
 const { Server, Socket } = require("socket.io");
-const Room = require("../game-logic/room");
 const RoomManager = require("../game-logic/RoomManager");
 const Player = require("../game-logic/Player");
 const { getUsersPokemonsDB } = require("../db/services/userServices");
@@ -17,7 +16,7 @@ const { getUsersPokemonsDB } = require("../db/services/userServices");
 module.exports = (io, socket, socketInformation, manager) => {
     const joinQueue = async ({ pokemons }) => {
         const user = socketInformation.allConnectedUsers.find(cu => cu.socket.id === socket.id);
-        const inGame = socketInformation.allGameRooms.some(gr => gr.player1.id === user.id || gr.player2.id === user.id);
+        const inGame = socketInformation.allGameRooms.some(gr => gr.player1?.id === user.id || gr.player2?.id === user.id);
         if (inGame) {
             return socket.emit('game:queue:join:failed', { message: 'Already in queue/game', roomId: inGame.roomId });
         }
@@ -47,7 +46,7 @@ module.exports = (io, socket, socketInformation, manager) => {
                 return socket.emit('game:queue:join:failed', { message: 'Too many games right now, try later' });
             }
         } else { // ROOM IS FOUND
-            socket.emit('game:queue:join:success'); // QUEUE ENTERED
+            socket.emit('game:queue:join:success', { message: 'We found you a game, you will be redirected soon' }); // QUEUE ENTERED -> early, otherwise this event will never reach the one waiting for queue
             emptyGame.joinGame(player); // GAME ENTERED -> QUEUE FOUND
         }
     }
@@ -70,6 +69,11 @@ module.exports = (io, socket, socketInformation, manager) => {
     const joinGame = ({ roomId }) => {
         const user = socketInformation.allConnectedUsers.find(cu => cu.socket.id === socket.id);
         const game = socketInformation.allGameRooms.find(gr => gr.player1.id === user.id || gr.player2.id === user.id);
+        if (!user) {
+            return socket.emit('game:connect:failed', { message: 'No entry for you, please reconnect'});
+        }
+        console.log("User " + user.username + " requested to join a room.",
+            "We found this room candidate that he is in:", game?.roomId);
 
         if (game == null) {
             return socket.emit('game:connect:failed', { message: 'Not in a game' });
@@ -81,14 +85,17 @@ module.exports = (io, socket, socketInformation, manager) => {
 
         let player;
         let enemy;
+        let ourTurn;
         if (game.player1.id === user.id) {
             player = game.player1.sanatize();
             enemy = game.player2.sanatize();
+            ourTurn = true;
         } else {
             player = game.player2.sanatize();
             enemy = game.player1.sanatize();
+            ourTurn = false;
         }
-        return socket.emit('game:connect:success', { player: player, enemy: enemy });
+        return socket.emit('game:connect:success', { player: player, enemy: enemy, ourTurn: ourTurn });
     }
 
     const attack = ({ attackId }) => {
@@ -150,6 +157,9 @@ module.exports = (io, socket, socketInformation, manager) => {
         const user = socketInformation.allConnectedUsers.find(cu => cu.socket.id === socket.id);
         const game = socketInformation.allGameRooms.find(gr => gr.player1.id === user.id || gr.player2.id === user.id);
 
+        console.log("game that is found: ",
+            !game ? null : (String(game.roomId) + game.status)
+        )
         if (game == null || game.status !== 'playing') {
             return socket.emit('game:action:leave:failed', { message: "Can't leave the game when you are not in a game" });
         }

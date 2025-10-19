@@ -269,6 +269,10 @@ $addapted-gap: $ratio * $gap;
       overflow: hidden;
       transition: .2s ease-out all;
 
+      &.disabled {
+        cursor: auto;
+      }
+
       div {
         @include center();
         padding: $gap;

@@ -40,8 +40,10 @@ $base-transition: --gradPoint 0.25s ease-in-out,
     }
 
     &:disabled {
-        color: gray;
-        cursor: auto;
+        &, * {
+            color: gray;
+            cursor: auto;
+        }
     }
 }
 

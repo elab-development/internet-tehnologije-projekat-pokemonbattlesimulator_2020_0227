@@ -47,16 +47,29 @@ const evolutionToBoolean = (pokemons) => {
    }
 }
 
-export const loadApiData = async (id) => {
+/**
+ * 
+ * @param {number} id 
+ * @param {boolean} [withDescription] 
+ * @returns {Promise<{name: string, picture: string, flavorText?: string}>}
+ */
+export const loadApiData = async (id, withDescription = true) => {
    const pPokemonResponse = await axios.get(`${pokeAPI}/pokemon/${id}`);
    const pPokemon = pPokemonResponse.data;
-   const pPokemonSpeciesResponse = await axios.get(`${pPokemon.species.url}`);
-   const pPokemonSpecies = pPokemonSpeciesResponse.data;
-   return {
+   let pPokemonSpecies = null;
+
+   const res = {
       name: pPokemon.name,
       picture: pPokemon.sprites.other.dream_world.front_default,
-      flavorText: pPokemonSpecies.flavor_text_entries?.[0]?.flavor_text || 'No description available'
    }
+
+   if (withDescription) {
+      const pPokemonSpeciesResponse = await axios.get(`${pPokemon.species.url}`);
+      pPokemonSpecies = pPokemonSpeciesResponse.data;
+      res.flavorText = pPokemonSpecies.flavor_text_entries?.[0]?.flavor_text || 'No description available';
+   }
+
+   return res;
 }
 
 /**
@@ -97,9 +110,10 @@ const loadUserPokemons = async (userId) => {
  *    id?: number | undefined, 
  *    cardOptions: {evolvable?: boolean, selectable?: boolean},
  *    selectedArray: Array<UsersPokemon | null>
+ *    disabled?: boolean
  * }} 
  */
-const Collection = ({ cardClickEvent = undefined, id = undefined, cardOptions, selectedArray }) => {
+const Collection = ({ cardClickEvent = undefined, id = undefined, cardOptions, selectedArray, disabled = false }) => {
    const { info } = useContext(UserContext);
    const [loaded, setLoaded] = useState(false);
    /**@type {[UsersPokemonExpanded[], React.Dispatch<React.SetStateAction<UsersPokemonExpanded[]>>]} */
@@ -136,6 +150,7 @@ const Collection = ({ cardClickEvent = undefined, id = undefined, cardOptions, s
                   onClick={handleClick}
                   options={cardOptions}
                   isSelected={isSelected(pokemon)}
+                  disabled={disabled}
                />
             )
          )}

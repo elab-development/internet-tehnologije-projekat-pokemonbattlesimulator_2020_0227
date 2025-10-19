@@ -223,14 +223,14 @@ const getId = (q) => {
     await db.insert(pokemons).values([
         { id: 4, defenseBase: 30, healthPointsBase: 39 },
         { id: 5, defenseBase: 40, healthPointsBase: 55 },
+        { id: 7, defenseBase: 45, healthPointsBase: 60 },
+        { id: 8, defenseBase: 55, healthPointsBase: 80 },
         { id: 25, defenseBase: 35, healthPointsBase: 70 },
         { id: 26, defenseBase: 45, healthPointsBase: 45 },
         { id: 66, defenseBase: 50, healthPointsBase: 60 },
         { id: 67, defenseBase: 60, healthPointsBase: 70 },
-        { id: 7, defenseBase: 45, healthPointsBase: 60 },
-        { id: 8, defenseBase: 55, healthPointsBase: 80 },
-        { id: 445, defenseBase: 75, healthPointsBase: 100 },
         { id: 335, defenseBase: 40, healthPointsBase: 60 },
+        { id: 445, defenseBase: 75, healthPointsBase: 100 },
     ]);
 
     await db.insert(pokemonsTypes).values([

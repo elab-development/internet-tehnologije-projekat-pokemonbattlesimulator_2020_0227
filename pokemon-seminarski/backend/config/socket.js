@@ -29,34 +29,38 @@ const handleSocketConnections = async (io) => {
     io.use(async (socket, next) => {
         console.log('new connection!');
         const token = socket.handshake.auth.token;
-        console.log('token we got from connection', token);
+
         try {
-            let tempSocket = socket;
             const user = await validateToken(token);
-            const alreadyOn = socketInformation.allConnectedUsers.find(val => val.id === user.id);
-            if (alreadyOn) {
-                console.log("User \"" + user.username + "\"is already online!\nPrevious socket.id " + alreadyOn.socket.id + " \nNew socket.id " + socket.id + "\n\n\n");
-                alreadyOn.socket.emit('disconnect:new:connection');
-                alreadyOn.socket.disconnect();
-                alreadyOn.socket = socket;
+            const existingUser = socketInformation.allConnectedUsers.find(val => val.id === user.id);
+
+            if (existingUser) {
+                console.log(`User "${user.username}" is already online.`);
+                console.log(`Old socket: ${existingUser.socket.id}, New socket: ${socket.id}`);
+
+                existingUser.socket.data.replaced = true;
+                existingUser.socket.emit('disconnect:new:connection');
+                existingUser.socket.disconnect(true);
+                existingUser.socket = socket;
             } else {
                 socketInformation.allConnectedUsers.push(
                     new ConnectedUser(user.id, user.username, socket)
                 );
             }
-            socket.mydata = user;
+            console.log(`User ${user.username} connected successfully with socket ${socket.id}`);
+            socket.data.user = user;
             next();
         } catch (error) {
-            console.log('no token by user');
-            next(new Error(error.message));
+            // @ts-ignore
+            console.log('Token validation failed:', error.message);
+            next(new Error("Authentication error"));
         }
     });
 
     io.on('connection', (socket) => {
         console.log('New user successfuly connected!');
         console.log('connected users: ', socketInformation.allConnectedUsers.map((val) => ({ id: val.id, username: val.username, socketId: val.socket.id })));
-        console.log(socket.mydata);
-        socket.emit('connect:user', { user: socket.mydata });
+        socket.emit('connect:user', { user: socket.data.user });
 
         // Event registration
         registerChatHandlers(io, socket, socketInformation);

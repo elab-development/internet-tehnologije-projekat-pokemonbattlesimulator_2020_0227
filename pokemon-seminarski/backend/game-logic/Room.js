@@ -1,3 +1,4 @@
+//@ts-check
 const { updateUsersStatsDB, updateUsersPokemonsDB } = require('../db/services/userServices');
 const Player = require('./Player');
 /**
@@ -5,13 +6,12 @@ const Player = require('./Player');
  */
 module.exports = class Room {
     /**
-     * @param {import('./RoomManager').RoomManager} observer reference to parent manager
+     * @param {import('./RoomManager')} observer reference to parent manager
      * @param {number} roomId unique id
      * @param {Player} player1 player one (creator of room)
      * @param {Player} player2 player two (one who joined)
      * @param {'waiting' | 'playing'} status represents the current state of the room
-     * @param {boolean} turn true if its player1 turn, else its false
-     * @param {{movesEffectivenesses: { attackerTypeId: number; defenderTypeId: number; effectivness: string;}[]}} essentialsRef 
+     * @param {{movesEffectivenesses: { attackerTypeId: number; defenderTypeId: number; effectivness: number;}[]}} essentialsRef 
      */
     constructor(observer, roomId, player1, player2, essentialsRef, status = 'waiting') {
         this.observer = observer;
@@ -109,7 +109,7 @@ module.exports = class Room {
         const damage = (selectedMove.atk * (1 - opponentPokemon.stats.def / (100 * 2 * 2))) * effectivness;
         opponentPokemon.stats.hp -= damage > 0 ? damage : 0;
 
-        if (opponentPlayer.stats.hp <= 0) {
+        if (opponentPokemon.stats.hp <= 0) {
             opponentPokemon.stats.hp = 0;
             const nextPokemonIndex = opponentPlayer.pokemons.findIndex(val => val.stats.hp > 0);
             opponentPlayer.selectedPokemonIndex = nextPokemonIndex;
@@ -134,7 +134,7 @@ module.exports = class Room {
             this.player1 = player;
         } else {
             this.player2 = player;
-            this.foundGame();
+            this.broadcastFoundGame();
         }
     }
 
@@ -142,48 +142,61 @@ module.exports = class Room {
      * Writes results to database and removes the gamelobby
      */
     async endGame() {
-        const checkP1 = this.player1.pokemons.every(val => val.stats.hp <= 0) || this.player1.socket.disconnected || this.player1.leftTheGame;
-        const checkP2 = this.player2.pokemons.every(val => val.stats.hp <= 0) || this.player2.socket.disconnected || this.player2.leftTheGame;
+        const p1Lost = this.player1.pokemons.every(val => val.stats.hp <= 0) || this.player1.socket.disconnected || this.player1.leftTheGame;
+        const p2Lost = this.player2.pokemons.every(val => val.stats.hp <= 0) || this.player2.socket.disconnected || this.player2.leftTheGame;
 
-        if (checkP1) {
-            this.player1.socket.emit('game:end', { message: `player '${this.player1.username}' won, wohoo` });
-            this.player2.socket.emit('game:end', { message: `player '${this.player1.username}' won, too bad` });
-        } else if (checkP2) {
+        if (p1Lost) {
             this.player2.socket.emit('game:end', { message: `player '${this.player2.username}' won, wohoo` });
             this.player1.socket.emit('game:end', { message: `player '${this.player2.username}' won, too bad` });
+        } else if (p2Lost) {
+            this.player2.socket.emit('game:end', { message: `player '${this.player1.username}' won, wohoo` });
+            this.player1.socket.emit('game:end', { message: `player '${this.player1.username}' won, too bad` });
         } else {
+            console.error("Didn't find any winning condition for any of those two... canceling the endGame");
             return; // THROW NEW ERROR
         }
 
         updateUsersStatsDB(this.player1.id, {
-            won: checkP2,
+            won: !p1Lost,
             numOfDefeatedPokemon: this.player2.pokemons.reduce((acc, val) => val.stats.hp <= 0 ? acc + 1 : acc, 0),
         }).then(async () => {
             let coef = 1
-            if (this.player1.leftTheGame) return; // NO XP REWARD FOR FLEEING
-            if (this.player2.socket.disconnected) coef = 0.5 // ALL GOOD BUT COEF IS 0.5
-            if (checkP2) coef = coef * 1.4;
-            else coef = coef * 0.8;
+            if (this.player1.leftTheGame) return;               // NO XP REWARD FOR FLEEING
+            if (this.player2.socket.disconnected) coef = 0.5    // ALL GOOD BUT COEF IS 0.5
 
+            // Calculate the new coef after the penalties
+            if (p2Lost) coef = coef * 1.4;                      // WE WON  1.4 coef
+            else coef = coef * 0.8;                             // WE LOST 0.8 coef (0.4 coef if we disconnected by mistake)
+
+            // XP is calculated such that, if pokemon is dead then .8 of total xp is awarded, else its 1.1
             const usersPokemonsPromises = this.player1.pokemons.map(async (val) => {
-                await updateUsersPokemonsDB(this.player1.id, val.id, { xp: val.xp + (coef * val.stats.hp <= 0 ? 0.8 : 1.1 * Math.floor(Math.random() * (30 - 15 + 1)) + 15) })
+                await updateUsersPokemonsDB(
+                    this.player1.id,
+                    val.id,
+                    val.xp + ((coef * val.stats.hp <= 0 ? 0.8 : 1.1) * Math.floor(Math.random() * (30 - 15 + 1)) + 15)
+                )
             });
             await Promise.all(usersPokemonsPromises);
             console.log('updated userspokemons');
         }).catch((err) => console.error('some mf error' + err.message));
 
         updateUsersStatsDB(this.player2.id, {
-            won: checkP1,
+            won: !p2Lost,
             numOfDefeatedPokemon: this.player2.pokemons.reduce((acc, val) => val.stats.hp <= 0 ? acc + 1 : acc, 0),
         }).then(async () => {
             let coef = 1;
-            if (this.player2.leftTheGame) return; // NO XP REWARD FOR FLEEING
-            if (this.player1.socket.disconnected) coef = 0.5// ALL GOOD BUT COEF IS 0.5
-            if (checkP1) coef = coef * 1.4;
+            if (this.player2.leftTheGame) return;
+            if (this.player1.socket.disconnected) coef = 0.5;
+
+            if (p1Lost) coef = coef * 1.4;
             else coef = coef * 0.8;
 
             const usersPokemonsPromises = this.player2.pokemons.map(async (val) => {
-                await updateUsersPokemonsDB(this.player2.id, val.id, { xp: val.xp + (coef * val.stats.hp <= 0 ? 0.8 : 1.1 * Math.floor(Math.random() * (30 - 15 + 1)) + 15) })
+                await updateUsersPokemonsDB(
+                    this.player2.id,
+                    val.id,
+                    val.xp + ((coef * val.stats.hp <= 0 ? 0.8 : 1.1) * Math.floor(Math.random() * (30 - 15 + 1)) + 15)
+                )
             });
             await Promise.all(usersPokemonsPromises);
             console.log('updated userspokemons');

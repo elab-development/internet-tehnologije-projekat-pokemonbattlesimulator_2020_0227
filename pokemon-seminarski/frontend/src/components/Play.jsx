@@ -4,14 +4,16 @@ import Collection from './Collection'
 import { socket } from './sockets/sockets';
 import { useNavigate } from 'react-router-dom';
 import './css/Auth/Play.scss'
+import { useRef } from 'react';
 
 const Play = () => {
    const navigate = useNavigate();
    /**@type {[Array<import('./Collection').UsersPokemon>, React.Dispatch<React.SetStateAction<import('./Collection').UsersPokemon[]>>]} */
    const [selectedPokemon, setSelectedPokemon] = useState(Array(3).fill(null));
    const [isSearching, setIsSearching] = useState(false);
+   const isSearchingRef = useRef(isSearching);
 
-   const areThreePokemonsSelected = () => selectedPokemon.every(p => p);
+   const areThreePokemonsSelected = selectedPokemon.every(p => p);
 
    const handleDeselect = async (pokemon) => {
       setSelectedPokemon(prev => {
@@ -44,29 +46,37 @@ const Play = () => {
       })
    }
    const handleFind = () => {
-      if (!areThreePokemonsSelected()) return;
+      if (!areThreePokemonsSelected) return;
       if (isSearching) socket.emit('game:queue:leave');
       else socket.emit('game:queue:join', { pokemons: selectedPokemon.map((val) => val.id) });
    }
 
    useEffect(() => {
+      isSearchingRef.current = isSearching;
+   }, [isSearching])
+
+   useEffect(() => {
       function onSuccessJoinQueue({ message }) {
+         console.log("joined a queue", message);
          setIsSearching(true);
       }
-      function onFoundGame(id) {
-         navigate(`/game/${id}`, { replace: true });
+      function onFoundGame({ id }) {
+         console.log("found a game:", id);
+         navigate(`/game/${id}`);
       }
       function onCancelGame(error) {
          console.error(error);
          setIsSearching(false);
       }
 
-      socket.on('game:queue:found', onFoundGame);                                      // Successfully joined the queue and found the game
-      socket.on('game:queue:join:success', onSuccessJoinQueue);                        // Successfully joined the game search
-      socket.on('game:queue:join:failed', onCancelGame);                               // Coudln't join queue cause of given reason
-      socket.on('game:queue:leave:success', onCancelGame);                             // Successfully exited game search
-      socket.on('game:queue:leave:failed', onCancelGame);                              // Couldn't exit game search
+      socket.on('game:queue:found', onFoundGame);                   // Successfully joined the queue and found the game
+      socket.on('game:queue:join:success', onSuccessJoinQueue);     // Successfully joined the game search
+      socket.on('game:queue:join:failed', onCancelGame);            // Coudln't join queue cause of given reason
+      socket.on('game:queue:leave:success', onCancelGame);          // Successfully exited game search
+      socket.on('game:queue:leave:failed', onCancelGame);           // Couldn't exit game search
       return () => {
+         if (isSearchingRef.current) socket.emit('game:queue:leave');
+
          socket.off('game:queue:found', onFoundGame);
          socket.off('game:queue:join:failed', onCancelGame);
          socket.off('game:queue:join:success', onSuccessJoinQueue);
@@ -79,7 +89,7 @@ const Play = () => {
    return (
       <div className='play-page'>
          <div className='find-game-button'>
-            <button className='button-full' onClick={handleFind} disabled={selectedPokemon.length !== 3}>
+            <button className='button-full' onClick={handleFind} disabled={!areThreePokemonsSelected}>
                {isSearching ? <span><i className="bi bi-x"></i> Cancel Search</span> : <span><i className="bi bi-search"></i> Find Opponent</span>}
             </button>
          </div>
@@ -87,7 +97,7 @@ const Play = () => {
             <h3>Chosen Pokemons</h3>
             <div className='chosen-pokemons'>
                {selectedPokemon.map((pokemon, idx) => (pokemon ?
-                  <PokemonCard pokemon={pokemon} onClick={handleDeselect} key={idx} options={{ deselectable: true }} />
+                  <PokemonCard pokemon={pokemon} onClick={handleDeselect} key={idx} options={{ deselectable: true }} disabled={isSearching}/>
                   : <PlaceHolderPokemon key={idx} />
                ))}
             </div>
@@ -95,7 +105,7 @@ const Play = () => {
          <hr />
          <div className='collection-wrapper'>
             <h3>Your Pokemons</h3>
-            <Collection horizontal={true} cardClickEvent={handleSelect} cardOptions={{ selectable: true }} selectedArray={selectedPokemon} />
+            <Collection horizontal={true} cardClickEvent={handleSelect} cardOptions={{ selectable: true }} selectedArray={selectedPokemon} disabled={isSearching}/>
          </div>
       </div>
    )

@@ -10,7 +10,7 @@ module.exports = class RoomManager {
     /**
      * @param {import("../utils/typedefs").SocketInformation} socketInformation 
      * @param {Server} io server reference
-     * @param {{movesEffectivenesses: { attackerTypeId: number; defenderTypeId: number; effectivness: string;}[]}} gameEssentials
+     * @param {{movesEffectivenesses: { attackerTypeId: number; defenderTypeId: number; effectivness: number;}[]}} gameEssentials
      */
     constructor(socketInformation, io, gameEssentials) {
         this.gameEssentials = gameEssentials;
