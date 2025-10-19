@@ -67,6 +67,11 @@
   --pic-fairy: url('./components/assets/pokemonCardAssets/fairy.svg');
 }
 
+:root,
+main {
+  scrollbar-width: none;
+}
+
 * {
   margin: 0;
   padding: 0;

@@ -1,5 +1,5 @@
 const { Socket } = require('socket.io');
-const Room = require('../game-logic/room');
+const Room = require('../game-logic/Room.js');
 const { z, ZodError } = require('zod');
 const { selectUserSchema, insertUserSchema, selectUserSchemaFull } = require('../validations/userValidation.js');
 const { users, pokemons, usersStats } = require('../db/schema.js');

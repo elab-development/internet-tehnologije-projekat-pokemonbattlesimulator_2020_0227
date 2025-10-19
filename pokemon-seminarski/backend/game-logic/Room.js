@@ -1,12 +1,11 @@
 const { updateUsersStatsDB, updateUsersPokemonsDB } = require('../db/services/userServices');
 const Player = require('./Player');
-const RoomManager = require('./RoomManager');
 /**
- * Data wrapper for Rooms, all Room behaviour is managed by `RoomManager` check {@link RoomManager | link}
+ * Data wrapper for Rooms, all Room behaviour is managed by `RoomManager` check {@link import('./RoomManager').RoomManager | link}
  */
 module.exports = class Room {
     /**
-     * @param {RoomManager} observer reference to parent manager
+     * @param {import('./RoomManager').RoomManager} observer reference to parent manager
      * @param {number} roomId unique id
      * @param {Player} player1 player one (creator of room)
      * @param {Player} player2 player two (one who joined)
@@ -130,7 +129,7 @@ module.exports = class Room {
     /**@param {Player} player  */
     joinGame(player) {
         player.socket.join(this.roomId);
-        preparedPlayer
+        //preparedPlayer wtf je ovo
         if (this.player1 == null) {
             this.player1 = player;
         } else {

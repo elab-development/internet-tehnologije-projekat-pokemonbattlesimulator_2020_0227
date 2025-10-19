@@ -1,6 +1,6 @@
 const { Server } = require('socket.io');
 const Player = require('./Player');
-const Room = require('./room');
+const Room = require('./Room');
 const RoomCodeManager = require('./RoomCodeManager');
 
 /**
@@ -15,7 +15,7 @@ module.exports = class RoomManager {
     constructor(socketInformation, io, gameEssentials) {
         this.gameEssentials = gameEssentials;
         this.socketInformation = socketInformation;
-        this.roomCodeManager = new RoomCodeManager();
+        this.roomCodeManager = new RoomCodeManager(socketInformation);
         this.lock = false;
         this.io = io;
     }

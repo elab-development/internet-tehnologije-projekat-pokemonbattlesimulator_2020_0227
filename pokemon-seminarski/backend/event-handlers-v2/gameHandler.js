@@ -43,6 +43,7 @@ module.exports = (io, socket, socketInformation, manager) => {
                 manager.createRoom(player);
                 return socket.emit('game:queue:join:success', { message: 'Created room and joined queue' });
             } catch (error) {
+                console.error(error);
                 return socket.emit('game:queue:join:failed', { message: 'Too many games right now, try later' });
             }
         } else { // ROOM IS FOUND
@@ -159,6 +160,7 @@ module.exports = (io, socket, socketInformation, manager) => {
         player.socket.emit('game:action:leave:success');
         game.endGame();
     }
+
 
     socket.on("game:connect", joinGame);
     socket.on("game:queue:join", joinQueue);

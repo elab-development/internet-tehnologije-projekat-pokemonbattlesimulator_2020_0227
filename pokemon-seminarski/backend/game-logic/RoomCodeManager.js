@@ -7,9 +7,9 @@ module.exports = class RoomCodeManager {
      * @param {number} codeLength 
      * @param {import("../utils/typedefs").SocketInformation} socketInformation 
      */
-    constructor(codeLength = 4, socketInformation){
-        this.codeLength = codeLength;
+    constructor(socketInformation, codeLength = 4){
         this.socketInformation = socketInformation;
+        this.codeLength = codeLength;
     }
 
     /**

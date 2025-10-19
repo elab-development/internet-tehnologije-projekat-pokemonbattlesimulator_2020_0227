@@ -1,0 +1,307 @@
+@use 'sass:math';
+@use 'sass:list';
+@import '../colors';
+
+
+$card-width: 190px;
+$card-height: 290px;
+$card-aspec-ratio: list.slash(21, 32);
+
+$ratio: .9047; // Keeping it similar to one in Career.scss
+$gap: 10px;
+$addapted-gap: $ratio * $gap;
+
+@mixin center() {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin centerColumn() {
+  @include center();
+  flex-direction: column;
+}
+
+.play-page {
+  padding-top: 40px;
+  height: 100%;
+  width: 100%;
+  @include centerColumn();
+  justify-content: flex-start;
+
+  .find-game-button{
+    margin-bottom: 20px;
+  }
+
+  &>hr {
+    width: 400px;
+    margin: 30px 0 20px 0;
+    border-width: 1px;
+    border-color: rgba($extra-light-purple, .1)
+  }
+
+  .chosen-pokemons-wrapper {
+    @include centerColumn();
+    gap: 1.3*$gap;
+  }
+
+  .chosen-pokemons {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3*$gap;
+  }
+
+  .pokemon-card-placeholder {
+    @include center();
+    width: $card-width;
+    height: $card-height;
+    border: 1px solid $light-purple;
+    background-color: rgba($black-purple, .4);
+    border-radius: $gap;
+
+    div {
+      @include center();
+      width: 100px;
+      border: 1px solid $light-purple;
+      aspect-ratio: 1;
+      padding: 10px;
+      border-radius: 100%;
+    }
+
+    svg {
+      margin-right: -6px;
+      object-fit: contain;
+    }
+  }
+
+
+  .collection-wrapper {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    gap: 1.3*$gap;
+    width: 100%;
+    max-width: 100%;
+
+    overflow: hidden;
+    mask-image: linear-gradient(
+    to right,
+    transparent 10px,
+    black 50px,
+    black calc(100% - 50px),
+    transparent calc(100% - 10px)
+  );
+  }
+
+  .collection {
+    display: flex;
+    justify-content: center;
+    flex-wrap: nowrap;
+    gap: 3*$gap;
+
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    padding: 0 20px;
+  }
+
+  .pokemon-card {
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    border: 2px solid var(--currentColor);
+    background-color: var(--currentTransparentColor);
+    width: $card-width;
+    height: $card-height;
+
+    padding: $addapted-gap;
+    border-radius: $gap;
+
+    .evolve-picture {
+      display: none;
+      pointer-events: none;
+    }
+
+    .pokemon-card-types {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      gap: math.div($addapted-gap, 2);
+      top: 1.15 * $addapted-gap;
+      left: $addapted-gap;
+
+      &>* {
+        width: $ratio * 15px;
+        aspect-ratio: 1;
+      }
+    }
+
+    .pokemon-card-title {
+      font-size: $ratio * .8rem;
+      text-transform: capitalize;
+      margin-bottom: $ratio * 5px;
+    }
+
+    .pokemon-card-picture img {
+      width: $ratio * 80px;
+      aspect-ratio: $ratio * 1;
+    }
+
+    hr {
+      width: calc(100% + $ratio * 5px);
+      margin: $ratio * 1px 0 $ratio * 5px 0;
+      opacity: .5;
+    }
+
+    .pokemon-card-base-stats {
+      display: flex;
+      flex-direction: column;
+      gap: $ratio * 5px;
+      width: 100%;
+
+      .stat-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: $ratio * 5px;
+      }
+
+      .stat-name {
+        font-size: $ratio * .8rem;
+        line-height: 1;
+        width: 13%;
+      }
+
+      .stat-group {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: $ratio * 5px;
+
+        .stat-value {
+          font-size: $ratio * .8rem;
+          line-height: 1;
+        }
+
+        .progress-bar {
+          flex: 1;
+        }
+      }
+    }
+
+    .pokemon-card-moves {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: $ratio * 5px;
+
+      p {
+        line-height: 1;
+        font-size: $ratio * .8rem;
+      }
+
+      .pokemon-card-move {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-radius: $ratio * 20px;
+        padding: $ratio*5px $ratio*12px;
+        background-color: var(--currentTransparentColor);
+        margin-top: 1px;
+
+        .move-name {
+          text-align: center;
+          font-size: $ratio*.75rem;
+
+          span {
+            display: inline-block;
+            width: $ratio*13px;
+            aspect-ratio: 1;
+            vertical-align: middle;
+            margin-left: $ratio*(-5px);
+            margin-top: $ratio*(-3px);
+            filter: drop-shadow(0 0 2px #2c2c2c8d);
+          }
+        }
+
+        .move-info-wrap {
+          display: flex;
+          flex-direction: column;
+          gap: 1px;
+        }
+
+        .move-info {
+          display: flex;
+          justify-content: flex-end;
+          gap: $ratio*5px;
+
+          * {
+            font-size: $ratio*.65rem;
+            line-height: .9;
+          }
+        }
+      }
+    }
+  }
+
+
+  ////////////////////////////////////////////////////////////
+  //////////////////////// CARD OVERLAYS /////////////////////
+  ////////////////////////////////////////////////////////////
+
+  .pokemon-card {
+
+    .selected-overlay,
+    .deselectable-overlay {
+      @include center();
+      z-index: 100;
+      cursor: pointer;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      backdrop-filter: blur(4px);
+      border-radius: $addapted-gap - 1px;
+      overflow: hidden;
+      transition: .2s ease-out all;
+
+      div {
+        @include center();
+        padding: $gap;
+        aspect-ratio: 1;
+        width: 100px;
+        border-radius: 100%;
+        border: 1px solid;
+      }
+    }
+
+
+    .selected-overlay {
+      background-color: rgba(#104217, .8);
+
+      &:hover {
+        background-color: rgba(#104217, .65);
+      }
+
+      div {
+        border-color: $success;
+      }
+    }
+
+    .deselectable-overlay {
+      background-color: rgba(#421037, .8);
+      opacity: 0;
+      &:hover {
+        opacity: 1;
+      }
+
+      div {
+        border-color: $pink-blood;
+      }
+    }
+  }
+}

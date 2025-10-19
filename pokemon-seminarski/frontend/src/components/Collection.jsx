@@ -93,13 +93,13 @@ const loadUserPokemons = async (userId) => {
 /** 
  * Collection of users pokemon
  * @param {{
- *    horizontal?: boolean, 
  *    cardClickEvent: (clickedpokemon: UsersPokemonExpanded) => Promise, 
  *    id?: number | undefined, 
- *    cardOptions: {evolvable?: boolean, selectable?: boolean}
+ *    cardOptions: {evolvable?: boolean, selectable?: boolean},
+ *    selectedArray: Array<UsersPokemon | null>
  * }} 
  */
-const Collection = ({ horizontal = false, cardClickEvent = undefined, id = undefined, cardOptions }) => {
+const Collection = ({ cardClickEvent = undefined, id = undefined, cardOptions, selectedArray }) => {
    const { info } = useContext(UserContext);
    const [loaded, setLoaded] = useState(false);
    /**@type {[UsersPokemonExpanded[], React.Dispatch<React.SetStateAction<UsersPokemonExpanded[]>>]} */
@@ -108,10 +108,11 @@ const Collection = ({ horizontal = false, cardClickEvent = undefined, id = undef
 
    /**@param {UsersPokemonExpanded} pokemon*/
    const handleClick = async (pokemon) => {
-      console.log("collection clicked");
       await cardClickEvent?.(pokemon);
-      setResetQuery({});
+      if (cardOptions && cardOptions.evolvable) setResetQuery({});
    }
+
+   const isSelected = (pokemon) => selectedArray?.some(p => p?.id === pokemon.id);
 
    useEffect(() => {
       (async () => {
@@ -122,15 +123,22 @@ const Collection = ({ horizontal = false, cardClickEvent = undefined, id = undef
    }, [info, id, resetQuery])
 
    return (
-      <div className={`collection${horizontal ? " collection-horizontal" : ""}`}>
+      <div className="collection">
          {!loaded ? (
             <div className='collection-loading'>
                loading...
             </div>
          ) : (
-            pokemons.map((pokemon) => <PokemonCard key={pokemon.id} pokemon={pokemon} onClick={handleClick} options={cardOptions} />)
-         )
-         }
+            pokemons.map((pokemon) =>
+               <PokemonCard
+                  key={pokemon.id}
+                  pokemon={pokemon}
+                  onClick={handleClick}
+                  options={cardOptions}
+                  isSelected={isSelected(pokemon)}
+               />
+            )
+         )}
       </div>
    )
 }
