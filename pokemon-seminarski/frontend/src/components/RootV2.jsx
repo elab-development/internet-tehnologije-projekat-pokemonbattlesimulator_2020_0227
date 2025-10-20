@@ -41,6 +41,9 @@ const RootV2 = () => {
         function onConnectUser(data) { // Successfuly authorized and recived userData -> It's okay
             setInfo(prev => ({ ...prev, ...data.user }));
             setloadingState(false);
+            if (data.gameRoom) {
+                return navigate(`/game/${data.gameRoom}`);
+            }
             if (redirect.current.onSuccess) {
                 let temp = redirect.current.onSuccess;
                 redirect.current.onSuccess = null;

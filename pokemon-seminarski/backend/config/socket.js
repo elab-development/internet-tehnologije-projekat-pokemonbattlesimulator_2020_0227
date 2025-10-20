@@ -60,7 +60,8 @@ const handleSocketConnections = async (io) => {
     io.on('connection', (socket) => {
         console.log('New user successfuly connected!');
         console.log('connected users: ', socketInformation.allConnectedUsers.map((val) => ({ id: val.id, username: val.username, socketId: val.socket.id })));
-        socket.emit('connect:user', { user: socket.data.user });
+        const game = socketInformation.allGameRooms.find(gr => gr.player1.id === socket.data.user.id || gr.player2.id === socket.data.user.id);
+        socket.emit('connect:user', { user: socket.data.user, gameRoom: game ? game.roomId : undefined });
 
         // Event registration
         registerChatHandlers(io, socket, socketInformation);

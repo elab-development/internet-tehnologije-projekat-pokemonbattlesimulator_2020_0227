@@ -421,6 +421,8 @@ const getUsersMessages = async (req, res) => {
         zerrors.addIssue({ code: ZodIssueCode.invalid_type, path: ['receivedMessages'], message: 'Expected boolean. Allowed values are: ["true", "1", "yes", "y", "false", "0", "no", "n"]' })
     if (req.query.sentMessages != null && ((sentMessages = stringToBoolean(req.query.sentMessages)) === undefined))
         zerrors.addIssue({ code: ZodIssueCode.invalid_type, path: ['sentMessages'], message: 'Expected boolean. Allowed values are: ["true", "1", "yes", "y", "false", "0", "no", "n"]' })
+    if (receivedMessages != null && sentMessages != null && receivedMessages === false && sentMessages === false) 
+        zerrors.addIssue({ code: ZodIssueCode.invalid_type, path: ['receivedMessages'], message: "Nice try to get all messages but too bad :(" })
     if (req.query.orderByAsc != null && ((orderByAsc = stringToBoolean(req.query.receivedMessages)) === undefined))
         zerrors.addIssue({ code: ZodIssueCode.invalid_type, path: ['orderByAsc'], message: 'Expected boolean. Allowed values are: ["true", "1", "yes", "y", "false", "0", "no", "n"]' })
 
@@ -437,8 +439,10 @@ const getUsersMessages = async (req, res) => {
     try {
         let obj = { userId, offset, limit, chatsWith, receivedMessages, sentMessages, orderByAsc };
         Object.keys(obj).forEach(key => obj[key] === undefined && delete obj[key]);
+        console.log(obj);
         const result = await getUsersMessagesDB({ ...obj });
 
+        console.log(result);
         return res.status(200).json({
             totalCount: result.totalCount,
             next: result.offset + result.limit >= result.totalCount ? null : `${getClientURL()}/api/users/${userId}/messages?offset=${result.offset + result.limit < 0 ? 0 : result.offset}&limit=${result.offset + 2 * result.limit > result.totalresult ? result.totalCount - result.limit : (result.limit <= 0 ? Math.min(20, result.totalCount) : result.limit)}${chatsWith != null ? '&chatsWith=' + chatsWith : ""}${receivedMessages != null ? '&recivedMessages=' + receivedMessages : ""}${sentMessages != null ? '&sentMessages=' + sentMessages : ""}&orderByAsc=${orderByAsc ?? false}`,
@@ -537,6 +541,36 @@ const resetUserPassword = async (req, res) => {
     }
 }
 
+/**
+ * @description     resets the password via provided token
+ * @route           POST /api/users/:param/ban
+ * @access          Private - ADMIN, MODERATOR
+ * 
+ * @type {import('express').RequestHandler<{param: string}, any, any, qs.ParsedQs, Record<string, any>}
+ */
+const banUser = async (req, res) => {
+    const { param } = req.params;
+    const { isMuted } = req.body;
+    try {
+        let user;
+        if (isStringInteger(param)) {
+            user = await getUserById(parseInt(param, 10));
+        } else {
+            user = await getUserByUsername(param);
+        }
+
+        if (!user) {
+            return res.status(404).json(new ResponseError("User not found"));
+        }
+
+        const shouldMute = isMuted ?? true; // no need for req.body but can provide additional data if so.
+        await updateUserDB({ id: param, isMuted: shouldMute, ...user });
+        res.sendStatus(200);
+    } catch (error) {
+        return res.status(500).json(new ResponseError(error.message));
+    }
+}
+
 module.exports = {
     getUser,
     registerUser,
@@ -548,5 +582,6 @@ module.exports = {
     deleteUser,
     updateUser,
     requestUserPasswordReset,
-    resetUserPassword
+    resetUserPassword,
+    banUser
 }

@@ -10,6 +10,7 @@ const users = pgTable('users', {
     email: varchar('email', { length: 256 }).notNull().unique(),
     password: varchar('password', { length: 72 }).notNull(),
     role: varchar('role', { enum: [ADMIN, MODERATOR, USER], length: 64 }).notNull().default(USER),
+    isMuted: boolean('is_muted').notNull().default(false),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow().$onUpdate(() => new Date()),
 });

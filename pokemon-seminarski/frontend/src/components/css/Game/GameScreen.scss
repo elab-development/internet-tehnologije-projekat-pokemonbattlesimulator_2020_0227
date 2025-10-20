@@ -12,6 +12,12 @@ $mini-size: 65px;
   overflow: hidden;
 
   .game-over {
+    z-index: 999;
+    position: absolute;
+    top: 0;
+    left: 0;
+    backdrop-filter: blur(8px);
+    background-color: rgba($black-purple, .4);
     display: flex;
     width: 100dvw;
     height: 100dvh;
@@ -190,6 +196,7 @@ $mini-size: 65px;
 
         .pokemon-image img {
           width: 160px;
+          max-height: 200px;
         }
 
         .pokemon-podium {
@@ -204,6 +211,7 @@ $mini-size: 65px;
 
         .pokemon-image img {
           width: 240px;
+          max-height: 240px;
         }
 
         .pokemon-podium {
@@ -229,6 +237,15 @@ $mini-size: 65px;
       max-width: 1000px;
       width: 100%;
       height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 3*$gap;
+    }
+
+    .tables-wrapper {
+      width: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -266,7 +283,7 @@ $mini-size: 65px;
       gap: 1.3*$gap;
 
       .our-pokemon-move {
-        cursor: pointer; //TODO remove
+        cursor: pointer;
         flex: 1 0 auto;
         width: 100%;
         background-color: $purple;
@@ -280,6 +297,17 @@ $mini-size: 65px;
 
         &:hover {
           background-color: $light-purple;
+        }
+
+        &.disabled {
+          cursor: auto;
+          pointer-events: none;
+          background-color: rgba($purple, .5);
+
+          * {
+            color: gray;
+            cursor: auto;
+          }
         }
 
         .our-pokemon-move-name {
@@ -341,12 +369,24 @@ $mini-size: 65px;
         gap: $gap;
 
         .mini-pokemon {
+          cursor: pointer;
           position: relative;
           width: $mini-size;
           height: $mini-size;
           border: 1px solid $light-purple;
           border-radius: $gap;
           overflow: hidden;
+          transition: .1s ease-out box-shadow;
+
+          &.disabled {
+            cursor: auto;
+            pointer-events: none;
+            opacity: .8;
+          }
+
+          &:not(.disabled):hover {
+            box-shadow: 0 0 0 2px $extra-light-purple;
+          }
 
           &:has(.pokemon-dead) {
             border-color: $pink-blood;

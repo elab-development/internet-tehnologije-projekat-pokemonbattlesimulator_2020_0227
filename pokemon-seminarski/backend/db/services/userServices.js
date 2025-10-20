@@ -314,10 +314,10 @@ const updateUsersStatsDB = async (userId, data) => {
  * @param {FilterOptions} param0 
  */
 const getUsersMessagesDB = async ({ userId, offset = 0, limit = 10, chatsWith = 0, receivedMessages = true, sentMessages = true, orderByAsc = false }) => {
-    const conditions = and(
+    const conditions = or(
         receivedMessages ? eq(messages.receiverUserId, userId) : undefined,
         sentMessages ? eq(messages.senderUserId, userId) : undefined,
-        chatsWith ? or(eq(messages.senderUserId, chatsWith), eq(messages.receiverUserId, chatsWith)) : undefined
+        chatsWith !== 0 ? or(eq(messages.senderUserId, chatsWith), eq(messages.receiverUserId, chatsWith)) : undefined
     );
 
 

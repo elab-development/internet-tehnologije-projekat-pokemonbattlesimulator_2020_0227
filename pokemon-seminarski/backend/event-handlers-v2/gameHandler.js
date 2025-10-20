@@ -1,3 +1,4 @@
+//@ts-check
 const { Server, Socket } = require("socket.io");
 const RoomManager = require("../game-logic/RoomManager");
 const Player = require("../game-logic/Player");
@@ -66,11 +67,14 @@ module.exports = (io, socket, socketInformation, manager) => {
         return socket.emit('game:queue:leave:success', { message: 'Succesfully left the queue' });
     }
 
+    /**
+     * @param {{roomId: number}} param0 
+     */
     const joinGame = ({ roomId }) => {
         const user = socketInformation.allConnectedUsers.find(cu => cu.socket.id === socket.id);
         const game = socketInformation.allGameRooms.find(gr => gr.player1.id === user.id || gr.player2.id === user.id);
         if (!user) {
-            return socket.emit('game:connect:failed', { message: 'No entry for you, please reconnect'});
+            return socket.emit('game:connect:failed', { message: 'No entry for you, please reconnect' });
         }
         console.log("User " + user.username + " requested to join a room.",
             "We found this room candidate that he is in:", game?.roomId);
@@ -98,8 +102,17 @@ module.exports = (io, socket, socketInformation, manager) => {
         return socket.emit('game:connect:success', { player: player, enemy: enemy, ourTurn: ourTurn });
     }
 
-    const attack = ({ attackId }) => {
+    /**
+     * @param {{moveId: number}} param0 
+     * @returns 
+     */
+    const attack = ({ moveId }) => {
         const user = socketInformation.allConnectedUsers.find(cu => cu.socket.id === socket.id);
+
+        if (user == null) {
+            return socket.emit('game:connect:failed', { message: "No entry for you, please reconnect" });
+        }
+
         const game = socketInformation.allGameRooms.find(gr => gr.player1.id === user.id || gr.player2.id === user.id);
 
         if (game == null || game.status !== 'playing') {
@@ -107,19 +120,29 @@ module.exports = (io, socket, socketInformation, manager) => {
         }
 
         let player = game.player1.id === user.id ? game.player1 : game.player2;
-        if (!player.pokemons[player.selectedPokemonIndex].moves.some(move => move.id === attackId)) {
-            return socket.emit('game:action:failed', { message: "Such move is not found on selected pokemon", state: game.generateStateForPlayer(id) });
+        if (!player.pokemons[player.selectedPokemonIndex].moves.some(move => move.id === moveId)) {
+            return socket.emit('game:action:failed', { message: "Such move is not found on selected pokemon", state: game.generateStateForPlayer(user.id) });
         }
 
+        console.log("moveID provided:", moveId);
         try {
-            game.action(user.id, 'attack', attackId);
+            game.action(user.id, 'attack', moveId);
         } catch (error) {
-            return socket.emit('game:action:failed', { message: "Such move is not found on selected pokemon", state: game.generateStateForPlayer(id) });
+            // @ts-ignore
+            return socket.emit('game:action:failed', { message: `Error: ${error.message}`, state: game.generateStateForPlayer(user.id) });
         }
     }
 
+    /**
+     * @param {{pokemonIndex: number}} param0 
+     */
     const switchPokemon = async ({ pokemonIndex }) => {
         const user = socketInformation.allConnectedUsers.find(cu => cu.socket.id === socket.id);
+
+        if (user == null) {
+            return socket.emit('game:connect:failed', { message: "No entry for you, please reconnect" });
+        }
+
         const game = socketInformation.allGameRooms.find(gr => gr.player1.id === user.id || gr.player2.id === user.id);
 
         if (game == null || game.status !== 'playing') {
@@ -128,18 +151,24 @@ module.exports = (io, socket, socketInformation, manager) => {
 
         let player = game.player1.id === user.id ? game.player1 : game.player2;
         if (!player.pokemons.some(val => val.id === pokemonIndex && val.stats.hp > 0)) {
-            return socket.emit('game:action:failed', { message: "Can't find the pokemon to switch to", state: game.generateStateForPlayer(id) });
+            return socket.emit('game:action:failed', { message: "Can't find the pokemon to switch to", state: game.generateStateForPlayer(user.id) });
         }
 
         try {
             game.action(user.id, 'switch', pokemonIndex);
         } catch (error) {
-            return socket.emit('game:action:failed', { message: "You should never get this error, how did you do this", state: game.generateStateForPlayer(id) });
+            // @ts-ignore
+            return socket.emit('game:action:failed', { message: `Error: ${error.message}`, state: game.generateStateForPlayer(user.id) });
         }
     }
 
     const skipTurn = () => {
         const user = socketInformation.allConnectedUsers.find(cu => cu.socket.id === socket.id);
+
+        if (user == null) {
+            return socket.emit('game:connect:failed', { message: "No entry for you, please reconnect" });
+        }
+
         const game = socketInformation.allGameRooms.find(gr => gr.player1.id === user.id || gr.player2.id === user.id);
 
         if (game == null || game.status !== 'playing') {
@@ -147,14 +176,20 @@ module.exports = (io, socket, socketInformation, manager) => {
         }
 
         try {
-            game.action(user.id, 'skip');
+            game.action(user.id, 'skip', undefined);
         } catch (error) {
-
+            // @ts-ignore
+            return socket.emit('game:action:failed', { message: `Error: ${error.message}`, state: game.generateStateForPlayer(user.id) });
         }
     }
 
     const leaveGame = () => {
         const user = socketInformation.allConnectedUsers.find(cu => cu.socket.id === socket.id);
+
+        if (user == null) {
+            return socket.emit('game:connect:failed', { message: "No entry for you, please reconnect" });
+        }
+
         const game = socketInformation.allGameRooms.find(gr => gr.player1.id === user.id || gr.player2.id === user.id);
 
         console.log("game that is found: ",
@@ -177,6 +212,6 @@ module.exports = (io, socket, socketInformation, manager) => {
     socket.on("game:queue:leave", leaveQueue);
     socket.on("game:action:attack", attack);
     socket.on("game:action:switch", switchPokemon);
-    socket.on("game:action:skip", switchPokemon);
+    socket.on("game:action:skip", skipTurn);
     socket.on("game:action:leave", leaveGame);
 }

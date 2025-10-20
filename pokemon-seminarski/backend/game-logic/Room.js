@@ -33,11 +33,15 @@ module.exports = class Room {
         this.status = 'playing';
     }
 
-    generateStateForPlayer(id) {
+    /**
+     * @param {number} userId 
+     * @returns 
+     */
+    generateStateForPlayer(userId) {
         return {
-            player: this.player1.id === id ? this.player1.sanatize() : this.player2.sanatize(),
-            enemy: this.player1.id === id ? this.player2.sanatize() : this.player1.sanatize(),
-            ourTurn: this.player1.id === id ? this.turn : !this.turn
+            player: this.player1.id === userId ? this.player1.sanatize() : this.player2.sanatize(),
+            enemy: this.player1.id === userId ? this.player2.sanatize() : this.player1.sanatize(),
+            ourTurn: this.player1.id === userId ? this.turn : !this.turn
         }
     }
 
@@ -45,19 +49,20 @@ module.exports = class Room {
      * Performs action of type `'attack' | 'switch' | 'skip'`
      * @param {number} userId User that requests an action
      * @param {'attack' | 'switch' | 'skip'} type  type of attack
-     * @param {number} id Either moveId or pokemonIndex, if skip ommited then dont provide anything
+     * @param {number} [id] Either moveId or pokemonIndex, if skip ommited then dont provide anything
      */
-    action(userId, type, id) {
-        const currentPlayer = this.turn ? this.player1 : this.player2;
-        const opponentPlayer = this.turn ? this.player2 : this.player1;
+    action(userId, type, id = -1) {
+        const currentPlayer = this.turn ? this.player1 : this.player2;  // PLAYER WHOS TURN IT IS
+        const opponentPlayer = this.turn ? this.player2 : this.player1; // RECEIVING PLAYER
 
         if (userId !== currentPlayer.id) {
             throw new Error('Not your turn');
         }
 
+        /**@type {number | undefined} */
         let end;
         if (type === 'attack') {
-            end = this.handleAttack(currentPlayer, opponentPlayer, id);
+            end = this.handleAttack(currentPlayer, opponentPlayer, id); // RETURNS -1 if no pokemon has hp
             this.turn = !this.turn;
             currentPlayer.mana += 7;
         } else if (type === 'switch') {
@@ -67,22 +72,22 @@ module.exports = class Room {
             currentPlayer.mana += 7;
         }
 
-
         this.player1.socket.emit('game:update', {
-            ...this.generateStateForPlayer(),
+            state: this.generateStateForPlayer(this.player1.id),
             actionResult: {
                 type: type,
             }
         });
         this.player2.socket.emit('game:update', {
-            ...this.generateStateForPlayer(),
+            state: this.generateStateForPlayer(this.player2.id),
             actionResult: {
                 type: type,
             }
         });
 
         if (end != null && end < 0) {
-            this.endGame();
+            // Wait for callstack to finish, then call the function, to give time to users to update components
+            setTimeout(() => this.endGame(), 1);
         }
     }
 
@@ -95,7 +100,10 @@ module.exports = class Room {
         const currentPokemon = currentPlayer.pokemons[currentPlayer.selectedPokemonIndex];
         const opponentPokemon = opponentPlayer.pokemons[opponentPlayer.selectedPokemonIndex];
 
-        const selectedMove = currentPokemon.moves[moveIndex];
+        const selectedMove = currentPokemon.moves.find(m => m.id === moveIndex);
+        if (!selectedMove) {
+            throw new Error("Selected Move doesn't exist");
+        }
         if (currentPlayer.mana < selectedMove.mana) {
             throw new Error('Not nough mana to perform this move');
         }
@@ -104,7 +112,7 @@ module.exports = class Room {
 
         // ATK * (DEF/(MAX_DEF * 2))/2 -> DEF maksimalno može da se smanji napad za 50%
         const effectivness = this.essentialsRef.movesEffectivenesses.find(val =>
-            val.attackerTypeId === selectedMove.type.id && opponentPokemon.type.some(t => t.id === val.defenderTypeId)
+            (val.attackerTypeId === selectedMove.type.id) && opponentPokemon.type.some(t => t.id === val.defenderTypeId)
         )?.effectivness ?? 1;
         const damage = (selectedMove.atk * (1 - opponentPokemon.stats.def / (100 * 2 * 2))) * effectivness;
         opponentPokemon.stats.hp -= damage > 0 ? damage : 0;
@@ -122,7 +130,11 @@ module.exports = class Room {
      * @param {number} pokemonIndex 
      */
     handleSwitch(currentPlayer, pokemonIndex) {
-        currentPlayer.selectedPokemonIndex = pokemonIndex;
+        const newIndex = currentPlayer.pokemons.findIndex(p => p.id === pokemonIndex);
+        if (newIndex < -1) {
+            throw new Error("You don't have this pokemon");
+        }
+        currentPlayer.selectedPokemonIndex = newIndex;
     }
 
 
@@ -145,6 +157,7 @@ module.exports = class Room {
         const p1Lost = this.player1.pokemons.every(val => val.stats.hp <= 0) || this.player1.socket.disconnected || this.player1.leftTheGame;
         const p2Lost = this.player2.pokemons.every(val => val.stats.hp <= 0) || this.player2.socket.disconnected || this.player2.leftTheGame;
 
+        console.log(p1Lost, p2Lost)
         if (p1Lost) {
             this.player2.socket.emit('game:end', { message: `player '${this.player2.username}' won, wohoo` });
             this.player1.socket.emit('game:end', { message: `player '${this.player2.username}' won, too bad` });

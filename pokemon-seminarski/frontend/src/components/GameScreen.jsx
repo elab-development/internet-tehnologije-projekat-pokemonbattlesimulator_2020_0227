@@ -5,7 +5,7 @@ import Pokemon from './utils/Pokemon';
 import { useAnimate } from 'framer-motion';
 import './css/Game/GameScreen.scss'
 import { loadApiData } from './Collection';
-import { useRef } from 'react';
+import { useCallback } from 'react';
 /**@typedef {import('../../../backend/game-logic/Player').SanitizedUser} Player*/
 
 /** @param {number} id */
@@ -27,17 +27,11 @@ const GameScreen = () => {
    const [gameResult, setGameResult] = useState(null);
    const [gameOver, setGameOver] = useState(false);
 
-   /** @type {React.MutableRefObject<HTMLDivElement>}*/
-   const playerPokemonRef = useRef(null);
-
-   /** @type {React.MutableRefObject<HTMLDivElement>}*/
-   const enemyPokemonRef = useRef(null);
-
-   /**@param {'us' | 'enemy'} attacker */
-   const animateAttack = (attacker) => {
-      const usEl = playerPokemonRef.current;
-      const enemyEl = enemyPokemonRef.current;
-      if (!usEl || !enemyEl) { console.error("Couldn't calc, data is missing", playerPokemonRef, enemyPokemonRef); return; }
+   /**@type {(attacker: 'us' | 'enemy') => void} */
+   const animateAttack = useCallback((attacker) => {
+      const usEl = document.querySelector(".us-img");
+      const enemyEl = document.querySelector(".enemy-img");
+      if (!usEl || !enemyEl) { console.error("Couldn't calc, data is missing", usEl, enemyEl); return; }
 
       const usRect = usEl.getBoundingClientRect();
       const enemyRect = enemyEl.getBoundingClientRect();
@@ -77,7 +71,7 @@ const GameScreen = () => {
             { duration: 0.6, ease: [0.68, -0.55, 0.27, 1.55], at: '-0.4' }
          ]
       ]);
-   }
+   }, [animate]);
 
    const handleAttack = async (move) => {
       if (ourTurn && isWaitingForServer) return;
@@ -85,14 +79,23 @@ const GameScreen = () => {
 
       animateAttack("us");
 
-      //socket.emit('game:action:attack', { attackId: move.id });
+      socket.emit('game:action:attack', { moveId: move.id });
+      setTimeout(() => {
+         if (isWaitingForServer) {
+            console.error("No response from the server :(");
+            setisWaitingForServer(false);
+         }
+      }, 5000)
    }
-
 
    const handleChangePokemon = (newPokemonIndex) => {
       if (ourTurn && isWaitingForServer) return;
       setisWaitingForServer(true);
       socket.emit('game:action:switch', { pokemonIndex: newPokemonIndex });
+   }
+
+   const handleSkip = () => {
+      socket.emit('game:action:skip');
    }
 
    const handleLeave = () => {
@@ -140,19 +143,40 @@ const GameScreen = () => {
          navigate('/home', { replace: true });
       }
 
-      async function onUpdate({ player, enemy, actionResult, ourTurn }) {
-         if (actionResult.type === 'attack' && ourTurn) { // ourTurn === true -> enemy attacked
-            await animate([
-               ['.enemy-pokemon', { x: [10, -120, 0], y: [5, -40, 0] }, { duration: 1 }], // TODO
-               ['.player-pokemon', { x: [-30, 20, 0] }, { at: "-0.3" }]
-            ]);
+      /**
+       * @param {{
+       *    state: { player: Player, enemy: Player, ourTurn: boolean},
+       *    actionResult: {type: string}
+       * }} param0 
+       */
+      async function onUpdate({ state, actionResult }) {
+         if (actionResult.type === 'attack' && state.ourTurn) {// If the new turn is us, that means opponent attacked
+            animateAttack(state.ourTurn ? "enemy" : "us");
          }
-         // ELSE 
-         //    MI SMO NAPALI -> VEĆ OBRAĐENO (OURTURN === false)
-         //    ZAMENILI SMO POKEMONA -> FRAMER MOTION RADI POSAO ZA UNMOUNT
-         //    ZAMENILI SU POKEMONA -> -||-
-         setPlayer(player);
-         setEnemy(enemy);
+
+         console.log(state);
+         setPlayer(prev => {
+            return {
+               ...state.player,
+               // If selectedIndex is 0, prevent crashing and keep the old index, the endgame event will come soon
+               selectedPokemonIndex: state.player.selectedPokemonIndex < 0 ? prev.selectedPokemonIndex : state.player.selectedPokemonIndex,
+               pokemons: prev.pokemons.map((p) => ({
+                  ...p,                                                  // Keep the old description data
+                  ...state.player.pokemons.find((sp) => sp.id === p.id), // Get new pokemon data
+               }))
+            }
+         });
+         setEnemy(prev => {
+            return {
+               ...state.enemy,
+               selectedPokemonIndex: state.enemy.selectedPokemonIndex < 0 ? prev.selectedPokemonIndex : state.enemy.selectedPokemonIndex,
+               pokemons: prev.pokemons.map((p) => ({
+                  ...p,                                                  // Keep the old description data
+                  ...state.enemy.pokemons.find((sp) => sp.id === p.id),  // Get new pokemon data
+               }))
+            }
+         });
+         setOurTurn(state.ourTurn);
          setisWaitingForServer(false);
       }
       function onEnd({ message }) {
@@ -164,6 +188,7 @@ const GameScreen = () => {
       }
       function onActionFailed({ message }) {
          console.error(message);
+         setisWaitingForServer(false);
       }
       function onLeaveSuccess() {
          navigate('/home', { replace: true });
@@ -197,18 +222,19 @@ const GameScreen = () => {
          socket.off('game:action:leave:failed', onLeaveFailed);
          socket.off('game:end', onEnd);
       }
-   }, [animate, navigate, params]);
+   }, [animate, navigate, params, animateAttack]);
 
 
    return (
       <div className='game'>
-         {!loaded ? null : gameOver ? (
-            <div className='game-over'>
-               <p>{gameResult}</p>
-               <button className='button-full' type='button' onClick={() => navigate('/home', { replace: true })}>go home</button>
-            </div>
-         ) : (
+         {!loaded ? null : (
             <>
+               {gameOver && (
+                  <div className='game-over'>
+                     <p>{gameResult}</p>
+                     <button className='button-full' type='button' onClick={() => navigate('/home', { replace: true })}>go home</button>
+                  </div>
+               )}
                <div className='enemy-header'>
                   <div className='enemy-header-group'>
                      <div className='enemy-name'>{enemy.username}</div>
@@ -228,53 +254,58 @@ const GameScreen = () => {
                   </div>
                </div>
                <div className='game-screen' ref={scope}>
-                  <Pokemon player={enemy} isEnemy={true} ref={enemyPokemonRef} />
-                  <Pokemon player={player} ref={playerPokemonRef} />
+                  <Pokemon player={enemy} isEnemy={true} />
+                  <Pokemon player={player} />
                </div>
                <div className='game-option-menu'>
                   <div className='game-option-wrapper'>
-                     <div className='our-pokemon-moves-wrapper'>
-                        <h3>Our pokemon moves</h3>
-                        <div className='our-pokemon-moves'>
-                           {player.pokemons[player.selectedPokemonIndex].moves.map(m => (
-                              <div className='our-pokemon-move' key={m.id} onClick={() => handleAttack(m)}>
-                                 <p className='our-pokemon-move-name'>
-                                    <span aria-hidden="true" style={{ background: `var(--pic-${m.type.name})` }} /> {m.name}
-                                 </p>
-                                 <div className='our-pokemon-info-wrap'>
-                                    <div className='our-pokemon-stat-info'>
-                                       <p><code>{String(Math.round(m.atk)).padStart(3, "0")}</code></p>
-                                       <p> DMG</p>
-                                    </div>
-                                    <div className='our-pokemon-stat-info'>
-                                       <p><code>{String(Math.round(m.mana)).padStart(2, "0")}</code></p>
-                                       <p> MNA</p>
-                                    </div>
-                                 </div>
-                              </div >
-                           ))}
-                        </div>
+                     <div className='turn-info'>
+                        <h3>{ourTurn ? "Our turn!" : "Opponents turn!"}</h3>
                      </div>
-                     <div className='our-game-info'>
-                        <div className='our-mana-points'>
-                           <i className="bi bi-flask"></i> <i className="bi bi-chevron-double-right"></i> <code>{String(player.mana).padStart(2, "0")}</code>
-                        </div>
-                        <div className='our-pokemons-wraper'>
-                           <h4>Change pokemon</h4>
-                           <div className='our-pokemons'>
-                              {player.pokemons.map(val => (
-                                 <div className='mini-pokemon' key={val.id} onClick={() => handleChangePokemon(val.id)}>
-                                    <img src={getSmallPokemonImage(val.id)} alt={val.name} />
-                                    {val.stats.hp === 0 && <div className='pokemon-dead'><span className='x-bar' /><span className='x-bar' /></div>}
-                                 </div>
+                     <div className='tables-wrapper'>
+                        <div className='our-pokemon-moves-wrapper'>
+                           <h3>Our pokemon moves</h3>
+                           <div className='our-pokemon-moves'>
+                              {player.pokemons[player.selectedPokemonIndex].moves.map(m => (
+                                 <div className={`our-pokemon-move${ourTurn && player.mana >= m.mana ? "" : " disabled"}`} key={m.id} onClick={() => handleAttack(m)}>
+                                    <p className='our-pokemon-move-name'>
+                                       <span aria-hidden="true" style={{ background: `var(--pic-${m.type.name})` }} /> {m.name}
+                                    </p>
+                                    <div className='our-pokemon-info-wrap'>
+                                       <div className='our-pokemon-stat-info'>
+                                          <p><code>{String(Math.round(m.atk)).padStart(3, "0")}</code></p>
+                                          <p> DMG</p>
+                                       </div>
+                                       <div className='our-pokemon-stat-info'>
+                                          <p><code>{String(Math.round(m.mana)).padStart(2, "0")}</code></p>
+                                          <p> MNA</p>
+                                       </div>
+                                    </div>
+                                 </div >
                               ))}
                            </div>
                         </div>
-                        <div className='skip-btn-wrapper'>
-                           <button className='button-full' >skip move</button>
-                        </div>
-                        <div>
-                           <button className='button-full' onClick={handleLeave} type='button'>leave game</button>
+                        <div className='our-game-info'>
+                           <div className='our-mana-points'>
+                              <i className="bi bi-flask"></i> <i className="bi bi-chevron-double-right"></i> <code>{String(player.mana).padStart(2, "0")}</code>
+                           </div>
+                           <div className='our-pokemons-wraper'>
+                              <h4>Change pokemon</h4>
+                              <div className='our-pokemons'>
+                                 {player.pokemons.map((val, idx) => (
+                                    <div className={`mini-pokemon${!ourTurn || val.stats.hp === 0 || player.selectedPokemonIndex === idx ? " disabled" : ""}`} key={val.id} onClick={() => handleChangePokemon(val.id)}>
+                                       <img src={getSmallPokemonImage(val.id)} alt={val.name} />
+                                       {val.stats.hp === 0 && <div className='pokemon-dead'><span className='x-bar' /><span className='x-bar' /></div>}
+                                    </div>
+                                 ))}
+                              </div>
+                           </div>
+                           <div className='skip-btn-wrapper'>
+                              <button className='button-full' onClick={handleSkip} disabled={!ourTurn}>skip move</button>
+                           </div>
+                           <div>
+                              <button className='button-full' onClick={handleLeave} type='button'>leave game</button>
+                           </div>
                         </div>
                      </div>
                   </div>
