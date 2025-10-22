@@ -1,4 +1,4 @@
-const { count, eq } = require('drizzle-orm');
+const { count, eq, and } = require('drizzle-orm');
 const db = require('../../config/db');
 const { pokemons, types, pokemonsTypes, pokemonsMoves, moves, evolution } = require('../schema');
 const { alias } = require('drizzle-orm/pg-core');
@@ -93,13 +93,11 @@ const getPokemonsDB = async ({ offset = 0, limit = 10 }) => {
         .leftJoin(moves, eq(pokemonsMoves.moveId, moves.id))
         .leftJoin(mTypes, eq(moves.typeId, mTypes.id))
         .leftJoin(evolution, eq(evolution.pokemonId, pokemons.pokemonId))
-        .offset(offset)
-        .limit(limit);
+
     const accumulatedPokemons = pokemonsData.reduce((acc, row) => {
         if (!acc[row.id]) {
             acc[row.id] = {
                 id: row.id,
-                xp: row.xp,
                 baseStats: row.baseStats,
                 type: [],
                 moves: [],
@@ -116,14 +114,50 @@ const getPokemonsDB = async ({ offset = 0, limit = 10 }) => {
         return acc;
     }, {});
     /**@type {{id: number, baseStats: {def: number, hp: number}, type: {id: number, name: string}[]}[]} */
-    const finalResult = Object.values(accumulatedPokemons);
+    const result = Object.values(accumulatedPokemons);
+    const finalResult = result.slice(
+        Math.max(0, offset - 1),
+        Math.max(0, offset - 1 + limit)
+    )
 
     return { totalCount, offset, limit, pokemonsData: finalResult }
 }
 
-/**@param {import('../../utils/typedefs').PokemonTable} */
-const insertPokemonDB = async ({ id, defenseBase, healthPointsBase }) => {
-    return (await db.insert(pokemons).values({ id, defenseBase, healthPointsBase }).returning())[0];
+/**@param {import('../../utils/typedefs').PokemonTable & {moves: number[], types: number[], evolvesTo: number}} */
+const insertPokemonDB = async ({ id, defenseBase, healthPointsBase, moves: moveIds, types: typeIds, evolvesTo }) => {
+    await db.insert(pokemons).values({ id, defenseBase, healthPointsBase });
+    if (moveIds && moveIds.length === 3) {
+        await db.delete(pokemonsMoves).where(eq(pokemonsMoves.pokemonId, id))
+        await Promise.all(moveIds.map(async moveId => {
+            await db.insert(pokemonsMoves).values({ pokemonId: id, moveId: moveId })
+        }))
+    }
+
+    await db.delete(pokemonsTypes).where(eq(pokemonsTypes.pokemonId, id));
+    await Promise.all(typeIds.map(async typeId => {
+        await db.insert(pokemonsTypes).values({ pokemonId: id, typeId: typeId })
+    }))
+
+    const evo = await db.query.evolution.findFirst({
+        where: and(eq(evolution.pokemonId, id))
+    });
+
+    if (evolvesTo != null) {
+        const evolvesToPokemon = await db.query.pokemons.findFirst({
+            where: eq(pokemons.id, evolvesTo)
+        })
+        if (evolvesToPokemon) {
+            if (evo) {
+                await db.update(evolution).set({ evolvesToId: evolvesTo }).where(eq(evolution.id, evo.id))
+            } else {
+                await db.insert(evolution).values({ pokemonId: id, evolvesToId: evolvesTo, })
+            }
+        }
+    } else if (evo) {
+        await db.delete(evolution).where(eq(evolution.pokemonId, id));
+    }
+
+    return await getPokemonByIdDB(id);
 }
 
 /**@param {import('../../utils/typedefs').PokemonTable[]} pokemons */

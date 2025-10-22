@@ -1,0 +1,49 @@
+@import '../colors';
+@import '../mixins';
+
+$gap: 10px;
+
+.admin-wrapper {
+    width: 100dvw;
+    height: 100%;
+    max-height: calc(100dvh - 55px - 27.2px);
+    overflow: hidden;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3*$gap;
+
+    .tab-switch {
+        margin-top: min(100px, max(5dvh, 50px));
+        display: flex;
+        justify-content: center;
+        gap: $gap;
+    }
+
+    .admin-content {
+        flex: 1 0 auto;
+        width: 100%;
+        max-height: calc(100% - min(100px, max(5dvh, 50px)) - 3*$gap - 38px );
+    }
+}
+
+.welcome-admin {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 2*$gap;
+    text-align: center;
+    width: 100%;
+    height: 100%;
+
+    img {
+        width: 120px;
+        aspect-ratio: 1;
+        object-fit: contain;
+        border-radius: 100%;
+        padding: 15px;
+        border: 1px solid $light-purple;
+    }
+}

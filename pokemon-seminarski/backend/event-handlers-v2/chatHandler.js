@@ -14,6 +14,10 @@ const GLOBAL_CHAT_ROOM = "chat:global";
 module.exports = (io, socket, socketInformation) => {
     const messageGlobal = (data) => {
         const user = socketInformation.allConnectedUsers.find((user) => user.socket.id === socket.id);
+        if(socket.data.user?.isMuted) {
+            return socket.emit("message:muted");
+        }
+
         if(!user) return;
 
         const message = {
@@ -27,6 +31,9 @@ module.exports = (io, socket, socketInformation) => {
     const messageFriend = async ({ receiver, message }) => {
         if (!z.string().safeParse(message).success || !z.number().int().safeParse(receiver).success) {
             return; // Bad request
+        }
+        if(socket.data.user?.isMuted) {
+            return socket.emit("message:muted");
         }
 
         console.log(socketInformation.allConnectedUsers.map(u => {u.username, u.socket.id}));

@@ -1,9 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react'
-import API from './utils/api/API';
 import { UserContext } from '../contexts/UserContextProvider';
-import axios from 'axios';
 import PokemonCard from './utils/PokemonCard';
-
+import { getAllPokemons, loadUserPokemons } from './utils/api/services/pokemonService';
 
 /**
  * @typedef {{name: string, picture: string, flavorText: string}} UsersPokemonExpansion
@@ -35,85 +33,21 @@ import PokemonCard from './utils/PokemonCard';
  * @typedef {UsersPokemon & UsersPokemonExpansion} UsersPokemonExpanded
  */
 
-const pokeAPI = "https://pokeapi.co/api/v2";
 export const pokeGITAPI = (id) => `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/dream-world/${id}.svg`;
 
-
-/**@param {(UsersPokemonBackend & UsersPokemonExpansion)[]} pokemons*/
-const evolutionToBoolean = (pokemons) => {
-   for (const pokemon of pokemons) { // Removes evolves to id and adds a canEvolve property
-      pokemon.canEvolve = pokemon.evolvesToPokemonId != null && pokemon.xp >= 100 && !pokemons.some(p => p.id === pokemon.evolvesToPokemonId);
-      delete pokemon.evolvesToPokemonId;
-   }
-}
-
-/**
- * 
- * @param {number} id 
- * @param {boolean} [withDescription] 
- * @returns {Promise<{name: string, picture: string, flavorText?: string}>}
- */
-export const loadApiData = async (id, withDescription = true) => {
-   const pPokemonResponse = await axios.get(`${pokeAPI}/pokemon/${id}`);
-   const pPokemon = pPokemonResponse.data;
-   let pPokemonSpecies = null;
-
-   const res = {
-      name: pPokemon.name,
-      picture: pPokemon.sprites.other.dream_world.front_default,
-   }
-
-   if (withDescription) {
-      const pPokemonSpeciesResponse = await axios.get(`${pPokemon.species.url}`);
-      pPokemonSpecies = pPokemonSpeciesResponse.data;
-      res.flavorText = pPokemonSpecies.flavor_text_entries?.[0]?.flavor_text || 'No description available';
-   }
-
-   return res;
-}
-
-/**
- * @returns {UsersPokemonExpanded[]}
- */
-const loadUserPokemons = async (userId) => {
-   try {
-      /**@type {UsersPokemonBackend[]} */
-      const pokemonsDB = (await API.get(`/users/${userId}/pokemons`)).data; // MY API
-
-      if (pokemonsDB.length === 0) {
-         return [];
-      }
-
-      const fetchPromises = pokemonsDB.map(async (element) => {
-         const pokemon = (await loadApiData(element.id));
-         return {
-            ...element,
-            ...pokemon,
-         };
-      });
-
-      const result = await Promise.all(fetchPromises);
-      evolutionToBoolean(result);
-
-      console.log('All pokemons have been loaded and updated:', result);
-      return result;
-   } catch (error) {
-      console.error(error.toJSON?.() || error.message);
-      return null;
-   }
-}
 
 /** 
  * Collection of users pokemon
  * @param {{
  *    cardClickEvent: (clickedpokemon: UsersPokemonExpanded) => Promise, 
  *    id?: number | undefined, 
- *    cardOptions: {evolvable?: boolean, selectable?: boolean},
+ *    cardOptions: {evolvable?: boolean, selectable?: boolean, noXp?: boolean},
  *    selectedArray: Array<UsersPokemon | null>
  *    disabled?: boolean
+ *    loadAllPokemons?: boolean
  * }} 
  */
-const Collection = ({ cardClickEvent = undefined, id = undefined, cardOptions, selectedArray, disabled = false }) => {
+const Collection = ({ cardClickEvent = undefined, id = undefined, cardOptions, selectedArray, disabled = false, loadAllPokemons = false }) => {
    const { info } = useContext(UserContext);
    const [loaded, setLoaded] = useState(false);
    /**@type {[UsersPokemonExpanded[], React.Dispatch<React.SetStateAction<UsersPokemonExpanded[]>>]} */
@@ -130,11 +64,16 @@ const Collection = ({ cardClickEvent = undefined, id = undefined, cardOptions, s
 
    useEffect(() => {
       (async () => {
-         const loaded = (await loadUserPokemons(id ?? info.id)) ?? [];
+         const loaded = loadAllPokemons ? (await getAllPokemons()) : (await loadUserPokemons(id ?? info.id)) ?? [];
          setPokemons(loaded);
          setLoaded(true);
       })();
-   }, [info, id, resetQuery])
+   }, [info, id, resetQuery, loadAllPokemons])
+
+   if (loadAllPokemons) {
+      cardOptions = cardOptions ?? {};
+      cardOptions.noXp = true;
+   }
 
    return (
       <div className="collection">

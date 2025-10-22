@@ -8,6 +8,8 @@ import CopyUrlButton from './utils/CopyUrlButton';
 import NotFound from './utils/NotFound';
 import './css/Auth/Career.scss'
 import { RootContext } from '../contexts/RootContextProvider';
+import { ADMIN } from './utils/roles';
+import { muteUser } from './utils/api/services/userServices';
 
 function splitCamelCase(str) {
    return str.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase();
@@ -25,6 +27,8 @@ const Career = () => {
    const [{ stats, ...user }, setUser] = useState({});
    const [loaded, setLoaded] = useState({ stats: false });
    const isOurProfile = (isInteger(params.id) && Number(params.id) === info.id) || params.id === info.username;
+   const [userMuteLoading, setUserMuteLoading] = useState(false);
+
 
    /** @param {import('./Collection').UsersPokemonExpanded} pokemon @param {React.Dispatch<React.SetStateAction<import('./Collection').UsersPokemonExpanded[]>>} callback*/
    const handleEvolve = async (pokemon, callback) => {
@@ -40,6 +44,21 @@ const Career = () => {
       }
    }
 
+   const handleMute = async () => {
+      if (info.id === user.id || userMuteLoading) return;
+
+      console.count("hadnleMute");
+      setUserMuteLoading(true)
+      muteUser(user.id, !user.isMuted)
+         .then(() => {
+            user.isMuted = !user.isMuted;
+            setUser({...user, ...stats});
+         }).catch((err) => {
+            console.error(err)
+         }).finally(() => {
+            setUserMuteLoading(false)
+         });
+   }
 
    useEffect(() => {
       async function loadStats() {
@@ -77,6 +96,27 @@ const Career = () => {
                      <button className="button-full" onClick={logout} type='button'>
                         <i className="bi bi-box-arrow-right"></i> <span>Logout</span>
                      </button>
+                     {info.role === ADMIN &&
+                        <button className='button-full' onClick={() => navigate(`/admin`)} type='button'>
+                           <i className="bi bi-bullseye"></i> <span>Admin Page</span>
+                        </button>
+                     }
+                  </>
+               }
+               {!isOurProfile &&
+                  <>
+                     <button className='button-full' onClick={handleMute} type='button' disabled={userMuteLoading}>
+                        {(user.isMuted ?? false) ? (
+                           <>
+                              <i className="bi bi-ban-fill"></i> <span>Unmute user</span>
+                           </>
+                        ) : (
+                           <>
+                              <i className="bi bi-ban"></i> <span>Mute user</span>
+                           </>
+                        )}
+
+                     </button>
                   </>
                }
                <CopyUrlButton />
@@ -91,7 +131,7 @@ const Career = () => {
                   {Object.keys({ ...user, ...stats }).map((stat) => (
                      <tr key={stat}>
                         <td>{splitCamelCase(stat)}</td>
-                        <td>{user[stat] || stats[stat]}</td>
+                        <td>{String(user[stat] ?? stats[stat])}</td>
                      </tr>
                   ))}
                </tbody>
@@ -101,7 +141,7 @@ const Career = () => {
             <h3>Collection</h3>
             <Collection cardClickEvent={handleEvolve} cardOptions={{ evolvable: isOurProfile }} id={user.id} />
          </div>
-      </div>
+      </div >
    )
 }
 

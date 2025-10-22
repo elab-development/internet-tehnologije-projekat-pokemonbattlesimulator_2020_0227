@@ -76,9 +76,9 @@ const getMessages = async (req, res) => {
 
 
     let { direction, q } = req.query;
-    let x;
-    let offset = req.query.offset != null ? parseInt(req.query.offset, 10) : undefined;
-    let limit = req.query.limit != null && (x = parseInt(req.query.limit, 10)) !== 0 ? x : undefined;
+    
+    const offset = Number.isFinite(parseInt(req.query.offset, 10)) ? parseInt(req.query.offset, 10) : undefined;
+    const limit = Number.isFinite(parseInt(req.query.limit, 10)) ? parseInt(req.query.limit, 10) : undefined;
 
     try {
         let obj = { offset, limit, user1, user2, direction, q, };

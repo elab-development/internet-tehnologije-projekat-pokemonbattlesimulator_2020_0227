@@ -128,7 +128,7 @@ const getUserDB = async ({ userId = undefined, username = undefined, email = und
 // Error check to not cause massive update
 /** @param {import("../../utils/typedefs").UserTable} data */
 const updateUserDB = async ({ id, ...data }) => {
-    console.log(id == null);
+    console.log(id == null, data);
     if (data == null || id == null) throw new Error('Data to be updated, userId or email are not provided.');
     await db.update(users).set({ ...data }).where(eq(users.id, id)).returning({ id: users.id });
 }
@@ -371,6 +371,11 @@ const deleteResetPasswordToken = async (email) => {
     return (await db.delete(passwordResetTokens).where(eq(passwordResetTokens.email, email)));
 }
 
+const addPokemonDB = async (userId, pokemonId) => {
+    return (await db.insert(usersPokemons).values({ pokemonId: pokemonId, userId: userId }).onConflictDoNothing());
+}
+
+
 module.exports = {
     createUser,
     getUserById,
@@ -388,5 +393,6 @@ module.exports = {
     deleteUserDB,
     insertResetPasswordToken,
     getResetPasswordToken,
-    deleteResetPasswordToken
+    deleteResetPasswordToken,
+    addPokemonDB
 }

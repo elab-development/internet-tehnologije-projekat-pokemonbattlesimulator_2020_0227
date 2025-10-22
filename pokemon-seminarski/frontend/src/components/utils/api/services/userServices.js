@@ -21,4 +21,12 @@ const getUserById = async (id, signal = undefined) => {
     return parseUser(response.data);
 }
 
-export { getUsers, getUserById };
+const addPokemon = async ({ userId, pokemonId }) => {
+    return (await API.post(`/users/${userId}/pokemons/${pokemonId}`))
+}
+
+const muteUser = async (id, isMuted = true) => {
+    return (await API.post(`/users/${id}/mute`, { isMuted }));
+}
+
+export { getUsers, getUserById, addPokemon, muteUser };

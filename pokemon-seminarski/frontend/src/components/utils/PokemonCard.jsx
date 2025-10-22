@@ -15,13 +15,13 @@ function getColor(typeID, transparent = false) {
  * @param {{
  *  pokemon: import('../Collection').UsersPokemonExpanded, 
  *  onClick: (pokemon: import('../Collection').UsersPokemonExpanded) => Promise<void>, 
- *  options: {evolvable?: boolean, selectable?: boolean, deselectable?: boolean}, 
+ *  options: {evolvable?: boolean, selectable?: boolean, deselectable?: boolean, noXp: boolean}, 
  *  isSelected?: boolean,
  *  disabled?: boolean
  * }} param0 
  */
 const PokemonCard = ({ pokemon, onClick, options = {}, isSelected = false, disabled = false }) => {
-    const { evolvable = false, selectable = false, deselectable = false } = options;
+    const { evolvable = false, selectable = false, deselectable = false, noXp = false } = options;
     const color = getColor(pokemon.type[0].id)
     const colorTransparent = getColor(pokemon.type[0].id, true);
     const [isClickedBlocked, setIsClickedBlocked] = useState(false);
@@ -77,21 +77,21 @@ const PokemonCard = ({ pokemon, onClick, options = {}, isSelected = false, disab
                     <p className="stat-name">HP</p>
                     <div className='stat-group'>
                         <p className="stat-value">
-                            <code>{String(Math.round(pokemon.baseStats.healthPointsBase * (1 + (pokemon.xp / 100)))).padStart(3, "0")}</code>
+                            <code>{String(Math.round(pokemon.baseStats.healthPointsBase * (1 + ((pokemon.xp ?? 0) / 100)))).padStart(3, "0")}</code>
                         </p>
-                        <ProgressBar percent={pokemon.baseStats.healthPointsBase * (1 + (pokemon.xp / 100)) / 2} fillColor={color} />
+                        <ProgressBar percent={pokemon.baseStats.healthPointsBase * (1 + ((pokemon.xp ?? 0) / 100)) / 2} fillColor={color} />
                     </div>
                 </div>
                 <div className="stat-wrap">
                     <p className="stat-name">DEF</p>
                     <div className='stat-group'>
                         <p className="stat-value">
-                            <code>{String(Math.round(pokemon.baseStats.defenseBase * (1 + (pokemon.xp / 100)))).padStart(3, "0")}</code>
+                            <code>{String(Math.round(pokemon.baseStats.defenseBase * (1 + ((pokemon.xp ?? 0) / 100)))).padStart(3, "0")}</code>
                         </p>
-                        <ProgressBar percent={pokemon.baseStats.defenseBase * (1 + (pokemon.xp / 100)) / 2} fillColor={color} />
+                        <ProgressBar percent={pokemon.baseStats.defenseBase * (1 + ((pokemon.xp ?? 0) / 100)) / 2} fillColor={color} />
                     </div>
                 </div>
-                <div className="stat-wrap">
+                {!noXp && <div className="stat-wrap">
                     <p className="stat-name">XP</p>
                     <div className='stat-group'>
                         <p className="stat-value">
@@ -99,7 +99,7 @@ const PokemonCard = ({ pokemon, onClick, options = {}, isSelected = false, disab
                         </p>
                         <ProgressBar percent={Math.min(100, Math.round(pokemon.xp))} fillColor={color} />
                     </div>
-                </div>
+                </div>}
             </div>
             <hr style={{ borderColor: color, marginTop: 5 }} />
             <div className='pokemon-card-moves'>
@@ -109,7 +109,7 @@ const PokemonCard = ({ pokemon, onClick, options = {}, isSelected = false, disab
                         <div className='move-info-wrap'>
                             <div className='move-info'>
                                 <p className='move-dmg-val'>
-                                    <code>{String(Math.round(move.attackBase * (1 + pokemon.xp / 100))).padStart(3, "0")}</code>
+                                    <code>{String(Math.round(move.attackBase * (1 + (pokemon.xp ?? 0)/ 100))).padStart(3, "0")}</code>
                                 </p>
                                 <p className='move-dmg'> DMG</p>
                             </div>

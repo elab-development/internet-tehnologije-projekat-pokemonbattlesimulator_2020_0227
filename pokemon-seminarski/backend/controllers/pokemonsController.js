@@ -1,7 +1,7 @@
 const { insertPokemonDB, insertBulkPokemonDB, getPokemonByIdDB, getPokemonsDB, deletePokemonDB, updatePokemonDB } = require("../db/services/pokemonServices");
 const { ADMIN } = require("../enums/roles");
 const getClientURL = require("../utils/getClientURL");
-const { parseIntegerStrict } = require("../utils/parsesForPrimitives");
+const { parseIntegerStrict, isStringInteger } = require("../utils/parsesForPrimitives");
 const { ResponseError } = require("../utils/typedefs");
 const { selectPokemonSchema, insertPokemonSchema, updatePokemonSchema } = require("../validations/pokemonValidation");
 const { z } = require('zod');
@@ -16,21 +16,25 @@ const { z } = require('zod');
  */
 const insertPokemons = async (req, res) => {
     if (req.user.role !== ADMIN) {
-        return res.status(401).json(new ResponseError('Unauthorized'));
+        return res.status(403).json(new ResponseError('Unauthorized'));
     }
 
     let { pokemons } = req.body;
-    let { id, defenseBase, healthPointsBase } = req.body;
+    let { id, defenseBase, healthPointsBase, moves, types, evolvesTo } = req.body;
 
     if (pokemons == null) {
-        pokemons = [{ id, defenseBase, healthPointsBase }];
+        pokemons = [{ id, defenseBase, healthPointsBase, moves, types, evolvesTo }];
     } else if (!Array.isArray(pokemons)) {
         pokemons = [pokemons];
     } //else pokemons exist and is an Array
 
     let validatedArray;
     try {
-        validatedArray = z.array(insertPokemonSchema).nonempty().parse(pokemons);
+        validatedArray = z.array(insertPokemonSchema.extend({
+            evolvesTo: z.number().int().gt(0),
+            moves: z.number().int().array().length(3),
+            types: z.number().int().array().min(1).max(2)
+        })).nonempty().parse(pokemons);
     } catch (error) {
         return res.status(400).json(new ResponseError('Bad Request', error, 'body', 'pokemons'));
     }
@@ -38,7 +42,7 @@ const insertPokemons = async (req, res) => {
     try {
         if (validatedArray.length === 1) {
             let pokemon = await insertPokemonDB(validatedArray[0]);
-            return res.status(201).json({ message: "Success!!", pokemon: { ...pokemon } });
+            return res.status(201).json({ ...pokemon });
         } else {
             let result = await insertBulkPokemonDB(validatedArray);
             return res.status(201).json({ rowsInserted: result });
@@ -95,16 +99,13 @@ const getPokemons = async (req, res) => {
     }
 
 
-    let x;
-    let offset = req.query.offset ? parseInt(req.query.offset, 10) : undefined;
-    let limit = req.query.limit && (x = parseInt(req.query.limit, 10)) === 0 ? x : undefined;
-
+    const offset = Number.isFinite(parseInt(req.query.offset, 10)) ? parseInt(req.query.offset, 10) : undefined;
+    const limit = Number.isFinite(parseInt(req.query.limit, 10)) ? parseInt(req.query.limit, 10) : undefined;
 
     try {
         let obj = { offset, limit }
         Object.keys(obj).forEach(key => obj[key] === undefined && delete obj[key])
         const result = await getPokemonsDB({ ...obj });
-
 
         return res.status(200).json({
             totalCount: result.totalCount,

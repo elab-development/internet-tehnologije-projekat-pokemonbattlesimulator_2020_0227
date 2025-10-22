@@ -114,13 +114,18 @@ const ChatV2 = () => {
             console.log("private", data);
             addNewPrivateMessage(info.id, data, setFriends, selectedNamespaceIDRef.current);
         }
+        function onMutedMessage(data) {
+            setMessageText("You can't send messages, you are muted, contact support");
+        }
 
         socket.on('message:global:received', onGlobalMessageReceived);
         socket.on('message:private:received', onPrivateMessageReceived);
+        socket.on('message:muted', onMutedMessage);
 
         return () => {
             socket.off('message:global:received', onGlobalMessageReceived);
             socket.off('message:private:received', onPrivateMessageReceived);
+            socket.off('message:muted', onMutedMessage);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [info.id]);

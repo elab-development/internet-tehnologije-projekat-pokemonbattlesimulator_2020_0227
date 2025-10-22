@@ -12,7 +12,6 @@ const guard = (roles) => async (req, res, next) => {
     }
 
     try {
-        console.log(req.user);
         if (roles.some(r => r === req.user.role)) {
             next();
         } else {

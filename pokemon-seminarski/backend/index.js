@@ -9,6 +9,8 @@ const cors = require('cors');
 
 
 // Routes
+const movesRoutes = require('./routes/moveRoutes');
+const typeRoutes = require('./routes/typeRoutes');
 const gameRoutes = require('./routes/gameRoutes');
 const gifRoutes = require('./routes/gifRoutes');
 const messagesRoutes = require('./routes/messageRoutes');
@@ -25,6 +27,8 @@ app.get('/', (_, res) => {
 });
 
 // Route registrations
+app.use('/api/moves', movesRoutes);
+app.use('/api/types', typeRoutes);
 app.use('/api/games', gameRoutes);
 app.use('/api/gifs', gifRoutes);
 app.use('/api/messages', messagesRoutes);

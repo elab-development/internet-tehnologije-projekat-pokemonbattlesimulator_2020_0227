@@ -4,8 +4,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Pokemon from './utils/Pokemon';
 import { useAnimate } from 'framer-motion';
 import './css/Game/GameScreen.scss'
-import { loadApiData } from './Collection';
 import { useCallback } from 'react';
+import { loadApiData } from './utils/api/services/pokemonService';
 /**@typedef {import('../../../backend/game-logic/Player').SanitizedUser} Player*/
 
 /** @param {number} id */

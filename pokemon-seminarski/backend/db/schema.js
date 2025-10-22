@@ -49,11 +49,13 @@ const pokemons = pgTable('pokemons', {
 
 
 const evolution = pgTable('evolution', {
-    id: serial('id').primaryKey(),
+    id: serial('id'),
     pokemonId: integer('pokemon_id').notNull().references(() => pokemons.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
     evolvesToId: integer('evolves_to_id').references(() => pokemons.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
     //expirienceRequired: integer('expirience_required').notNull(),
-});
+}, (t) => ({
+    pk: primaryKey({ columns: [t.id, t.evolvesToId, t.pokemonId] })
+}));
 
 
 const types = pgTable('types', {
@@ -89,7 +91,9 @@ const typeEffectivness = pgTable('type_effectiveness', {
 const pokemonsTypes = pgTable('pokemon_type', {
     pokemonId: integer('pokemon_id').notNull().references(() => pokemons.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
     typeId: integer('type_id').notNull().references(() => types.id, { onDelete: 'cascade', onUpdate: 'cascade' })
-});
+}, (t) => ({
+    pk: primaryKey({ columns: [t.pokemonId, t.typeId] })
+}));
 
 const usersPokemons = pgTable('users_pokemons', {
     pokemonId: integer('pokemon_id').notNull().references(() => pokemons.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
@@ -110,8 +114,8 @@ const games = pgTable('games', {
 
 /*/*            Relations            */
 const gameRelations = relations(games, ({ one }) => ({
-    user1: one(users, { fields: games.user1Id, references: [users.id] }),
-    user2: one(users, { fields: games.user2Id, references: [users.id] })
+    user1: one(users, { fields: [games.user1Id], references: [users.id] }),
+    user2: one(users, { fields: [games.user2Id], references: [users.id] })
 }));
 
 const userRelations = relations(users, ({ one, many }) => ({
@@ -134,9 +138,9 @@ const pokemonRelations = relations(users, ({ one, many }) => ({
 
 const movesRelations = relations(moves, ({ one, many }) => ({
     pokemons: many(pokemonsMoves),
-    types: one(types, {
-        fields: [moves.type],
-        references: [types.id]
+    type: one(types, {
+        fields: [moves.typeId],
+        references: [types.id],
     })
 }));
 

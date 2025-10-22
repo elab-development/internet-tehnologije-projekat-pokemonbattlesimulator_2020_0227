@@ -16,6 +16,11 @@ import EditProfile from './components/EditProfile';
 import ResetPassword from './components/ResetPassword';
 import RootV2 from './components/RootV2';
 import Career from './components/Career';
+import AdminLayout from './components/Admin/AdminLayout';
+import WelcomeAdmin from './components/Admin/WelcomeAdmin';
+import CreatePokemon from './components/Admin/CreatePokemon';
+import CreateMove from './components/Admin/CreateMove';
+import GivePokemon from './components/Admin/GivePokemon';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -26,6 +31,12 @@ const router = createBrowserRouter(
           <Route path='/play' element={<Play />} />
           <Route path='/users/:id' element={<Career />} />
           <Route path='/users/:id/edit' element={<EditProfile />} />
+          <Route id='admin-only' element={<AdminLayout />}>
+            <Route path='/admin' element={<WelcomeAdmin />} />
+            <Route path='/admin/create/pokemon' element={<CreatePokemon />} />
+            <Route path='/admin/create/move' element={<CreateMove />} />
+            <Route path='/admin/create/award' element={<GivePokemon />} />
+          </Route>
         </Route>
         <Route path='/game/:id' element={<GameScreen />} />
       </Route>

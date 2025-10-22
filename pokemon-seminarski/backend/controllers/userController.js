@@ -2,10 +2,10 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const generateToken = require('../utils/generateToken');
 const { stringToBoolean, isStringInteger, parseIntegerStrict, dynamicParseStringToPrimitives } = require('../utils/parsesForPrimitives');
-const { getUserByUsername, createUser, getUserById, getUserByEmail, updateUserDB, getUsersPokemonsDB, deleteUserDB, getUsersMessagesDB, insertResetPasswordToken, getResetPasswordToken, getUserDB, getUsersDB, deleteUsersPokemonDB, evolvePokemonDB, deleteResetPasswordToken } = require('../db/services/userServices');
+const { getUserByUsername, createUser, getUserById, getUserByEmail, updateUserDB, getUsersPokemonsDB, deleteUserDB, getUsersMessagesDB, insertResetPasswordToken, getResetPasswordToken, getUserDB, getUsersDB, deleteUsersPokemonDB, evolvePokemonDB, deleteResetPasswordToken, addPokemonDB } = require('../db/services/userServices');
 const { insertUserSchema, selectUserSchema, selectUserPokemonsSchema, updateUserSchema, usernameWeakValidation } = require('../validations/userValidation');
 const { ZodError, z, ZodIssueCode } = require('zod');
-const { ADMIN } = require('../enums/roles');
+const { ADMIN, MODERATOR } = require('../enums/roles');
 const { ResponseError } = require('../utils/typedefs');
 const { generateResetPasswordToken, validateResetPasswordToken, hashToken } = require('../utils/generateResetPasswordToken');
 const { sendPasswordResetEmail } = require('../utils/sendPasswordResetEmail');
@@ -187,10 +187,9 @@ const getUsers = async (req, res) => {
         return res.status(400).json(new ResponseError('Bad Request', zerrors, 'query'));
     }
 
+    const offset = Number.isFinite(parseInt(req.query.offset, 10)) ? parseInt(req.query.offset, 10) : undefined;
+    const limit = Number.isFinite(parseInt(req.query.limit, 10)) ? parseInt(req.query.limit, 10) : undefined;
 
-    let x;
-    let offset = req.query.offset ? parseInt(req.query.offset, 10) : undefined;
-    let limit = req.query.limit && (x = parseInt(req.query.limit, 10)) === 0 ? x : undefined;
     let userIds = req.query.users;
     let queryUsername = req.query.usernameQuery;
     try {
@@ -294,6 +293,50 @@ const evolvePokemon = async (req, res) => {
     }
 }
 
+
+/**
+ * @description     Deletes the user with provided token
+ * @route           DELETE /api/users/:param/pokemons/:id
+ * @access          Private ADMIN only
+ * 
+ * @type {import('express').RequestHandler<{param: string}, any, any, qs.ParsedQs, Record<string, any>}
+ */
+const addPokemon = async (req, res) => {
+    const { param, id } = req.params;
+
+    try {
+        console.log("param", param);
+        let user
+        if (isStringInteger(param)) {
+            user = await getUserById(parseInt(param, 10));
+        } else {
+            user = await getUserByUsername(param);
+        }
+
+        let parsed;
+        try {
+            parsed = z.object({
+                userId: z.coerce.number().int(),
+                pokemonId: z.coerce.number().int(),
+            }).parse({
+                userId: user.id,
+                pokemonId: id
+            })
+        } catch (error) {
+            return res.status(400).json(new ResponseError("Bad request", error, "params"));
+        }
+
+        if (!user) {
+            return res.status(404).json(new ResponseError('User not found'));
+        }
+
+        const result = await addPokemonDB(parsed.userId, parsed.pokemonId);
+
+        return res.status(200).json(result);
+    } catch (error) {
+        return res.status(500).json(new ResponseError("Internal server error - " + error.message))
+    }
+}
 
 /**
  * @description     Deletes the user with provided token
@@ -421,7 +464,7 @@ const getUsersMessages = async (req, res) => {
         zerrors.addIssue({ code: ZodIssueCode.invalid_type, path: ['receivedMessages'], message: 'Expected boolean. Allowed values are: ["true", "1", "yes", "y", "false", "0", "no", "n"]' })
     if (req.query.sentMessages != null && ((sentMessages = stringToBoolean(req.query.sentMessages)) === undefined))
         zerrors.addIssue({ code: ZodIssueCode.invalid_type, path: ['sentMessages'], message: 'Expected boolean. Allowed values are: ["true", "1", "yes", "y", "false", "0", "no", "n"]' })
-    if (receivedMessages != null && sentMessages != null && receivedMessages === false && sentMessages === false) 
+    if (receivedMessages != null && sentMessages != null && receivedMessages === false && sentMessages === false)
         zerrors.addIssue({ code: ZodIssueCode.invalid_type, path: ['receivedMessages'], message: "Nice try to get all messages but too bad :(" })
     if (req.query.orderByAsc != null && ((orderByAsc = stringToBoolean(req.query.receivedMessages)) === undefined))
         zerrors.addIssue({ code: ZodIssueCode.invalid_type, path: ['orderByAsc'], message: 'Expected boolean. Allowed values are: ["true", "1", "yes", "y", "false", "0", "no", "n"]' })
@@ -430,9 +473,8 @@ const getUsersMessages = async (req, res) => {
         return res.status(400).json(new ResponseError('Bad Request', zerrors, 'query'));
     }
 
-    let x;
-    offset = req.query.offset != null ? parseInt(req.query.offset, 10) : undefined;
-    limit = req.query.limit != null && (x = parseInt(req.query.limit, 10)) !== 0 ? x : undefined; //if 0 then default value
+    offset = Number.isFinite(parseInt(req.query.offset, 10)) ? parseInt(req.query.offset, 10) : undefined;
+    limit = Number.isFinite(parseInt(req.query.limit, 10)) ? parseInt(req.query.limit, 10) : undefined;
     chatsWith = req.query.chatsWith ? parseInt(req.query.chatsWith, 10) : undefined;
 
 
@@ -543,12 +585,12 @@ const resetUserPassword = async (req, res) => {
 
 /**
  * @description     resets the password via provided token
- * @route           POST /api/users/:param/ban
+ * @route           POST /api/users/:param/mute
  * @access          Private - ADMIN, MODERATOR
  * 
  * @type {import('express').RequestHandler<{param: string}, any, any, qs.ParsedQs, Record<string, any>}
  */
-const banUser = async (req, res) => {
+const muteUser = async (req, res) => {
     const { param } = req.params;
     const { isMuted } = req.body;
     try {
@@ -559,12 +601,21 @@ const banUser = async (req, res) => {
             user = await getUserByUsername(param);
         }
 
+        if ((user.role === MODERATOR && req.user.role === MODERATOR)
+            || (user.role === ADMIN && req.user.role === MODERATOR)
+            || (user.role === ADMIN && req.user.role === ADMIN)
+        ) {
+            return res.status(403).json(new ResponseError("Not Authorized - Can't mute same/higher ranks"))
+        }
+
         if (!user) {
             return res.status(404).json(new ResponseError("User not found"));
         }
 
-        const shouldMute = isMuted ?? true; // no need for req.body but can provide additional data if so.
-        await updateUserDB({ id: param, isMuted: shouldMute, ...user });
+        const shouldMute = isMuted ?? true;
+        console.log("isMuted", isMuted, shouldMute);
+
+        await updateUserDB({ id: param, isMuted: shouldMute});
         res.sendStatus(200);
     } catch (error) {
         return res.status(500).json(new ResponseError(error.message));
@@ -583,5 +634,6 @@ module.exports = {
     updateUser,
     requestUserPasswordReset,
     resetUserPassword,
-    banUser
+    addPokemon,
+    muteUser
 }

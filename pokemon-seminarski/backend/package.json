@@ -28,7 +28,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "drizzle-kit": "^0.23.1",
+    "drizzle-kit": "^0.23.2",
     "nodemon": "^3.1.4"
   }
 }
