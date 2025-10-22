@@ -5,6 +5,7 @@ import TypeWritter from './utils/TypeWritter';
 import InputField from './utils/InputField';
 import './css/NoAuth/RequestPasswordReset.scss'
 import { AnimatePresence, motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 const RequestPasswordReset = () => {
   const [successMessage, setSuccessMessage] = useState(false);
@@ -12,10 +13,11 @@ const RequestPasswordReset = () => {
   const [buttonPressed, setButtonPressed] = useState(false);
   const [err, setErr] = useState("");
   const [errRerun, setErrRerun] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
+    setErr("");
     if (!z.string().email().safeParse(email).success) {
       setErr("incorrect email format");
       setErrRerun(prev => !prev);
@@ -23,10 +25,13 @@ const RequestPasswordReset = () => {
     }
 
     setButtonPressed(true)
-    API.post('/request-password-reset', {
+    API.post('/users/request-password-reset', {
       email: email
     }).then(() => {
       setSuccessMessage(true);
+      setTimeout(() => {
+        navigate('/');
+      }, 2000)
     }).catch((err) => {
       let errorMessage = String('Unexpected error occured' + err);
       console.error('Unexpected error occured' + err);

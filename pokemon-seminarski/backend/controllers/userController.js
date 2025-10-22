@@ -549,10 +549,11 @@ const requestUserPasswordReset = async (req, res) => {
  */
 const resetUserPassword = async (req, res) => {
     const { token } = req.params;
-    const { newPassword } = req.body;
+    const { password } = req.body;
     let user;
     let email;
     let parsedPassword;
+
     try {
         const result = await getResetPasswordToken(hashToken(token));
         if (!validateResetPasswordToken(result)) {
@@ -560,11 +561,12 @@ const resetUserPassword = async (req, res) => {
         }
 
         parsedPassword = updateUserSchema.parse({
-            password: newPassword
+            password: password
         });
 
         email = result.email;
     } catch (err) {
+        console.error(err);
         if (err instanceof ZodError) {
             return res.status(401).json(new ResponseError('Bad Request', err, 'body'));
         }

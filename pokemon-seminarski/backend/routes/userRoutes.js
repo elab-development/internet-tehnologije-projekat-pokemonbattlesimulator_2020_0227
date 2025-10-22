@@ -10,7 +10,7 @@ const router = express.Router();
 
 router.route('/').get(getUsers).post(registerUser)
 router.route('/login').post(loginUser);
-router.route('/reset-password').put(requestUserPasswordReset);
+router.route('/request-password-reset').post(requestUserPasswordReset);
 router.route('/reset-password/:token').patch(resetUserPassword);
 router.route('/:param').get(getUser).patch(protect, updateUser).delete(protect, deleteUser);
 router.route('/:param/mute').post(protect, guard([ADMIN, MODERATOR]), muteUser)

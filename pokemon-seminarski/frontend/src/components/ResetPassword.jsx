@@ -13,7 +13,7 @@ const ResetPassword = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [buttonPressed, setButtonPressed] = useState(false);
   const [textError, setTextError] = useState({ password: false, confirm: false });
-  const [errRerun, setErrRerun] = useState(false);
+  const [_, setErrRerun] = useState(false);
 
 
   const debouncedText = useDebounce(text);
@@ -43,7 +43,7 @@ const ResetPassword = () => {
       let m1 = zerrors[0].length > 67 ? zerrors[0].length.substring(0, 67) + "..." : zerrors[0];
       let message = m1 + zerrors.length > 1 && `. (${zerrors.length - 1} more error${zerrors.length - 1 > 1 ? "s" : ""})`
       setErrorMessage(message);
-      setTextError(tempTextError);
+      //setTextError(tempTextError);
     }
   }, [debouncedText])
 
@@ -56,7 +56,7 @@ const ResetPassword = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
+    setErrorMessage("");
     if (textError.confirm || textError.password) {
       setErrorMessage('fields are incorrect');
       setErrRerun(prev => !prev);
@@ -69,9 +69,11 @@ const ResetPassword = () => {
     }
 
     setButtonPressed(true);
-    API.post('/reset-password/' + params.id, { password: text.password }).then((result) => {
+    console.log('/users/reset-password/' + params.id)
+    API.patch('/users/reset-password/' + params.id, { password: text.password }).then((result) => {
       setSuccessMessage(true);
     }).catch((err) => {
+      console.log(err);
       setErrorMessage(err.message?.length > 70 ? err.message.substring(0, 67) + "..." : err.message);
       setErrRerun(prev => !prev);
     }).finally(() => {
@@ -84,10 +86,10 @@ const ResetPassword = () => {
       <form onSubmit={handleSubmit}>
 
         <label htmlFor='password'>password</label>
-        <InputField id="password" name="password" type='text' onChange={handleChange} value={text.password} autoFocus={true} valid={text.password ? textError.password : null} />
+        <InputField id="password" name="password" type='password' onChange={handleChange} value={text.password} autoFocus={true} valid={text.password ? textError.password : null} />
 
         <label htmlFor='confirm'>confirm password</label>
-        <InputField id="confirm" name="confirm" type='text' onChange={handleChange} value={text.confirm} valid={text.confirm ? textError.confirm : null} />
+        <InputField id="confirm" name="confirm" type='password' onChange={handleChange} value={text.confirm} valid={text.confirm ? textError.confirm : null} />
 
         {successMessage ?
           <label className='auth-success-message'>Password is reset!</label> :
