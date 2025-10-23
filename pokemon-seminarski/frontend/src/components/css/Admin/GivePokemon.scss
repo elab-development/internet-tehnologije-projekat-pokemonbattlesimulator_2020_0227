@@ -1,0 +1,285 @@
+@use 'sass:math';
+@import '../mixins';
+@import '../colors';
+
+$gap: 10px;
+
+.give-pokemon {
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+
+    gap: 2*$gap;
+
+    form {
+        border: 2px solid $light-purple;
+        border-radius: $gap;
+
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 2*$gap;
+        gap: 2*$gap;
+
+        .input-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        button {
+            margin: 0 $gap;
+            display: block;
+        }
+
+        .form-result {
+            text-align: center;
+            position: absolute;
+            bottom: calc(100% + $gap);
+            left: 50%;
+            translate: -50% 0;
+
+            .error-message {
+                color: $pink-blood;
+            }
+
+            .success-message {
+                color: $success;
+            }
+        }
+    }
+
+    .double-wrapper-holy-moly{
+        margin-top: 20px;
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+        gap: 1.3*$gap;
+        width: 100%;
+    }
+    
+
+
+    .collection-wrapper {
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+        gap: 1.3*$gap;
+        width: 100%;
+        min-height: 301.2px;
+
+        overflow: hidden;
+        mask-image: linear-gradient(to right,
+                transparent 10px,
+                black 50px,
+                black calc(100% - 50px),
+                transparent calc(100% - 10px));
+    }
+
+
+    .collection-loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+    }
+
+    .collection {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 3*$gap;
+
+        width: 100%;
+        max-width: 1000px;
+        height: 100%;
+        overflow-x: scroll;
+        padding: 0 20px 10px 20px;
+        mask-image: linear-gradient(to right,
+                transparent 5px,
+                black 30px,
+                black calc(100% - 30px),
+                transparent calc(100% - 5px));
+
+
+        @include customScrollbar();
+    }
+
+    .pokemon-card {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        border: 3px solid var(--currentColor);
+        background-color: var(--currentTransparentColor);
+        min-width: 210px;
+        height: 300px; //backup if sm shit happens
+
+        padding: $gap;
+        border-radius: $gap;
+
+        .evolve-picture {
+            cursor: pointer;
+            z-index: 100;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #FFE10088;
+            border-radius: $gap - 3px;
+            backdrop-filter: blur(2px);
+            overflow: hidden;
+            transition: .2s ease-out background-color;
+
+            &:hover {
+                background-color: #ffe100AA;
+            }
+
+            svg {
+                position: absolute;
+                display: block;
+                top: 50%;
+                left: 50%;
+                translate: -50% -50%;
+                width: 50%;
+                height: auto;
+                filter: drop-shadow(0 0 4px #895000);
+                animation: 2s ease-in-out bounce infinite;
+
+                path {
+                    transform-origin: center;
+                    animation: 4s ease-in-out appearEvolve infinite;
+                }
+
+                path:nth-child(1) {
+                    animation-delay: -.2s;
+                }
+
+                path:nth-child(2) {
+                    animation-delay: -.4s;
+                }
+
+                path:nth-child(3) {
+                    animation-delay: -.6s;
+                }
+            }
+        }
+
+        .pokemon-card-types {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            gap: math.div($gap, 2);
+            top: 1.15*$gap;
+            left: $gap;
+
+            &>* {
+                width: 15px;
+                aspect-ratio: 1;
+            }
+        }
+
+        .pokemon-card-title {
+            font-size: .8rem;
+            text-transform: capitalize;
+            margin-bottom: 5px;
+        }
+
+        .pokemon-card-picture img {
+            width: 80px;
+            aspect-ratio: 1;
+        }
+
+        hr {
+            width: calc(100% + 5px);
+            margin: 1px 0 5px 0;
+            opacity: .5;
+        }
+
+        .pokemon-card-base-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            width: 100%;
+
+            .stat-wrap {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 5px;
+            }
+
+            .stat-name {
+                font-size: .8rem;
+                line-height: 1;
+                width: 13%;
+            }
+
+
+            .stat-group {
+                flex: 1;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+
+                .stat-value {
+                    font-size: .8rem;
+                    line-height: 1;
+                }
+
+                .progress-bar {
+                    flex: 1;
+                }
+            }
+        }
+
+        .pokemon-card-moves {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+
+            p {
+                line-height: 1;
+                font-size: .8rem;
+            }
+
+            .pokemon-card-move {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border-radius: 20px;
+                padding: 4px 12px;
+                background-color: var(--currentTransparentColor);
+
+                .move-name {
+                    text-align: center;
+                    font-size: .75rem;
+
+                    span {
+                        display: inline-block;
+                        width: 13px;
+                        aspect-ratio: 1;
+                        vertical-align: middle;
+                        margin-left: -5px;
+                        margin-top: -3px;
+                        filter: drop-shadow(0 0 2px #2c2c2c8d);
+                    }
+                }
+
+                .move-info {
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: 5px;
+                }
+            }
+        }
+    }
+}

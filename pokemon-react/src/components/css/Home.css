@@ -1,0 +1,53 @@
+h1 {
+    text-align: center;
+    font-size: 1.67em;
+    margin: 0.33em;
+}
+
+h2 {
+    font-size: 1.33em;
+    margin: 0.33em;
+}
+
+hr {
+    background-color: grey;
+    height: 1px;
+    border: none;
+}
+
+.home-lista .funkcionalnosti li {
+    list-style: disc;
+}
+
+.home-lista .kako-pokrenuti li {
+    list-style: decimal;
+}
+
+code {
+    color: orangered;
+    background-color: rgba(0, 0, 0, 0.11);
+    border-radius: 2px;
+    padding: 0 5px;
+}
+
+.div-wrapper{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 20px;
+    width: 100%;
+}
+.home-dugme{
+    border: none;
+    outline: 3px solid #b90a24;
+    outline-offset: -3px;
+    border-radius: 12px;
+    padding: 12px 0 15px 0;
+    width: 300px;
+    text-decoration: none;
+    text-align: center;
+    font-size: large;
+    color: whitesmoke;
+    background-color: #D70A28;
+    transition: background-color 0.4s ease-out, box-shadow 0.4s ease-out, outline 0.4s ease-out;
+}

@@ -1,0 +1,44 @@
+@import './colors';
+
+//  splited backgrounds
+@mixin gradient-background($color1, $color2) {
+    background-image:
+        linear-gradient(to right, $color1, $color1),
+        linear-gradient(to right, $color2, $color2);
+}
+
+@mixin customScrollbar() {
+    & {
+        /* For Firefox */
+        scrollbar-width: thin;
+        scrollbar-color: $light-purple $dark-purple;
+        scrollbar-gutter: stable;
+    }
+
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background-color: $light-purple;
+        border-radius: 3px;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+        background-color: $light-purple
+    }
+}
+
+@mixin cardBackground() {
+    background: radial-gradient(ellipse at 50% -30%, $purple , transparent),
+        radial-gradient(ellipse at bottom, $black-purple, transparent);
+}
+
+@mixin cardBackgroundInverted() {
+    background: radial-gradient(ellipse at 50% 130%, $purple , transparent),
+        radial-gradient(ellipse at top, $black-purple, transparent);
+}

@@ -1,0 +1,112 @@
+@import './components/css/colors';
+
+:root {
+  /*full*/
+  --clr-normal: #A8A77A;
+  --clr-fire: #EE8130;
+  --clr-water: #6390F0;
+  --clr-electric: #F7D02C;
+  --clr-grass: #7AC74C;
+  --clr-ice: #96D9D6;
+  --clr-fighting: #C22E28;
+  --clr-poison: #A33EA1;
+  --clr-ground: #E2BF65;
+  --clr-flying: #A98FF3;
+  --clr-psychic: #F95587;
+  --clr-bug: #A6B91A;
+  --clr-rock: #B6A136;
+  --clr-ghost: #735797;
+  --clr-dragon: #6F35FC;
+  --clr-dark: #705746;
+  --clr-steel: #B7B7CE;
+  --clr-fairy: #D685AD;
+
+  /*transparent*/
+  --clr-normal-transparent: #a8a77a80;
+  --clr-fire-transparent: #EE813080;
+  --clr-water-transparent: #6390F080;
+  --clr-electric-transparent: #F7D02C80;
+  --clr-grass-transparent: #7AC74C80;
+  --clr-ice-transparent: #96D9D680;
+  --clr-fighting-transparent: #C22E2880;
+  --clr-poison-transparent: #A33EA180;
+  --clr-ground-transparent: #E2BF6580;
+  --clr-flying-transparent: #A98FF380;
+  --clr-psychic-transparent: #F9558780;
+  --clr-bug-transparent: #A6B91A80;
+  --clr-rock-transparent: #B6A13680;
+  --clr-ghost-transparent: #73579780;
+  --clr-dragon-transparent: #6F35FC80;
+  --clr-dark-transparent: #70574680;
+  --clr-steel-transparent: #B7B7CE80;
+  --clr-fairy-transparent: #D685AD80;
+
+  --clr-header-footer: #D70A28;
+  --clr-header-footer-transparent: #D70A2850;
+  --clr-header-footer-text: white;
+  --clr-content: white;
+  --clr-content-text: black;
+
+  --pic-normal: url('./components/assets/pokemonCardAssets/normal.svg');
+  --pic-fire: url('./components/assets/pokemonCardAssets/fire.svg');
+  --pic-water: url('./components/assets/pokemonCardAssets/water.svg');
+  --pic-electric: url('./components/assets/pokemonCardAssets/electric.svg');
+  --pic-grass: url('./components/assets/pokemonCardAssets/grass.svg');
+  --pic-ice: url('./components/assets/pokemonCardAssets/ice.svg');
+  --pic-fighting: url('./components/assets/pokemonCardAssets/fighting.svg');
+  --pic-poison: url('./components/assets/pokemonCardAssets/poison.svg');
+  --pic-ground: url('./components/assets/pokemonCardAssets/ground.svg');
+  --pic-flying: url('./components/assets/pokemonCardAssets/flying.svg');
+  --pic-psychic: url('./components/assets/pokemonCardAssets/psychic.svg');
+  --pic-bug: url('./components/assets/pokemonCardAssets/bug.svg');
+  --pic-rock: url('./components/assets/pokemonCardAssets/rock.svg');
+  --pic-ghost: url('./components/assets/pokemonCardAssets/ghost.svg');
+  --pic-dragon: url('./components/assets/pokemonCardAssets/dragon.svg');
+  --pic-dark: url('./components/assets/pokemonCardAssets/dark.svg');
+  --pic-steel: url('./components/assets/pokemonCardAssets/steel.svg');
+  --pic-fairy: url('./components/assets/pokemonCardAssets/fairy.svg');
+}
+
+:root,
+main {
+  scrollbar-width: none;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  color: white;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100dvh;
+  max-width: 100dvw;
+  min-width: 100dvw;
+  background-color: $dark-purple;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  height: 100%;
+  width: 100%;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}

@@ -1,0 +1,95 @@
+@import '../colors';
+@import '../mixins';
+
+header {
+    width: 100%;
+    max-height: 55px;
+    border-bottom: 3px solid $light-purple;
+
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+
+    z-index: 1;
+}
+
+.nav-item-wrapper {
+    margin: auto 40px;
+    font-size: 1.8em;
+    line-height: 1.05em;
+
+    a {
+        @include gradient-background(white, $extra-light-purple);
+        background-size: 100% 1em, 0 1em;
+        transition: background-size 300ms;
+
+        color: transparent;
+        background-clip: text;
+        padding: 0 5px;
+
+        &:hover,
+        &:focus {
+            background-size: 0 1em, 100% 1em;
+        }
+    }
+
+    &.nav-third {
+        a {
+            @include gradient-background($extra-light-purple, white);
+            background-size: 0 1em, 100% 1em;
+
+            &:hover,
+            &:focus {
+                background-size: 100% 1em, 0 1em;
+            }
+        }
+    }
+}
+
+.nav-item-wrapper-central {
+    position: relative;
+    height: 60px;
+    width: 300px;
+    background-color: $dark-purple;
+    clip-path: polygon(0 0, 27.6px 100%, calc(100% - 27.6px) 100%, 100% 0);
+
+    box-sizing: border-box;
+    z-index: 2;
+
+    &::before {
+        content: "";
+        height: 100%;
+        width: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        background-color: $pink-blood;
+        z-index: 1;
+        clip-path: polygon(0 0, 27.6px 100%, 32.2px 100%, 4.6px 0, 9.2px 0, 36.8px 100%, 41.4px 100%, 13.8px 0,
+                calc(100% - 13.8px) 0, calc(100% - 41.4px) 100%, calc(100% - 36.8px) 100%, calc(100% - 9.2px) 0,
+                calc(100% - 4.6px) 0, calc(100% - 32.2px) 100%, calc(100% - 27.6px) 100%, 100% 0);
+    }
+
+    .nav-item {
+        clip-path: polygon(9.2px 0, 36.8px 100%, calc(100% - 36.8px) 100%, 100% 0);
+        margin-top: 4px;
+        text-align: center;
+        display: block;
+        position: relative;
+        width: 100%;
+        height: 100%;
+
+        font-size: 2.3em;
+        top: -0.11em;
+        border-bottom: 3px solid $light-purple;
+
+        transition: color 200ms;
+
+        cursor: pointer;
+
+        &:hover,
+        &:focus {
+            color: $extra-light-purple;
+        }
+    }
+}

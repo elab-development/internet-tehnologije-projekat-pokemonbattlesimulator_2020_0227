@@ -1,0 +1,1 @@
+ALTER TABLE "pokemon_type" ADD CONSTRAINT "pokemon_type_pokemon_id_type_id_pk" PRIMARY KEY("pokemon_id","type_id");
